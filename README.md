@@ -1,3 +1,3 @@
 # 🔍 ClueSolo
 The classic detective game
-- but you're alone! 
+... but you're alone! 
