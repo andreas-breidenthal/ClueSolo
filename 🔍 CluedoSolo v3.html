@@ -1,0 +1,1515 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🔍 CluedoSolo — Human + AI</title>
+
+<style>
+  :root{
+    --bg:#0f172a;
+    --panel:#111c33;
+    --text:#e5e7eb;
+    --muted:#9ca3af;
+    --accent:#60a5fa;
+    --bad:#fb7185;
+    --good:#34d399;
+    --warn:#fbbf24;
+    --border:rgba(255,255,255,0.12);
+
+    /* Suspect colours */
+    --sus-green:#2D9542;--sus-mustard:#D6AA28;--sus-peacock:#0085B7;--sus-plum:#9C51B6;--sus-scarlet:#ff2400;--sus-white:#f8fafc;
+    /* Weapon colours */
+    --wep-candle:#FFD700;--wep-dagger:#BB0A1E;--wep-lead:#B7C9E2;--wep-revolver:#D8D8D8;--wep-rope:#BAA38C;--wep-wrench:#879EBF;
+  }
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 700px at 30% 0%, #1f2a4a, var(--bg));color:var(--text)}
+  header{padding:14px 18px;display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.15)}
+  header h1{margin:0;font-size:18px}
+  header .sub{color:var(--muted);font-size:13px}
+  .layout{display:grid;grid-template-columns:360px 1fr 420px;gap:12px;padding:12px;align-items:start}
+  .panel{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .panel h2{margin:0;padding:10px 12px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border);color:#cbd5e1}
+  .panel .content{padding:12px}
+  .leftStack{display:grid;gap:12px;grid-template-rows:auto auto 1fr}
+  .rightStack{display:grid;gap:12px;grid-template-rows:auto auto 1fr}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .row.between{justify-content:space-between}
+  .pill{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--muted)}
+  .pill.good{color:var(--good);border-color:rgba(52,211,153,.4)}
+  .pill.bad{color:var(--bad);border-color:rgba(251,113,133,.4)}
+  .pill.warn{color:var(--warn);border-color:rgba(251,191,36,.4)}
+  button{cursor:pointer;border:1px solid var(--border);background:rgba(96,165,250,.18);color:var(--text);padding:8px 10px;border-radius:10px;font-weight:700;transition:transform .05s ease, background .2s ease}
+  button:hover{background:rgba(96,165,250,.25)}button:active{transform:translateY(1px)}button.secondary{background:rgba(255,255,255,.06)}button.danger{background:rgba(251,113,133,.18)}button:disabled{opacity:.55;cursor:not-allowed}
+  select{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,.2);color:var(--text)}
+  .board{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-rows:56px;gap:12px;padding:12px}
+  .room.center{background:rgba(255,255,255,0.07);border-style:dashed}
+  .room.center.convicted{border-style:solid;background:linear-gradient(180deg, rgba(52,211,153,.15), rgba(255,255,255,.04))}
+  .room{border:1px solid var(--border);border-radius:12px;padding:10px;background:rgba(0,0,0,.15);min-height:96px;position:relative}
+  .room .title{font-weight:900}.room .tokens{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+  .room.reachable{outline:2px solid rgba(96,165,250,.55)}.room.here{outline:2px solid rgba(52,211,153,.55)}
+  .room button{position:absolute;right:10px;top:10px;padding:6px 8px;border-radius:10px;font-size:12px}
+  .log{height:200px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.35;background:rgba(0,0,0,.18);border:1px solid var(--border);border-radius:12px;padding:10px;white-space:pre-wrap}
+
+/* —— Checklist (with per-item single-line notes) —— */
+/* Wide / default: [checkbox] [label] [note input] on one line */
+.noteitem{
+  display:grid;
+  grid-template-columns: auto auto 1fr; /* checkbox | name | input (flex) */
+  column-gap:8px;
+  align-items:center;         /* single-line alignment */
+  padding:2px 0;
+  color:var(--muted);
+  font-size:12px;
+}
+.noteitem input[type="checkbox"]{
+  grid-column:1;
+  margin-top:0;
+}
+.noteitem .name{
+  grid-column:2;
+  color:var(--text);
+  margin:0;
+  white-space:nowrap;         /* keep the label from wrapping on wide screens */
+}
+.noteitem.cleared .name{
+  text-decoration:line-through;
+  color:#94a3b8;
+}
+.noteText{
+  grid-column:3;              /* sits to the right of the label on wide screens */
+  display:block;
+  width:100%;
+  box-sizing:border-box;
+  margin:0;
+  padding:3px 6px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:rgba(0,0,0,.18);
+  color:var(--text);
+  font-size:12px;
+  min-width:160px;            /* comfortable min size next to short labels */
+}
+
+/* Small screens: revert to stacked layout (input drops below the label) */
+@media (max-width: 540px){
+  .noteitem{
+    grid-template-columns: auto 1fr;  /* checkbox | label on row 1 … */
+    align-items:start;                /* let the input have its own row */
+  }
+  .noteitem .name{
+    grid-column:2;
+    white-space:normal;               /* allow wrapping on small screens */
+  }
+  .noteText{
+    grid-column:1 / -1;               /* …and input spans full width on row 2 */
+    margin-top:6px;
+  }
+}
+
+/* Container for each list (unchanged) */
+.checklistStack{ display:grid; grid-template-columns:1fr; gap:10px }
+
+  .promptBox{border:1px solid var(--border);border-radius:12px;background:rgba(0,0,0,.12);padding:10px}
+  .promptTitle{font-weight:800;margin-bottom:6px;color:#e2e8f0}
+  .promptBody{margin:6px 0 10px 0}
+  .promptActions{display:flex;flex-wrap:wrap;gap:8px}
+  .placeholder{color:var(--muted);font-size:12px}
+
+  .rightPanel,.leftPanel{position:sticky;top:12px;height:calc(100vh - 96px);overflow:auto}
+  @media (max-width:1200px){.layout{grid-template-columns:1fr}.leftPanel,.rightPanel{position:static;height:auto;overflow:visible}}
+
+  .token{font-size:11px;padding:3px 7px;border-radius:999px;border:2px solid rgba(255,255,255,.18);background:#000;line-height:1.1;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 0 0 1px rgba(0,0,0,.35) inset}
+  .token[data-color]{border-color: color-mix(in srgb, var(--token-color) 92%, transparent);color:color-mix(in srgb, var(--token-color) 92%, transparent);box-shadow:0 0 0 1px rgba(0,0,0,.35) inset,0 0 10px color-mix(in srgb, var(--token-color) 28%, transparent);text-shadow:0 1px 1px rgba(0,0,0,.85)}
+  .token .dot{width:8px;height:8px;border-radius:999px;background: var(--token-color);box-shadow:0 0 0 1px rgba(0,0,0,.55), 0 0 10px color-mix(in srgb, var(--token-color) 35%, transparent)}
+  .token.inactive{border-style:dashed}
+.token .ico {
+  margin-right: 6px;
+}
+  .token.suspect.green{--token-color:var(--sus-green)}.token.suspect.mustard{--token-color:var(--sus-mustard)}.token.suspect.peacock{--token-color:var(--sus-peacock)}.token.suspect.plum{--token-color:var(--sus-plum)}.token.suspect.scarlet{--token-color:var(--sus-scarlet)}.token.suspect.white{--token-color:var(--sus-white)}
+  .token.weapon.candlestick{--token-color:var(--wep-candle)}.token.weapon.dagger{--token-color:var(--wep-dagger)}.token.weapon.lead-pipe{--token-color:var(--wep-lead)}.token.weapon.revolver{--token-color:var(--wep-revolver)}.token.weapon.rope{--token-color:var(--wep-rope)}.token.weapon.wrench{--token-color:var(--wep-wrench)}
+.ico{ display:inline-block; margin-right:6px; line-height:1; }
+/* --- Mobile stacked layout for Rooms --- */
+@media (max-width: 540px){
+  /* Turn the board into a simple stacked layout */
+  .board{
+    display:grid;
+    gap:12px;
+    grid-template-columns: 1fr;   /* single column on mobile */
+    grid-auto-rows: auto;
+  }
+
+  /* Override the JS inline grid placement */
+  .board .room{
+    grid-column: auto !important;
+    grid-row: auto !important;
+    min-height: 120px;
+  }
+
+  /* Center “Classified Files / Convicted” tile should also stack */
+  .board .room.center{
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔍 CluedoSolo</h1>
+  <div class="sub">Just like the classic detective game - but you're alone!</div>
+</header>
+<div class="layout">
+  <div class="panel leftPanel">
+    <h2>Controls</h2>
+    <div class="content leftStack">
+      <div class="row between" style="margin-bottom:4px;">
+        <div class="row">
+          <span class="pill" id="turnPill">Turn: —</span>
+          <span class="pill" id="locPill">Location: —</span>
+        </div>
+        <button id="btnNewGame" class="secondary">New Game</button>
+      </div>
+      <div class="panel">
+        <h2>Your Cards</h2>
+        <div class="content" id="handBox"></div>
+      </div>
+      <div class="panel">
+        <h2>Players</h2>
+        <div class="content" id="playersBox"></div>
+      </div>
+      <div class="panel">
+        <h2>Game Log</h2>
+        <div class="content"><div class="log" id="log"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel centerPanel">
+    <h2>Rooms</h2>
+    <div class="content">
+      <div class="board" id="board"></div>
+      <div class="panel" style="margin-top:12px;">
+        <div class="content">
+          <div id="gameplayPromptBox" class="promptBox">
+            <div class="placeholder">Game-play prompts will appear here</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel rightPanel">
+    <h2>Casebook</h2>
+    <div class="content rightStack">
+          <div class="checklistStack">
+            <div class="notebox"><h4>Suspects</h4><div id="noteSuspects"></div></div>
+            <div class="notebox"><h4>Weapons</h4><div id="noteWeapons"></div></div>
+            <div class="notebox"><h4>Rooms</h4><div id="noteRooms"></div></div>
+          </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- Global error surface: log to the in-app Game Log panel ---
+window.onerror = function (msg, url, line, col, err) {
+  try {
+    const box = document.getElementById('log');
+    const where = (line != null && col != null) ? ` @ ${line}:${col}` : '';
+    const text = `[BOOT ERR] ${msg}${where}\n`;
+    if (box) {
+      box.textContent += text;
+      box.scrollTop = box.scrollHeight;
+    } else {
+      console.error(text);
+    }
+  } catch (e) {
+    console.error('Error in window.onerror:', e);
+  }
+};
+// (Optional) also surface unhandled Promise rejections
+window.addEventListener('unhandledrejection', (event) => {
+  try {
+    const box = document.getElementById('log');
+    const reason = (event.reason && (event.reason.message || event.reason)) || 'Unhandled rejection';
+    const text = `[BOOT ERR] Unhandled promise rejection: ${reason}\n`;
+    if (box) {
+      box.textContent += text;
+      box.scrollTop = box.scrollHeight;
+    } else {
+      console.error(text);
+    }
+  } catch (e) {
+    console.error('Error in unhandledrejection handler:', e);
+  }
+});
+
+/* Utilities */
+const randInt=(min,max)=>Math.floor(Math.random()*(max-min+1))+min;
+const choice=arr=>arr[Math.floor(Math.random()*arr.length)];
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const clampInt=(n,min,max,def)=>{const x=Number.parseInt(n,10); if(Number.isNaN(x)) return def; return Math.max(min,Math.min(max,x));};
+const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+
+/* Data */
+const SUSPECTS=["Green","Mustard","Peacock","Plum","Scarlet","White"];
+const SUSPECT_TITLES={Green:"Rev. Green",Mustard:"Col. Mustard",Peacock:"Mrs Peacock",Plum:"Prof. Plum",Scarlet:"Miss Scarlet",White:"Mrs White"};
+const WEAPONS=["Candlestick","Dagger","Lead Pipe","Revolver","Rope","Wrench"];
+const ROOMS=["Study","Hall","Lounge","Library","Billiard Room","Dining Room","Conservatory","Ballroom","Kitchen"];
+const START_ROOMS=["Study","Lounge","Kitchen","Conservatory","Billiard Room","Hall"];
+
+const displaySuspect=id=>SUSPECT_TITLES[id]||id;
+const displayCardName=(type,name)=> type==='Suspect'?displaySuspect(name):name;
+
+// Room icons for the board and casebook
+const ROOM_ICON = {
+  "Study": "📝",
+  "Hall": "🧥",
+  "Lounge": "🛋️",
+  "Library": "📖",
+  "Billiard Room": "🎱",
+  "Dining Room": "🍽️",
+  "Conservatory": "🪴",
+  "Ballroom": "💃",
+  "Kitchen": "🥩",
+  "Classified Files": "🕵️‍♂️"
+};
+
+/* Movement (kept as in your current build, including passages on any dice) */
+const ROOM_DICE={
+  "Study":{1:["Kitchen","Hall"],2:["Kitchen","Hall","Library"],3:["Kitchen","Hall","Library","Lounge"],4:["Kitchen","Hall","Library","Lounge","Billiard Room"],5:["Kitchen","Hall","Library","Lounge","Billiard Room","Dining Room"],6:["Kitchen","Hall","Library","Lounge","Billiard Room","Dining Room","Conservatory"]},
+  "Hall":{1:["Study"],2:["Study","Lounge"],3:["Study","Lounge","Library"],4:["Study","Lounge","Library","Dining Room"],5:["Study","Lounge","Library","Dining Room","Billiard Room"],6:["Study","Lounge","Library","Dining Room","Billiard Room","Kitchen"]},
+  "Lounge":{1:["Conservatory","Dining Room"],2:["Conservatory","Dining Room","Hall"],3:["Conservatory","Dining Room","Hall","Kitchen"],4:["Conservatory","Dining Room","Hall","Kitchen","Study"],5:["Conservatory","Dining Room","Hall","Kitchen","Study","Ballroom"],6:["Conservatory","Dining Room","Hall","Kitchen","Study","Ballroom","Library"]},
+  "Dining Room":{1:["Lounge"],2:["Lounge","Kitchen"],3:["Lounge","Kitchen","Hall"],4:["Lounge","Kitchen","Hall","Ballroom"],5:["Lounge","Kitchen","Hall","Ballroom","Study"],6:["Lounge","Kitchen","Hall","Ballroom","Study","Conservatory"]},
+  "Kitchen":{1:["Study","Ballroom"],2:["Study","Ballroom","Dining Room"],3:["Study","Ballroom","Dining Room","Conservatory"],4:["Study","Ballroom","Dining Room","Conservatory","Lounge"],5:["Study","Ballroom","Dining Room","Conservatory","Lounge","Billiard Room"],6:["Study","Ballroom","Dining Room","Conservatory","Lounge","Billiard Room","Hall"]},
+  "Ballroom":{1:["Kitchen"],2:["Kitchen","Conservatory"],3:["Kitchen","Conservatory","Dining Room"],4:["Kitchen","Conservatory","Dining Room","Billiard Room"],5:["Kitchen","Conservatory","Dining Room","Billiard Room","Lounge"],6:["Kitchen","Conservatory","Dining Room","Billiard Room","Lounge","Library"]},
+  "Conservatory":{1:["Lounge","Billiard Room"],2:["Lounge","Billiard Room","Ballroom"],3:["Lounge","Billiard Room","Ballroom","Library"],4:["Lounge","Billiard Room","Ballroom","Library","Kitchen"],5:["Lounge","Billiard Room","Ballroom","Library","Kitchen","Study"],6:["Lounge","Billiard Room","Ballroom","Library","Kitchen","Study","Dining Room"]},
+  "Billiard Room":{1:["Conservatory","Library"],2:["Conservatory","Library","Ballroom"],3:["Conservatory","Library","Ballroom","Study"],4:["Conservatory","Library","Ballroom","Study","Kitchen"],5:["Conservatory","Library","Ballroom","Study","Kitchen","Hall"],6:["Conservatory","Library","Ballroom","Study","Kitchen","Hall","Dining Room"]},
+  "Library":{1:["Billiard Room"],2:["Billiard Room","Study"],3:["Billiard Room","Study","Conservatory"],4:["Billiard Room","Study","Conservatory","Hall"],5:["Billiard Room","Study","Conservatory","Hall","Ballroom"],6:["Billiard Room","Study","Conservatory","Hall","Ballroom","Lounge"]}
+};
+function diceReachable(room,dice){
+  const d=Math.max(1,Math.min(6,dice|0));
+  const t=ROOM_DICE[room];
+  return new Set((t&&t[d])?t[d]:[]);
+}
+
+/* DOM */
+const el=id=>document.getElementById(id);
+function log(msg){
+  const box=el('log');
+  const t=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  box.textContent+=`[${t}] ${msg}\n`;
+  box.scrollTop=box.scrollHeight;
+}
+
+/* Prompt helpers */
+function renderPrompt({title="",bodyHTML="",actions=[]}){
+  return new Promise(resolve=>{
+    const box=el('gameplayPromptBox');if(!box){resolve(null);return;}
+    box.innerHTML="";
+    const t=document.createElement('div');t.className='promptTitle';t.textContent=title;box.appendChild(t);
+    const b=document.createElement('div');b.className='promptBody';b.innerHTML=bodyHTML;box.appendChild(b);
+    const a=document.createElement('div');a.className='promptActions';
+    actions.forEach(act=>{
+      const btn=document.createElement('button');
+      btn.textContent=act.label||'OK';
+      if(act.className) btn.className=act.className;
+      btn.onclick=()=>resolve(act.value!==undefined?act.value:true);
+      a.appendChild(btn);
+    });
+    box.appendChild(a);
+  });
+}
+function setPromptMessage(title, bodyHTML){
+  const box=el('gameplayPromptBox');if(!box) return;
+  box.innerHTML="";
+  const t=document.createElement('div');t.className='promptTitle';t.textContent=title;box.appendChild(t);
+  const b=document.createElement('div');b.className='promptBody';b.innerHTML=bodyHTML;box.appendChild(b);
+  const a=document.createElement('div');a.className='promptActions';box.appendChild(a);
+}
+function clearGameplayPrompt(){
+  const box=el('gameplayPromptBox');
+  if(box) box.innerHTML='<div class="placeholder">Game-play prompts will appear here</div>';
+}
+async function showInfoPrompt(title,html){
+  const r=await renderPrompt({title,bodyHTML:html,actions:[{label:'OK',value:true}]});
+  clearGameplayPrompt();return r;
+}
+async function showChoicePrompt(title, promptHTML, choices, { allowCancel = true } = {}){
+  const buttons=choices.map(ch=>({label:ch.label,value:ch.value,className:ch.className||'secondary'}));
+  if(allowCancel) buttons.push({label:'Cancel',value:null,className:'secondary'});
+  const r=await renderPrompt({title,bodyHTML:promptHTML,actions:buttons});
+  clearGameplayPrompt();return r;
+}
+async function promptPlayAgain(){
+  const r=await renderPrompt({
+    title:'Play Again?',
+    bodyHTML:`<div>Would you like to play again?</div><div style="margin-top:8px;color:var(--muted);font-size:12px;">Start a new game with fresh cards.</div>`,
+    actions:[{label:'New Game',value:true,className:'danger'}]
+  });
+  clearGameplayPrompt();
+  return !!r;
+}
+
+// Difficulty helpers & labels
+const DIFF_LABELS = {
+  basic   : 'Basic inference',
+  smart   : 'Smarter inference',
+  sherlock: 'Sherlock (expert + human-like quirks)',
+  // Back-compat alias if old saves or code still sets "deep":
+  deep    : 'Smarter inference'
+};
+const normDiff = (d) => (d === 'deep' ? 'smart' : d); // map old "deep" to "smart"
+const isAdvancedAI = (d) => (d === 'smart' || d === 'sherlock' || d === 'deep');
+const isSherlock   = (d) => (d === 'sherlock');
+
+/* Setup prompts */
+async function promptGameSetup(){
+  const body = `
+    <div style="margin-bottom:10px;">Choose game setup:</div>
+    <div class="row" style="margin-bottom:10px;">
+      <label><b>Difficulty:</b>
+        <select id="diffSel">
+          <option value="basic" selected>Basic</option>
+          <option value="smart">Smart</option>
+          <option value="sherlock">Sherlock</option>
+        </select>
+      </label>
+    </div>
+    <div class="row">
+      <label><b>Opponents:</b>
+        <select id="oppCountSel">
+          <option value="2" selected>2 opponents (3 players)</option>
+          <option value="3">3 opponents (4 players)</option>
+          <option value="4">4 opponents (5 players)</option>
+          <option value="5">5 opponents (6 players)</option>
+        </select>
+      </label>
+    </div>
+    <div style="margin-top:10px;color:var(--muted);font-size:12px;">You will be Player 1. The rest are AI.</div>
+  `;
+  await renderPrompt({ title:'New Game Setup', bodyHTML: body, actions:[{label:'Continue', value:true}] });
+  const diffRaw = document.getElementById('diffSel')?.value || 'basic';
+  const diff = normDiff(diffRaw);
+  const oppRaw = document.getElementById('oppCountSel')?.value;
+  const opp = clampInt(oppRaw, 2, 5, 2);
+  clearGameplayPrompt();
+  return { opp, diff };
+}
+
+async function promptHumanSuspect(available){
+  const opts=available.map(s=>`<option value="${s}">${displaySuspect(s)}</option>`).join("");
+  const body=`<div style="margin-bottom:10px;">Pick your character:</div>
+    <div class="row"><label><b>Suspect:</b> <select id="humanSusSel">${opts}</select></label></div>
+    <div style="margin-top:10px;color:var(--muted);font-size:12px;">The remaining suspects will be assigned to AIs.</div>`;
+  await renderPrompt({title:'Choose Your Character',bodyHTML:body,actions:[{label:'Start',value:true}]});
+  const pick=document.getElementById('humanSusSel')?.value||available[0];
+  clearGameplayPrompt();return pick;
+}
+
+/* Manual Checklist: ticks + per-item text notes */
+const CHECKLIST_KEY='cluedo_checklist_v1'; // ticked items
+const CHECK_NOTES_KEY='cluedo_checkitem_notes_v1'; // per-item note text
+function loadChecklist(){try{return JSON.parse(localStorage.getItem(CHECKLIST_KEY)||'{}')}catch{return {}}}
+function saveChecklist(state){localStorage.setItem(CHECKLIST_KEY,JSON.stringify(state))}
+function clearChecklist(){localStorage.removeItem(CHECKLIST_KEY)}
+function loadCheckNotes(){try{return JSON.parse(localStorage.getItem(CHECK_NOTES_KEY)||'{}')}catch{return {}}}
+function saveCheckNotes(state){localStorage.setItem(CHECK_NOTES_KEY,JSON.stringify(state))}
+function clearCheckNotes(){localStorage.removeItem(CHECK_NOTES_KEY)}
+
+/* --- Sherlock++ tuning --- */
+const AI_CFG = {
+  sherlock: {
+    // Learning strengths
+    weightBoostShow: 3.5,           // when a specific shown card is known
+    weightBoostRefutePattern: 0.35, // when someone refutes a triple containing a card
+    weightPenaltyNoRefute: 0.60,    // when someone fails to refute a triple
+    decay: 0.985,                   // slow belief decay
+
+    // Weight bounds
+    weightFloor: 0.01,
+    weightCeil:  4.00,
+
+    // Decision-making & mistakes
+    mistakeRate: 0.07,              // chance to make a plainly bad call
+    earlyAccuseMinConfidence: 0.82, // confidence threshold to consider early accuse
+    earlyAccuseChance: 0.25,        // chance to actually take the early accuse
+    explorationEpsilon: 0.12,       // randomness in suggestion targets
+    pickSecondBestChance: 0.10      // sometimes pick second-best to feel human
+  }
+};
+
+// Flattened list of all cards (for belief initialization)
+const ALL_CARDS = [
+  ...SUSPECTS.map(n => ({type:'Suspect', name:n})),
+  ...WEAPONS.map(n => ({type:'Weapon', name:n})),
+  ...ROOMS.map(n => ({type:'Room', name:n}))
+];
+
+/* Game Model */
+class Player{
+  constructor(id,isHuman=false,suspect=null){
+    this.id=id;this.isHuman=isHuman;this.suspect=suspect;
+    this.name=suspect?displaySuspect(suspect):(isHuman?'You':`AI-${id}`);
+    this.hand=[];this.location='Hall';this.eliminated=false;
+    this.seen=new Set();this.own=new Set();
+    this.knownOwners=new Map(); // cardKey -> playerId
+    this.constraints=[];this.unrefuted=[];
+    this.arrivedByOpponentSuggestion=false;
+
+    // Sherlock++ state
+    this.ownerWeights = new Map();     // cardKey -> Map(playerId -> weight/prob (normalized))
+    this.refutationCounts = new Map(); // cardKey -> Map(playerId -> count)
+    this.notOwners = new Map();        // cardKey -> Set(playerId) known NOT to own
+    this.playerCount = 0;
+    this.randomJitter = Math.random() * 0.02;
+  }
+
+  cardKey(type,name){return `${type}:${name}`;}
+
+  initKnowledge(){
+    for(const c of this.hand){
+      const k=this.cardKey(c.type,c.name);
+      this.own.add(k); this.seen.add(k); this.knownOwners.set(k,this.id);
+    }
+  }
+
+  // --- Sherlock++ belief init (called after dealing)
+  initBeliefs(players){
+    this.playerCount = players.length;
+    // uniform weights initially
+    for(const c of ALL_CARDS){
+      const key=this.cardKey(c.type,c.name);
+      const w=new Map();
+      for(const p of players) w.set(p.id, 1.0);
+      this.ownerWeights.set(key, w);
+    }
+    // I own my cards with certainty (others near-floor)
+    for(const c of this.hand){
+      const key=this.cardKey(c.type,c.name);
+      const w = this.ownerWeights.get(key);
+      if (!w) continue;
+      for(const [pid] of w) w.set(pid, AI_CFG.sherlock.weightFloor);
+      w.set(this.id, AI_CFG.sherlock.weightCeil);
+      this.clampAndNormalizeWeights(key);
+    }
+  }
+
+  clampAndNormalizeWeights(key){
+    const w=this.ownerWeights.get(key); if(!w) return;
+    let sum=0;
+    for(const [pid,val] of w){
+      const clamped=Math.max(AI_CFG.sherlock.weightFloor,Math.min(AI_CFG.sherlock.weightCeil,val));
+      w.set(pid,clamped); sum+=clamped;
+    }
+    if(sum>0){for(const [pid,val] of w) w.set(pid,val/sum);}
+  }
+
+  decayBeliefs(){
+    for(const [key,w] of this.ownerWeights){
+      for(const [pid,val] of w) w.set(pid, val*AI_CFG.sherlock.decay);
+      this.clampAndNormalizeWeights(key);
+    }
+  }
+
+  markSeen(card,ownerId=null){
+    const k=this.cardKey(card.type,card.name);
+    this.seen.add(k);
+    if(ownerId!==null&&ownerId!==undefined) this.knownOwners.set(k,ownerId);
+  }
+
+  // Negative knowledge: mark someone does NOT own a card
+  markNotOwner(card, playerId){
+    const key=this.cardKey(card.type,card.name);
+    let set=this.notOwners.get(key);
+    if(!set){set=new Set(); this.notOwners.set(key,set);}
+    set.add(playerId);
+  }
+
+  isCleared(type,name){return this.seen.has(this.cardKey(type,name));}
+  possibleSet(type){
+    const list=type==='Suspect'?SUSPECTS:type==='Weapon'?WEAPONS:ROOMS;
+    return list.filter(n=>!this.isCleared(type,n));
+  }
+  hasAnyOf(triple){
+    return triple.filter(t=>this.hand.some(c=>c.type===t.type&&c.name===t.name));
+  }
+
+  addRefuteConstraint(refuterId,cards){
+    const keys=new Set(cards.map(c=>this.cardKey(c.type,c.name)));
+    this.constraints.push({refuterId,keys});
+    this.propagateConstraints();
+  }
+
+  propagateConstraints(){
+    let changed=true;
+    while(changed){
+      changed=false;
+      for(let i=this.constraints.length-1;i>=0;i--){
+        const c=this.constraints[i];
+        // If we already know a card owned by refuter, satisfied
+        let satisfied=false;
+        for(const k of c.keys){
+          const owner=this.knownOwners.get(k);
+          if(owner===c.refuterId){satisfied=true;break;}
+        }
+        if(satisfied){ this.constraints.splice(i,1); changed=true; continue; }
+
+        // Prune keys that are owned by others, or cannot be owned by refuter (negative knowledge)
+        for(const k of [...c.keys]){
+          const owner=this.knownOwners.get(k);
+          if(owner!==undefined&&owner!==null&&owner!==c.refuterId){
+            c.keys.delete(k); changed=true; continue;
+          }
+          const noSet = this.notOwners.get(k);
+          if (noSet && noSet.has(c.refuterId)) {
+            c.keys.delete(k); changed = true;
+          }
+        }
+
+        // If only one remains -> deduce ownership
+        if(c.keys.size===1){
+          const [onlyKey]=c.keys;
+          this.seen.add(onlyKey);
+          this.knownOwners.set(onlyKey,c.refuterId);
+          this.constraints.splice(i,1);
+          changed=true; continue;
+        }
+        // If impossible set -> drop
+        if(c.keys.size===0){
+          this.constraints.splice(i,1); changed=true;
+        }
+      }
+    }
+  }
+
+  // Mild inference (unchanged)
+  // If two of a triple are cleared, the third must be solution (eliminate all others in that category)
+  // Implemented in Game.applyMildInference()
+
+  // --- Sherlock++ learning hooks ---
+  noteNoRefute(playerId,triple){
+    // For each card: downweight that player as a possible owner
+    for(const c of triple){
+      const key=this.cardKey(c.type,c.name);
+      const w=this.ownerWeights.get(key);
+      if(!w) continue;
+      const cur=w.get(playerId) ?? 0;
+      w.set(playerId, cur*AI_CFG.sherlock.weightPenaltyNoRefute);
+      this.clampAndNormalizeWeights(key);
+    }
+  }
+
+  noteRefutePattern(refuterId,triple){
+    for(const c of triple){
+      const key=this.cardKey(c.type,c.name);
+      const w=this.ownerWeights.get(key);
+      if(!w) continue;
+      // pattern memory
+      const cntMap = this.refutationCounts.get(key) || new Map();
+      cntMap.set(refuterId, (cntMap.get(refuterId) || 0) + 1);
+      this.refutationCounts.set(key, cntMap);
+
+      const cur=w.get(refuterId) ?? 0.0001;
+      w.set(refuterId, cur + AI_CFG.sherlock.weightBoostRefutePattern);
+      this.clampAndNormalizeWeights(key);
+    }
+  }
+
+  noteCardShown(card,ownerId){
+    const key=this.cardKey(card.type,card.name);
+    this.seen.add(key);
+    this.knownOwners.set(key,ownerId);
+    const w=this.ownerWeights.get(key);
+    if(w){
+      for(const [pid] of w) w.set(pid, AI_CFG.sherlock.weightFloor);
+      w.set(ownerId, AI_CFG.sherlock.weightCeil);
+      this.clampAndNormalizeWeights(key);
+    }
+  }
+
+  // Entropy of ownership distribution for a card (higher => more uncertain/informative)
+  entropyForCardKey(key){
+    const w=this.ownerWeights.get(key); if(!w) return 0;
+    const vals = Array.from(w.values());
+    const sum = vals.reduce((a,b)=>a+b,0)||1;
+    const probs = vals.map(v=>v/sum);
+    return -probs.reduce((acc,p)=>acc + (p>0 ? p*Math.log(p) : 0), 0);
+  }
+
+  // Sherlock++: pick suspect & weapon that look most informative (entropy + tiny jitter)
+  pickSmartSuggestionParts(){
+    const pickFrom=(type)=>{
+      const pool=this.possibleSet(type);
+      const candidates=pool.length ? pool : (type==='Suspect'?SUSPECTS : type==='Weapon'?WEAPONS : ROOMS);
+      let best=[],bestScore=-Infinity;
+      for(const name of candidates){
+        if(this.isCleared(type,name)) continue;
+        const key=this.cardKey(type,name);
+        const jitter=(Math.random()-0.5)*AI_CFG.sherlock.explorationEpsilon + this.randomJitter;
+        const score=this.entropyForCardKey(key)+jitter;
+        if(score>bestScore){best=[name];bestScore=score;}
+        else if(score===bestScore){best.push(name);}
+      }
+      const pick = best.length ? choice(best) : choice(candidates);
+      // sometimes pick second-best to look human
+      if(Math.random()<AI_CFG.sherlock.pickSecondBestChance){
+        const alt = candidates.filter(n => n!==pick);
+        if(alt.length) return choice(alt);
+      }
+      return pick;
+    };
+    return {
+      suspect: pickFrom('Suspect'),
+      weapon : pickFrom('Weapon')
+    };
+  }
+
+  // For solution-likelihood, we use: 1 - max_owner_weight(card).
+  beliefsTopFor(type){
+    const list = (type==='Suspect'?SUSPECTS: type==='Weapon'?WEAPONS: ROOMS);
+    let bestName=null, bestVal=-1, second=-1;
+    for(const name of list){
+      const key=this.cardKey(type,name);
+      const w=this.ownerWeights.get(key);
+      let maxW=0;
+      if(w) for(const val of w.values()) if(val>maxW) maxW=val;
+      const solLikely = 1 - maxW; // higher => more likely to be in solution
+      if(solLikely>bestVal){ second=bestVal; bestVal=solLikely; bestName=name; }
+      else if(solLikely>second){ second=solLikely; }
+    }
+    const margin = Math.max(0.0001, bestVal - Math.max(0, second));
+    const confidence = Math.max(0, Math.min(1, (bestVal * 0.7) + (margin * 0.3)));
+    return { name: bestName, confidence };
+  }
+
+  planAccusationWithBeliefs(){
+    const s=this.beliefsTopFor('Suspect');
+    const w=this.beliefsTopFor('Weapon');
+    const r=this.beliefsTopFor('Room');
+    const combined = Math.pow(s.confidence * w.confidence * r.confidence, 1/3);
+    return { acc: { suspect:s.name, weapon:w.name, room:r.name }, confidence: combined };
+  }
+}
+
+Player.prototype.isConfidentSolution = function(){
+  return this.possibleSet('Suspect').length === 1
+      && this.possibleSet('Weapon').length  === 1
+      && this.possibleSet('Room').length    === 1;
+};
+Player.prototype.inferredAccusation = function(){
+  return {
+    suspect: this.possibleSet('Suspect')[0],
+    weapon : this.possibleSet('Weapon')[0],
+    room   : this.possibleSet('Room')[0]
+  };
+};
+
+class Game{
+  constructor(){
+    this.players=[];this.turnIndex=0;this.solution=null;
+    this.suspectLoc=new Map();this.weaponLoc=new Map();
+    this.dice=null;this.reachable=new Set();
+    this.awaitingMove=false;this.awaitingDecision=false;this.stayedInsteadOfRoll=false;
+    this.aiDifficulty='basic';this.humanTurnsStarted=0;this.gameOver=false;
+    this.sessionId=0;this.resetPlayers(2);
+  }
+  newSession(){this.sessionId++;return this.sessionId;}
+  isActiveSession(id){return id===this.sessionId;}
+
+  initAllSuspectPawns(){
+    this.suspectLoc=new Map();
+    SUSPECTS.forEach((s,i)=>this.suspectLoc.set(s,START_ROOMS[i]||'Hall'));
+  }
+  initWeaponsOnBoard(){
+    this.weaponLoc=new Map();
+    const rooms=shuffle(ROOMS.slice());
+    WEAPONS.forEach((w,i)=>this.weaponLoc.set(w,rooms[i%rooms.length]));
+  }
+  resetPlayers(n){
+    n=clampInt(n,2,5,2);
+    this.newSession();
+    this.initAllSuspectPawns();
+    this.weaponLoc=new Map();
+    this.players=[new Player(0,true,null)];
+    for(let i=1;i<=n;i++) this.players.push(new Player(i,false,null));
+
+    this.players.forEach(p=>{
+      p.hand=[];p.eliminated=false;p.seen=new Set();p.own=new Set();
+      p.knownOwners=new Map();p.constraints=[];p.unrefuted=[];
+      p.arrivedByOpponentSuggestion=false;
+      p.name=p.suspect?displaySuspect(p.suspect):(p.isHuman?'You':`AI-${p.id}`);
+      p.location='Hall';
+    });
+
+    this.turnIndex=0;this.solution=null;this.dice=null;this.reachable=new Set();
+    this.awaitingMove=false;this.awaitingDecision=false;this.stayedInsteadOfRoll=false;
+    this.humanTurnsStarted=0;this.gameOver=false;
+  }
+  assignSuspects(human){
+    const pool=SUSPECTS.slice();const i=pool.indexOf(human);if(i>=0) pool.splice(i,1);
+    shuffle(pool);
+    const me=this.players[0];me.suspect=human;me.name=displaySuspect(human);
+    for(let k=1;k<this.players.length;k++){const s=pool.shift();this.players[k].suspect=s;this.players[k].name=displaySuspect(s);}
+    this.players.forEach(p=>{if(p.suspect)p.location=this.suspectLoc.get(p.suspect)||'Hall';});
+  }
+  buildDeck(){
+    const cards=[];
+    for(const s of SUSPECTS) cards.push({type:'Suspect',name:s});
+    for(const w of WEAPONS) cards.push({type:'Weapon',name:w});
+    for(const r of ROOMS) cards.push({type:'Room',name:r});
+    return cards;
+  }
+
+  setup(){
+    log('Setting up game…');
+    this.solution={suspect:choice(SUSPECTS),weapon:choice(WEAPONS),room:choice(ROOMS)};
+    const deck=this.buildDeck().filter(c=>{
+      return !((c.type==='Suspect'&&c.name===this.solution.suspect)||
+               (c.type==='Weapon'&&c.name===this.solution.weapon)||
+               (c.type==='Room'&&c.name===this.solution.room));
+    });
+    shuffle(deck);
+    this.players.forEach(p=>p.hand=[]);
+    let p=0; while(deck.length) this.players[p++%this.players.length].hand.push(deck.pop());
+    this.players.forEach(pl=>pl.initKnowledge());
+
+    this.initAllSuspectPawns();
+    this.players.forEach(pl=>{ if(pl.suspect) pl.location=this.suspectLoc.get(pl.suspect)||'Hall'; });
+    this.initWeaponsOnBoard();
+
+    // Sherlock++: initialize beliefs after hands are dealt
+    this.players.forEach(pl=>pl.initBeliefs(this.players));
+
+    log(`Cards dealt. Playing with ${this.players.length-1} opponents (${this.players.length} total players).`);
+    log(`AI difficulty: ${DIFF_LABELS[this.aiDifficulty] || this.aiDifficulty}.`);
+    renderAll(this);this.updateTurnUI();
+  }
+
+  currentPlayer(){return this.players[this.turnIndex];}
+  nextTurnIndex(i){
+    let x=i;for(let s=0;s<100;s++){x=(x+1)%this.players.length;if(!this.players[x].eliminated) return x;}return i;
+  }
+  computeReachable(start,steps){return diceReachable(start,steps);}
+  updateTurnUI(){
+    const pl=this.currentPlayer();
+    const who=pl.isHuman?`You (${pl.name})`:pl.name;
+    el('turnPill').textContent=`Turn: ${who}${pl.eliminated?' (eliminated)':''}`;
+    el('locPill').textContent=`Location: ${pl.location}`;
+    renderAll(this);
+  }
+
+  applyMildInference(pl){
+    for(const t of pl.unrefuted){
+      const s=pl.isCleared('Suspect',t.suspect),
+            w=pl.isCleared('Weapon',t.weapon),
+            r=pl.isCleared('Room',t.room);
+      if((s?1:0)+(w?1:0)+(r?1:0)===2){
+        if(!s){SUSPECTS.forEach(x=>{if(x!==t.suspect) pl.seen.add(pl.cardKey('Suspect',x));});}
+        if(!w){WEAPONS.forEach(x=>{if(x!==t.weapon) pl.seen.add(pl.cardKey('Weapon',x));});}
+        if(!r){ROOMS.forEach(x=>{if(x!==t.room) pl.seen.add(pl.cardKey('Room',x));});}
+      }
+    }
+  }
+
+  applyInference(pl){
+    if(pl.isHuman) return;
+    if(isAdvancedAI(this.aiDifficulty)){
+      pl.propagateConstraints();
+      this.applyMildInference(pl);
+    } else {
+      this.applyMildInference(pl);
+    }
+  }
+
+  async makeSuggestion(pl,suspect,weapon,room){
+    const triple=[{type:'Suspect',name:suspect},{type:'Weapon',name:weapon},{type:'Room',name:room}];
+
+    // Move suspect pawn and weapon into room as per suggestion
+    const wasSus=this.suspectLoc.get(suspect);
+    if(wasSus && wasSus!==room){
+      this.suspectLoc.set(suspect,room);
+      log(`${displaySuspect(suspect)} is moved from ${wasSus} to ${room} due to the suggestion.`);
+    }else if(!wasSus){
+      this.suspectLoc.set(suspect,room);
+      log(`${displaySuspect(suspect)} is moved into ${room} due to the suggestion.`);
+    }
+
+    const ownerPlayer=this.players.find(p=>p.suspect===suspect);
+    if(ownerPlayer){
+      if(ownerPlayer.location!==room){
+        const prev=ownerPlayer.location;
+        ownerPlayer.location=room;
+        ownerPlayer.arrivedByOpponentSuggestion=true;
+        log(`${ownerPlayer.name} is moved from ${prev} to ${room} due to the suggestion.`);
+      }
+    }
+
+    const wasWeap=this.weaponLoc.get(weapon);
+    if(wasWeap && wasWeap!==room){
+      this.weaponLoc.set(weapon,room);log(`${weapon} is moved from ${wasWeap} to ${room} due to the suggestion.`);
+    }else if(!wasWeap){
+      this.weaponLoc.set(weapon,room);log(`${weapon} is moved into ${room} due to the suggestion.`);
+    }
+    renderAll(this);
+    log(`${pl.name} suggests: ${displaySuspect(suspect)} in the ${room} with the ${weapon}.`);
+
+    // Resolve refutations in order
+    const order=[];for(let i=1;i<this.players.length;i++) order.push(this.players[(this.turnIndex+i)%this.players.length]);
+
+    for(const other of order){
+      const matches=other.hasAnyOf(triple);
+
+      if(matches.length>0){
+        let shown;
+        if(other.isHuman){
+          const opts=matches.map(c=>({label:`${c.type}: ${displayCardName(c.type,c.name)}`,value:c,className:'secondary'}));
+          const pick=await showChoicePrompt('Choose a card to show',`<div>You must refute <b>${pl.name}</b> by showing ONE matching card.</div>`,opts,{allowCancel:false});
+          shown=pick;log(`You show a card to ${pl.name}.`);
+        }else{
+          shown=choice(matches);log(`${other.name} refutes the suggestion.`);
+        }
+
+        // Sherlock++: learning signals
+        if(isAdvancedAI(this.aiDifficulty)){
+          for(const obs of this.players){
+            if(obs.isHuman) continue;
+            // Observers learn refuter likely owns one of the triple
+            obs.noteRefutePattern(other.id, triple);
+          }
+          // Suggester AI actually SEES the exact shown card; lock it in
+          if(!pl.isHuman && shown){ pl.noteCardShown(shown, other.id); }
+        }
+
+        if(pl.isHuman){
+          await showInfoPrompt('Card Shown to You',
+            `<div><b>${other.name}</b> shows you:</div>
+             <div style="margin-top:10px;font-size:18px;"><b>${shown.type}: ${displayCardName(shown.type,shown.name)}</b></div>`);
+        }else{
+          // Legacy knowledge record (still fine)
+          pl.markSeen(shown,other.id);
+        }
+
+        // Constraint reasoning for Smart/Sherlock observers
+        if(isAdvancedAI(this.aiDifficulty)){
+          for(const obs of this.players){
+            if(obs.id===pl.id) continue; if(obs.id===other.id) continue; if(obs.isHuman) continue;
+            obs.addRefuteConstraint(other.id,triple);
+          }
+        }
+
+        this.applyInference(pl);
+        renderAll(this);
+        return {refuted:true,by:other,card:shown};
+      } else {
+        // Negative refutation: other could not refute => they do NOT own any of the triple
+        if(isAdvancedAI(this.aiDifficulty)){
+          for(const obs of this.players){
+            if(obs.isHuman) continue;
+            for(const c of triple) { obs.markNotOwner(c, other.id); }
+            obs.noteNoRefute(other.id, triple);
+          }
+        }
+        // continue to next 'other'
+      }
+    }
+
+    // No one could refute
+    log(`No one could refute ${pl.name}'s suggestion.`);
+    pl.unrefuted.push({suspect,weapon,room});
+    this.applyInference(pl);
+    return {refuted:false};
+  }
+
+  checkAccusation(a){
+    return a.suspect===this.solution.suspect &&
+           a.weapon===this.solution.weapon &&
+           a.room===this.solution.room;
+  }
+
+  async accuse(pl,acc){
+    log(`${pl.name} ACCUSES: ${displaySuspect(acc.suspect)} in the ${acc.room} with the ${acc.weapon}!`);
+    const ok=this.checkAccusation(acc);
+    if(ok){
+      this.gameOver=true;
+      this.convicted={suspect:acc.suspect,weapon:acc.weapon,room:acc.room,winner:pl.name};
+      try{this.suspectLoc.set(acc.suspect,HOLDING_CELL_ID);}catch(e){}
+      try{this.weaponLoc.set(acc.weapon,HOLDING_CELL_ID);}catch(e){}
+      renderAll(this);
+      await showInfoPrompt('Game Over',
+        `<div><b>${pl.name}</b> wins!</div>
+         <div style="margin-top:10px;">Solution was: <b>${displaySuspect(this.solution.suspect)}</b> in the <b>${this.solution.room}</b> with the <b>${this.solution.weapon}</b>.</div>`);
+      const again=await promptPlayAgain();
+      if(again){ await startNewGame(game,{skipConfirm:true}); }
+      return;
+    }else{
+      log(`❌ Wrong accusation. ${pl.name} is eliminated from taking turns (but can still refute).`);
+      pl.eliminated=true;
+      if(pl.isHuman){
+        await showInfoPrompt('Wrong Accusation',
+          `<div>That accusation was incorrect.</div>
+           <div style="margin-top:10px;">You are eliminated from taking turns, but you will still be asked to refute suggestions.</div>`);
+      }
+    }
+    renderAll(this);
+  }
+
+  async beginTurn(){
+    if(this.gameOver) return;
+    const pl=this.currentPlayer();
+    this.dice=null;this.reachable=new Set();
+    this.awaitingMove=false;this.awaitingDecision=!!pl.arrivedByOpponentSuggestion;
+    this.stayedInsteadOfRoll=false;
+    this.updateTurnUI();
+
+    if(pl.eliminated){ await this.endTurn(); return; }
+    if(pl.isHuman){ this.humanTurnsStarted++; await this.showRollPromptForHuman(); }
+    else { await this.aiTurn(pl); }
+  }
+
+  async showRollPromptForHuman(){
+    const pl=this.currentPlayer();
+    if(!pl.isHuman||this.gameOver||pl.eliminated) return;
+    const firstEver=(this.humanTurnsStarted===1);
+    const movedHere=this.awaitingDecision;
+    let actions=[];
+    if(movedHere){
+      actions=[{label:'Roll Dice',value:'roll'},{label:'Stay',value:'stay',className:'secondary'},{label:'Make Accusation',value:'accuse',className:'danger'}];
+    }else if(firstEver){
+      actions=[{label:'Roll Dice',value:'roll'}];
+    }else{
+      actions=[{label:'Roll Dice',value:'roll'},{label:'Make Accusation',value:'accuse',className:'danger'}];
+    }
+    const body=movedHere?`<div>You were moved to <b>${pl.location}</b> by an opponent's suggestion.</div><div style="margin-top:8px;color:var(--muted);font-size:12px;">Choose what to do this turn.</div>`
+                        :`<div>It's your turn in <b>${pl.location}</b>.</div><div style="margin-top:8px;color:var(--muted);font-size:12px;">Roll the dice to move.</div>`;
+    const pick=await renderPrompt({title:'Your Turn',bodyHTML:body,actions});
+    clearGameplayPrompt();
+    if(pick==='accuse'){ await this.humanAccuse({onCancel:()=>this.showRollPromptForHuman()}); return; }
+    if(pick==='stay'){ await this.humanStayAndSuggest(); return; }
+    if(pick==='roll'){ await this.humanRollAndMove(); return; }
+  }
+
+  async humanRollAndMove(){
+    const pl=this.currentPlayer();
+    if(!pl.isHuman||this.gameOver||pl.eliminated) return;
+    if(this.stayedInsteadOfRoll) return;
+    if(this.awaitingDecision){ this.awaitingDecision=false; pl.arrivedByOpponentSuggestion=false; }
+    this.dice=randInt(1,6);
+    this.reachable=this.computeReachable(pl.location,this.dice);
+    this.awaitingMove=true;
+    log(`You rolled a ${this.dice}. Choose a reachable room to move.`);
+    this.updateTurnUI();
+    setPromptMessage('Dice Result',`<div>You rolled a <b>${this.dice}</b>.</div><div style="margin-top:8px;">Now click <b>Move</b> on a highlighted room.</div>`);
+  }
+
+  async humanStayAndSuggest(){
+    const pl=this.currentPlayer(); if(!pl.isHuman||this.gameOver||pl.eliminated) return;
+    if(!this.awaitingDecision) return;
+    this.awaitingDecision=false; this.stayedInsteadOfRoll=true; pl.arrivedByOpponentSuggestion=false;
+    log(`You chose to stay in ${pl.location} (no roll).`);
+    this.updateTurnUI();
+    await this.openSuggestionPromptAuto();
+  }
+
+  async humanMoveTo(room){
+    const pl=this.currentPlayer();
+    if(!pl.isHuman||!this.awaitingMove) return;
+    if(!this.reachable.has(room)) return;
+    pl.location=room; if(pl.suspect) this.suspectLoc.set(pl.suspect,room);
+    this.awaitingMove=false; pl.arrivedByOpponentSuggestion=false;
+    log(`You moved to ${room}.`);
+    this.updateTurnUI();
+    await this.openSuggestionPromptAuto();
+  }
+
+  async openSuggestionPromptAuto(){
+    const pl=this.currentPlayer(); if(!pl.isHuman||pl.eliminated||this.gameOver) return;
+    if(this.awaitingMove) return;
+    const room=pl.location;
+    const sus=SUSPECTS.map(s=>`<option value="${s}">${displaySuspect(s)}</option>`).join("");
+    const wep=WEAPONS.map(w=>`<option value="${w}">${w}</option>`).join("");
+    const html=`<div><b>Room:</b> ${room}</div>
+      <div style="margin-top:10px;" class="row">
+        <label>Suspect: <select id="selSuspect">${sus}</select></label>
+        <label>Weapon: <select id="selWeapon">${wep}</select></label>
+      </div>
+      <div style="margin-top:10px;color:var(--muted);font-size:12px;">Pick a suspect and weapon to make a suggestion.</div>`;
+    const go=await renderPrompt({title:'Make a Suggestion',bodyHTML:html,actions:[{label:'Suggest',value:true}]});
+    const suspect=document.getElementById('selSuspect')?.value;
+    const weapon=document.getElementById('selWeapon')?.value;
+    clearGameplayPrompt();
+    if(go&&suspect&&weapon){
+      const result=await this.makeSuggestion(pl,suspect,weapon,room);
+      await this.showPostSuggestionPrompt(result,{suspect,weapon,room});
+    }else{
+      await this.endTurn();
+    }
+  }
+
+  async showPostSuggestionPrompt(result,triple){
+    const pl=this.currentPlayer(); if(!pl.isHuman||this.gameOver) return;
+    const title=result.refuted?'Suggestion Result':'No One Could Refute!';
+    const body=result.refuted
+      ?`<div>Your suggestion has been <b>refuted</b>.</div><div style="margin-top:8px;color:var(--muted);font-size:12px;">What would you like to do next?</div>`
+      :`<div><b>No one</b> could refute your suggestion:</div>
+        <div style="margin-top:8px;"><b>${displaySuspect(triple.suspect)}</b> in the <b>${triple.room}</b> with the <b>${triple.weapon}</b>.</div>
+        <div style="margin-top:8px;color:var(--muted);font-size:12px;">What would you like to do next?</div>`;
+    const pick=await renderPrompt({title,bodyHTML:body,actions:[
+      {label:'End Turn',value:'end',className:'secondary'},
+      {label:'Make Accusation',value:'accuse',className:'danger'}
+    ]});
+    clearGameplayPrompt();
+    if(pick==='accuse'){ await this.humanAccuse({onCancel:()=>this.showPostSuggestionPrompt(result,triple)}); }
+    else await this.endTurn();
+  }
+
+  async humanAccuse({onCancel}={}){
+    const pl=this.currentPlayer(); if(!pl.isHuman||pl.eliminated||this.gameOver) return;
+    if(this.awaitingMove) return;
+    const sus=SUSPECTS.map(s=>`<option value="${s}">${displaySuspect(s)}</option>`).join("");
+    const wep=WEAPONS.map(w=>`<option value="${w}">${w}</option>`).join("");
+    const rms=this.roomsOptionsHTML();
+    const html=`<div style="color:var(--warn)"><b>Warning:</b> If you are wrong, you will be eliminated from taking turns.</div>
+      <div style="margin-top:10px;" class="row">
+        <label>Suspect: <select id="accSus">${sus}</select></label>
+        <label>Weapon: <select id="accWeap">${wep}</select></label>
+        <label>Room: <select id="accRoom">${rms}</select></label>
+      </div>`;
+    const go=await renderPrompt({title:'Make an Accusation',bodyHTML:html,actions:[
+      {label:'Cancel',value:false,className:'secondary'},
+      {label:'Accuse',value:true,className:'danger'}
+    ]});
+    const acc={suspect:document.getElementById('accSus')?.value,weapon:document.getElementById('accWeap')?.value,room:document.getElementById('accRoom')?.value};
+    clearGameplayPrompt();
+    if(go&&acc.suspect&&acc.weapon&&acc.room){
+      await this.accuse(pl,acc);
+      if(!this.gameOver) await this.endTurn();
+    }else{
+      if(this.gameOver) return;
+      if(typeof onCancel==='function'){ await onCancel(); return; }
+      if(this.awaitingMove){
+        setPromptMessage('Choose a Room',`<div>Click <b>Move</b> on a highlighted room.</div>`);
+      }else{
+        await this.showRollPromptForHuman();
+      }
+    }
+  }
+
+  roomsOptionsHTML(){ return ROOMS.map(r => `<option value="${r}">${r}</option>`).join(""); }
+
+  async endTurn(){
+    if(this.gameOver) return;
+    this.turnIndex=this.nextTurnIndex(this.turnIndex);
+    this.updateTurnUI();
+    await this.beginTurn();
+  }
+
+  async aiTurn(pl){
+    const sid=this.sessionId;
+    if(this.gameOver) return;
+
+    const summary=[];
+    log(`${pl.name}'s turn…`);
+    summary.push('Turn started.');
+    await sleep(650);
+    if(!this.isActiveSession(sid)) return;
+
+    let choseStay=false;
+
+    // Stay vs Roll decision (Sherlock a bit more intentional)
+    if (pl.arrivedByOpponentSuggestion) {
+      const roomCleared=pl.isCleared('Room',pl.location);
+      const roomsLeft=pl.possibleSet('Room');
+      if(roomCleared){
+        choseStay=false;
+      }else if(isSherlock(this.aiDifficulty)){
+        const isKeyRoom=roomsLeft.includes(pl.location);
+        choseStay=isKeyRoom?(Math.random()<0.72):(Math.random()<0.28);
+      }else if(isAdvancedAI(this.aiDifficulty)){
+        const isKeyRoom=roomsLeft.includes(pl.location);
+        choseStay=isKeyRoom?(Math.random()<0.65):(Math.random()<0.35);
+      }else{
+        choseStay=(Math.random()<0.45);
+      }
+      summary.push(choseStay?`Chose to STAY in ${pl.location} (no roll).`:`Chose to ROLL (was eligible to stay).`);
+      pl.arrivedByOpponentSuggestion=false;
+      await sleep(450);
+      if(!this.isActiveSession(sid)) return;
+    }
+
+    if(!choseStay){
+      // Roll and compute reachables
+      this.dice = randInt(1,6);
+      this.reachable = this.computeReachable(pl.location, this.dice);
+      log(`${pl.name} rolled ${this.dice}.`);
+      summary.push(`Rolled a ${this.dice}.`);
+      await sleep(650);
+      if(!this.isActiveSession(sid)) return;
+
+      const reach=[...this.reachable];
+      const possibleRooms=new Set(pl.possibleSet('Room'));
+
+      const candidates=reach.filter(r=>possibleRooms.has(r));
+      const nextTurnPotential=(fromRoom)=>{
+        const seen=new Set();
+        for(let d=1;d<=6;d++){
+          const arr=(ROOM_DICE[fromRoom]&&ROOM_DICE[fromRoom][d])?ROOM_DICE[fromRoom][d]:[];
+          for(const r of arr) if(possibleRooms.has(r)) seen.add(r);
+        }
+        return seen.size;
+      };
+      const pickBest=(arr)=>{
+        if(!arr.length) return null;
+        let best=[],bestScore=-1;
+        for(const r of arr){
+          const s=nextTurnPotential(r);
+          if(s>bestScore){best=[r];bestScore=s;}
+          else if(s===bestScore){best.push(r);}
+        }
+        return choice(best);
+      };
+
+      let dest=candidates.length?pickBest(candidates):pickBest(reach);
+
+      // Sherlock “second-best” flavor: compute after base dest, before moving
+      if(isSherlock(this.aiDifficulty)){
+        if(Math.random()<0.12){
+          const scored = reach.map(r=>({ r, s:(possibleRooms.has(r)?2:0)+Math.random()*0.5 }))
+                              .sort((a,b)=>b.s-a.s);
+          if(scored.length>1) dest=scored[1].r;
+        }
+      }
+
+      // Defensive fallback
+      if(!dest) dest=pl.location;
+
+      const from=pl.location;
+      pl.location=dest;
+      if(pl.suspect) this.suspectLoc.set(pl.suspect, dest);
+
+      log(`${pl.name} moved from ${from} to ${dest}.`);
+      summary.push(`Moved from ${from} to ${dest}.`);
+      renderAll(this);
+      await sleep(650);
+      if(!this.isActiveSession(sid)) return;
+    } else {
+      // Chose to stay
+      this.dice=null; this.reachable=new Set();
+      renderAll(this);
+    }
+
+    // Sherlock++: suggestion target selection
+    let suspect, weapon;
+    if (isSherlock(this.aiDifficulty)) {
+      const pick = pl.pickSmartSuggestionParts();
+      suspect = pick.suspect;
+      weapon  = pick.weapon;
+    } else {
+      const sC=pl.possibleSet('Suspect');
+      const wC=pl.possibleSet('Weapon');
+      suspect=choice(sC.length?sC:SUSPECTS);
+      weapon =choice(wC.length?wC:WEAPONS);
+    }
+    const room=pl.location;
+
+    summary.push(`Suggested: ${displaySuspect(suspect)} in the ${room} with the ${weapon}.`);
+    const result=await this.makeSuggestion(pl,suspect,weapon,room);
+    if(!this.isActiveSession(sid)) return;
+    summary.push(result.refuted?`Refuted by ${result.by?.isHuman ? 'You' : (result.by?.name ?? 'another player')}.`:'No one could refute the suggestion.');
+
+    // Sherlock++: beliefs decay each AI turn
+    if (isSherlock(this.aiDifficulty)) pl.decayBeliefs();
+
+    // === Accusation logic ===
+    let accused=false;
+
+    // A) Certain accusation (all difficulties)
+    if(!pl.eliminated && pl.isConfidentSolution()){
+      await sleep(650);
+      if(!this.isActiveSession(sid)) return;
+      const acc=pl.inferredAccusation();
+      summary.push(`Accused (certain): ${displaySuspect(acc.suspect)} in the ${acc.room} with the ${acc.weapon}.`);
+      await this.accuse(pl,acc);
+      accused=true;
+    }
+    // B) Sherlock++: belief-aware early accusation (bold, sometimes wrong)
+    else if(!pl.eliminated && isSherlock(this.aiDifficulty)){
+      const plan = pl.planAccusationWithBeliefs();
+      if (plan && plan.confidence >= AI_CFG.sherlock.earlyAccuseMinConfidence) {
+        if (Math.random() < AI_CFG.sherlock.earlyAccuseChance) {
+          await sleep(650);
+          if(!this.isActiveSession(sid)) return;
+          summary.push(`Accused (early, conf=${plan.confidence.toFixed(2)}): ${displaySuspect(plan.acc.suspect)} in the ${plan.acc.room} with the ${plan.acc.weapon}.`);
+          await this.accuse(pl, plan.acc);
+          accused = true;
+        }
+      } else if (Math.random() < AI_CFG.sherlock.mistakeRate) {
+        // Rare outright mistake to feel human
+        await sleep(650);
+        if(!this.isActiveSession(sid)) return;
+        const b = pl.planAccusationWithBeliefs();
+        summary.push(`Accused (mistake): ${displaySuspect(b.acc.suspect)} in the ${b.acc.room} with the ${b.acc.weapon}.`);
+        await this.accuse(pl, b.acc);
+        accused = true;
+      }
+    }
+
+    if (accused) {
+      if (!this.isActiveSession(sid)) return;
+      if (this.gameOver) return;
+    }
+
+    summary.push('Turn ended.');
+    await this.showOpponentTurnSummary(pl,summary);
+    if(!this.isActiveSession(sid)) return;
+    await this.endTurn();
+  }
+
+  async showOpponentTurnSummary(player,lines){
+    const pretty=lines.map(l=>`• ${l}`).join('\n');
+    const html=`<div style="margin-bottom:8px;"><b>${player.name}</b> finished their turn.</div>
+      <div style="color:var(--muted);font-size:12px;margin-bottom:10px;">Click OK to continue.</div>
+      <div style="background:rgba(0,0,0,0.18);border:1px solid var(--border);border-radius:12px;padding:10px;
+                  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.35;white-space:pre-wrap;">${pretty}</div>`;
+    await showInfoPrompt('Opponent Turn Summary',html);
+  }
+}
+
+/* Rendering */
+const HOLDING_CELL_ID='HoldingCell';
+const BOARD_LAYOUT={
+  'Study':{col:[1,5],row:[1,3]},
+  'Library':{col:[1,5],row:[3,5]},
+  'Billiard Room':{col:[1,5],row:[5,7]},
+  'Conservatory':{col:[1,5],row:[7,9]},
+  'Hall':{col:[5,9],row:[1,4]},
+  'Ballroom':{col:[5,9],row:[6,9]},
+  'Lounge':{col:[9,13],row:[1,4]},
+  'Dining Room':{col:[9,13],row:[4,7]},
+  'Kitchen':{col:[9,13],row:[7,9]}
+};
+const CENTER_CELL={col:[5,9],row:[4,6]};
+
+function renderPlayers(game){
+  const box=el('playersBox');box.innerHTML='';
+  game.players.forEach((p,idx)=>{
+    const div=document.createElement('div');
+    div.style.display='flex';div.style.justifyContent='space-between';
+    div.style.alignItems='center';div.style.padding='6px 0';
+    div.style.borderBottom='1px solid rgba(255,255,255,.06)';
+    const left=document.createElement('div');
+    const label=p.isHuman?`You (${p.name})`:p.name;
+    left.innerHTML=`<b>${label}</b> <span style="color:var(--muted);font-size:12px;">@ ${p.location}</span> ${p.eliminated?`<span class="pill bad" style="margin-left:6px;">eliminated</span>`:''}`;
+    const right=document.createElement('div');
+    const isTurn=idx===game.turnIndex && !game.gameOver;
+    right.innerHTML=isTurn?`<span class="pill good">active</span>`:`<span class="pill">—</span>`;
+    div.appendChild(left);div.appendChild(right);box.appendChild(div);
+  });
+}
+
+function renderHand(game){
+  const you=game.players[0];
+  const box=el('handBox');box.innerHTML='';
+  const sorted=[...you.hand].sort((a,b)=>a.type.localeCompare(b.type)||a.name.localeCompare(b.name));
+  sorted.forEach(c=>{
+    const badge=document.createElement('div');
+    badge.className='pill good';badge.style.display='inline-block';badge.style.margin='4px 6px 0 0';
+    badge.textContent=`${c.type}: ${displayCardName(c.type,c.name)}`;
+    box.appendChild(badge);
+  });
+  if(!sorted.length) box.innerHTML=`<span class="pill">(no cards?)</span>`;
+}
+
+function renderNotebook(game){
+  // Reuse global icon maps if they exist; otherwise built-ins.
+  const SUS_ICON = (typeof SUSPECT_ICON !== 'undefined') ? SUSPECT_ICON : {
+    "Green": "🎩","Mustard": "🎖️","Scarlet": "💋","Peacock": "💎","Plum": "💼","White": "👜"
+  };
+  const WEP_ICON = (typeof WEAPON_ICON !== 'undefined') ? WEAPON_ICON : {
+    "Candlestick":"🕯️","Dagger":"🗡️","Lead Pipe":"🦯","Revolver":"🔫","Rope":"🪢","Wrench":"🔧"
+  };
+  const ROOM_ICON_LOCAL = {
+    "Study": "📝","Hall":"🧥","Lounge":"🛋️","Library":"📖","Billiard Room":"🎱","Dining Room":"🍽️","Conservatory":"🪴","Ballroom":"💃","Kitchen":"🥩"
+  };
+
+  const chk=loadChecklist(); const notes=loadCheckNotes();
+
+  const renderList=(targetId,type,list)=>{
+    const box=el(targetId); box.innerHTML='';
+    list.forEach(name=>{
+      const key=`${type}:${name}`; const checked=!!chk[key];
+      const row=document.createElement('div'); row.className='noteitem'+(checked?' cleared':'');
+      const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=checked;
+      cb.setAttribute('aria-label',`Mark ${displayCardName(type,name)} as cleared`);
+      cb.style.marginTop='2px';
+      cb.onchange=()=>{
+        const state=loadChecklist();
+        if(cb.checked) state[key]=true; else delete state[key];
+        saveChecklist(state); renderNotebook(game);
+      };
+      const nameSpan=document.createElement('span'); nameSpan.className='name';
+      let icon=''; if(type==='Suspect') icon=SUS_ICON[name]||''; else if(type==='Weapon') icon=WEP_ICON[name]||''; else if(type==='Room') icon=ROOM_ICON_LOCAL[name]||'';
+      const label=displayCardName(type,name);
+      nameSpan.innerHTML=(icon?`<span class="ico" aria-hidden="true">${icon}</span>`:'')+label;
+
+      const text=document.createElement('input'); text.type='text'; text.className='noteText';
+      text.placeholder='Add a note…'; text.value=notes[key]||'';
+      text.oninput=()=>{ const s=loadCheckNotes(); s[key]=text.value; saveCheckNotes(s); };
+
+      row.appendChild(cb); row.appendChild(nameSpan); row.appendChild(text); box.appendChild(row);
+    });
+  };
+
+  renderList('noteSuspects','Suspect',SUSPECTS);
+  renderList('noteWeapons','Weapon',WEAPONS);
+  renderList('noteRooms','Room',ROOMS);
+}
+
+function renderBoard(game){
+  const board=el('board');board.innerHTML='';
+  const placeBox=(div,pos)=>{div.style.gridColumn=`${pos.col[0]} / ${pos.col[1]}`;div.style.gridRow=`${pos.row[0]} / ${pos.row[1]}`;};
+  const activeSuspects=new Set(game.players.map(p=>p.suspect).filter(Boolean));
+  const current=game.currentPlayer();
+  const roomNames=['Study','Library','Billiard Room','Conservatory','Hall','Ballroom','Lounge','Dining Room','Kitchen'];
+
+  roomNames.forEach(roomName=>{
+    const div=document.createElement('div');
+    div.className='room';
+    const pos=BOARD_LAYOUT[roomName];
+    if(pos) placeBox(div,pos);
+    const here=current.isHuman && current.location===roomName;
+    const reachable=current.isHuman && game.awaitingMove && game.reachable.has(roomName);
+    if(here) div.classList.add('here');
+    if(reachable) div.classList.add('reachable');
+
+    const SUSPECT_ICON = {"Green":"🎩","Mustard":"🎖️","Scarlet":"💋","Peacock":"💎","Plum":"💼","White":"👜"};
+    const suspectTokens = SUSPECTS
+      .filter(s => (game.suspectLoc.get(s) || 'Hall') === roomName)
+      .map(s => {
+        const inactive = !activeSuspects.has(s);
+        const cls = `token suspect ${slug(s)}${inactive ? ' inactive' : ''}`;
+        const icon = SUSPECT_ICON[s] || "";
+        const label = displaySuspect(s);
+        return `<span class="${cls}" data-color="1" title="${label}">
+                  <span class="ico" aria-hidden="true">${icon}</span>${label}
+                </span>`;
+      });
+
+    const WEAPON_ICON = {"Candlestick":"🕯️","Dagger":"🗡️","Lead Pipe":"🦯","Revolver":"🔫","Rope":"🪢","Wrench":"🔧"};
+    const weaponTokens = WEAPONS
+      .filter(w => (game.weaponLoc.get(w) || '') === roomName)
+      .map(w => {
+        const cls = `token weapon ${slug(w)}`;
+        const icon = WEAPON_ICON[w] || "";
+        return `<span class="${cls}" data-color="1" title="${w}">
+                  <span class="ico" aria-hidden="true">${icon}</span>${w}
+                </span>`;
+      });
+
+    const tokensHTML=[...suspectTokens,...weaponTokens].join('')||`<span class="token" style="opacity:.6;">(empty)</span>`;
+    const roomIcon = ROOM_ICON[roomName] || "";
+    div.innerHTML = `<div class="title"><span class="ico" aria-hidden="true">${roomIcon}</span>${roomName}</div>
+                     <div class="tokens">${tokensHTML}</div>`;
+    if(current.isHuman && game.awaitingMove && reachable){
+      const btn=document.createElement('button');btn.textContent='Move';
+      btn.setAttribute('aria-label',`Move to ${roomName}`);btn.tabIndex=0;
+      btn.onclick=()=>game.humanMoveTo(roomName);
+      btn.onkeydown=(e)=>{if(e.key==='Enter'||e.key===' ') btn.click();};
+      div.appendChild(btn);
+    }
+    board.appendChild(div);
+  });
+
+  const center=document.createElement('div');center.className='room center';placeBox(center,CENTER_CELL);
+  let centerTitle = `<span class="ico" aria-hidden="true">${ROOM_ICON["Classified Files"] || "🕵️‍♂️"}</span>Classified Files`;
+  let centerBody  = `<span class="token" style="opacity:.6;">(sealed)</span>`;
+  if (game.gameOver && game.convicted) {
+    const { suspect, weapon, room, winner } = game.convicted;
+    center.classList.add('convicted');
+    centerTitle = `<span class="ico" aria-hidden="true">👮‍♂️</span>CONVICTED`;
+    centerBody = `<div style="margin-top:6px;font-size:12px;color:var(--muted)">
+      ${winner ? `<div><b>By:</b> ${winner}</div>` : ''}
+      <div><b>Suspect:</b> ${displaySuspect(suspect)}</div>
+      <div><b>Weapon:</b> ${weapon}</div>
+      <div><b>Room:</b> ${room}</div>
+    </div>`;
+  }
+  const holdingSus=SUSPECTS
+    .filter(s=>game.suspectLoc.get(s)===HOLDING_CELL_ID)
+    .map(s=>`<span class="token suspect ${slug(s)}" data-color="1" title="${displaySuspect(s)}"><span class="dot"></span>${displaySuspect(s)}</span>`);
+  const holdingWep=WEAPONS
+    .filter(w=>game.weaponLoc.get(w)===HOLDING_CELL_ID)
+    .map(w=>`<span class="token weapon ${slug(w)}" data-color="1" title="${w}"><span class="dot"></span>${w}</span>`);
+  const centerTokens=[...holdingSus,...holdingWep].join('');
+  center.innerHTML=`<div class="title">${centerTitle}</div><div class="tokens">${centerTokens||centerBody}</div>`;
+  board.appendChild(center);
+}
+
+function renderAll(game){renderPlayers(game);renderHand(game);renderNotebook(game);renderBoard(game);}
+
+/* Startup */
+const game=new Game();
+(async function start(){
+  try{
+    clearGameplayPrompt();
+    const setup = await promptGameSetup();
+    game.aiDifficulty = normDiff(setup.diff);  // normalize
+    game.resetPlayers(setup.opp);
+    const pick=await promptHumanSuspect(SUSPECTS);
+    game.assignSuspects(pick);
+    game.setup();
+    el('btnNewGame').onclick=()=>startNewGame(game);
+    await game.beginTurn();
+  }catch(e){
+    console.error(e);
+    await showInfoPrompt('Error',
+      `<div style="color:#fca5a5"><b>${(e&&e.message)||'Unknown error'}</b></div>
+       <div style="margin-top:8px;color:var(--muted);font-size:12px;">Check the browser console for details.</div>`);
+  }
+})();
+
+function resetUIForSetup() {
+  clearGameplayPrompt();
+  const logBox = el('log'); if (logBox) logBox.textContent = '';
+  const playersBox = el('playersBox'); if (playersBox) playersBox.innerHTML = '';
+  const handBox = el('handBox'); if (handBox) handBox.innerHTML = '';
+  const board = el('board'); if (board) board.innerHTML = '';
+  ['noteSuspects','noteWeapons','noteRooms'].forEach(id => {
+    const box = el(id); if (box) box.innerHTML = '';
+  });
+  try { clearChecklist(); clearCheckNotes(); } catch (e) { console.warn('Checklist clear error (safe to ignore):', e); }
+  const turnPill = el('turnPill'); if (turnPill) turnPill.textContent = 'Turn: —';
+  const locPill  = el('locPill');  if (locPill)  locPill.textContent  = 'Location: —';
+}
+
+async function startNewGame(game,{skipConfirm=false}={}){
+  let ok=true;
+  if(!skipConfirm){
+    ok=await renderPrompt({
+      title:'Start a New Game?',
+      bodyHTML:`<div>This will restart the game and redeal all cards.</div>
+      <div style="margin-top:10px;color:var(--muted);font-size:12px;">
+      Any current turn progress will be lost.
+      </div>`,
+      actions:[
+        {label:'Cancel',value:false,className:'secondary'},
+        {label:'New Game',value:true,className:'danger'}
+      ]
+    });
+    clearGameplayPrompt();
+  }
+  if(!ok) return;
+
+  resetUIForSetup();
+  const setup=await promptGameSetup();
+  game.aiDifficulty = normDiff(setup.diff);
+  game.resetPlayers(setup.opp);
+  const pick=await promptHumanSuspect(SUSPECTS);
+  game.assignSuspects(pick);
+  game.setup();
+  await game.beginTurn();
+}
+</script>
+</body>
+</html>
