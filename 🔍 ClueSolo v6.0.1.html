@@ -1756,6 +1756,11 @@ function renderObserverCasebook(game){
     logBox.textContent = (game.obsLog && game.obsLog.length)
      ? game.obsLog.slice(-200).join('\n')
      : '(deductions log will appear here)';
+
+    // ✅ Auto-scroll to the latest entry
+    setTimeout(() => {
+      logBox.scrollTop = logBox.scrollHeight;
+    }, 0);
   }else{
     // Basic: remove log if present
     const logBox = document.getElementById('observerDeduceLog');
