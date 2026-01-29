@@ -44,6 +44,15 @@
   .board{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-rows:56px;gap:12px;padding:12px}
   .room.center{background:rgba(255,255,255,0.07);border-style:dashed}
   .room.center.convicted{border-style:solid;background:linear-gradient(180deg, rgba(52,211,153,.15), rgba(255,255,255,.04))}
+  /* Accusation tension states for centre tile */
+  .room.center.accused{
+    border-style:solid;
+    background:linear-gradient(180deg, rgba(251,191,36,.22), rgba(255,255,255,.04)); /* pale orange */
+  }
+  .room.center.notguilty{
+    border-style:solid;
+    background:linear-gradient(180deg, rgba(253,230,138,.22), rgba(255,255,255,.04)); /* pale yellow */
+  }
   .room{border:1px solid var(--border);border-radius:12px;padding:10px;background:rgba(0,0,0,.15);min-height:96px;position:relative}
   .room .title{font-weight:900}.room .tokens{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
   .room.reachable{outline:2px solid rgba(96,165,250,.55)}.room.here{outline:2px solid rgba(52,211,153,.55)}
@@ -713,6 +722,7 @@ class Game{
     this.dice=null;this.reachable=new Set();
     this.awaitingMove=false;this.awaitingDecision=false;this.stayedInsteadOfRoll=false;
     this.aiDifficulty='basic';this.humanTurnsStarted=0;this.gameOver=false;
+    this.trial=null; // { stage:'accused'|'notguilty', by, acc:{suspect,weapon,room}, prev:{sus, wep} }    
     this.sessionId=0;this.resetPlayers(2);
   }
   newSession(){this.sessionId++;return this.sessionId;}
@@ -746,6 +756,7 @@ class Game{
     this.turnIndex=0;this.solution=null;this.dice=null;this.reachable=new Set();
     this.awaitingMove=false;this.awaitingDecision=false;this.stayedInsteadOfRoll=false;
     this.humanTurnsStarted=0;this.gameOver=false;
+    this.trial=null;    
   }
   assignSuspects(human){
     const pool=SUSPECTS.slice();const i=pool.indexOf(human);if(i>=0) pool.splice(i,1);
@@ -950,6 +961,36 @@ class Game{
     return {refuted:false};
   }
 
+  // === Centre-tile "trial" helpers (ACCUSED → NOT GUILTY → revert) ===
+  beginTrial(pl, acc){
+    // Save previous locations so we can revert after NOT GUILTY
+    const prevSus = this.suspectLoc.get(acc.suspect);
+    const prevWep = this.weaponLoc.get(acc.weapon);
+
+    this.trial = {
+      stage: 'accused',
+      by: pl.name,
+      acc: { ...acc },
+      prev: { sus: prevSus, wep: prevWep }
+    };
+
+    // Move accused suspect + weapon to the centre (Classified Files tile)
+    this.suspectLoc.set(acc.suspect, HOLDING_CELL_ID);
+    this.weaponLoc.set(acc.weapon, HOLDING_CELL_ID);
+  }
+
+  restoreTrial(){
+    if(!this.trial) return;
+    const { acc, prev } = this.trial;
+
+    // Put pieces back where they were
+    if(prev && prev.sus) this.suspectLoc.set(acc.suspect, prev.sus);
+    if(prev && prev.wep) this.weaponLoc.set(acc.weapon,  prev.wep);
+
+    // Clear centre trial state
+    this.trial = null;
+  }
+
   checkAccusation(a){
     return a.suspect===this.solution.suspect &&
            a.weapon===this.solution.weapon &&
@@ -957,30 +998,72 @@ class Game{
   }
 
   async accuse(pl,acc){
+    // 1) Move pieces to centre + show "ACCUSED" prompt first (tension)
     log(`${pl.name} ACCUSES: ${displaySuspect(acc.suspect)} in the ${acc.room} with the ${acc.weapon}!`);
-    const ok=this.checkAccusation(acc);
+
+    // Start the centre "trial" display (orange ACCUSED)
+    this.beginTrial(pl, acc);
+    renderAll(this);
+
+    // Prompt describing the accusation (AI: this appears before end-of-turn summary)
+    await showInfoPrompt('Accusation',
+      `<div><b>${pl.name}</b> makes an accusation:</div>
+       <div style="margin-top:10px;font-size:16px;">
+         <b>${displaySuspect(acc.suspect)}</b> in the <b>${acc.room}</b> with the <b>${acc.weapon}</b>
+       </div>
+       <div style="margin-top:10px;color:var(--muted);font-size:12px;">Click OK to reveal the verdict…</div>`
+    );
+
+    // 2) Determine verdict
+    const ok = this.checkAccusation(acc);
+
     if(ok){
+      // === CORRECT: CONVICTED (keep tokens in centre, including ROOM token) ===
       this.gameOver=true;
       this.convicted={suspect:acc.suspect,weapon:acc.weapon,room:acc.room,winner:pl.name};
-      try{this.suspectLoc.set(acc.suspect,HOLDING_CELL_ID);}catch(e){}
-      try{this.weaponLoc.set(acc.weapon,HOLDING_CELL_ID);}catch(e){}
+
+      // Keep suspect + weapon in centre (already there); clear trial state (we'll use convicted UI)
+      this.trial = null;
+
       renderAll(this);
+
       await showInfoPrompt('Game Over',
         `<div><b>${pl.name}</b> wins!</div>
-         <div style="margin-top:10px;">Solution was: <b>${displaySuspect(this.solution.suspect)}</b> in the <b>${this.solution.room}</b> with the <b>${this.solution.weapon}</b>.</div>`);
+         <div style="margin-top:10px;">Solution was: <b>${displaySuspect(this.solution.suspect)}</b> in the <b>${this.solution.room}</b> with the <b>${this.solution.weapon}</b>.</div>`
+      );
+
       const again=await promptPlayAgain();
       if(again){ await startNewGame(game,{skipConfirm:true}); }
-      return;
-    }else{
-      log(`❌ Wrong accusation. ${pl.name} is eliminated from taking turns (but can still refute).`);
-      pl.eliminated=true;
-      if(pl.isHuman){
-        await showInfoPrompt('Wrong Accusation',
-          `<div>That accusation was incorrect.</div>
-           <div style="margin-top:10px;">You are eliminated from taking turns, but you will still be asked to refute suggestions.</div>`);
-      }
+      return { correct:true };
     }
+
+    // === WRONG: NOT GUILTY (keep tokens in centre temporarily, then revert) ===
+    log(`❌ Wrong accusation. ${pl.name} is eliminated from taking turns (but can still refute).`);
+    pl.eliminated=true;
+
+    // Switch centre tile to NOT GUILTY (pale yellow), keep tokens there for the prompt/summary
+    if(this.trial) this.trial.stage = 'notguilty';
     renderAll(this);
+
+    if(pl.isHuman){
+      // Human: use the existing Wrong Accusation prompt (plus the revert behaviour after OK)
+      await showInfoPrompt('Wrong Accusation',
+        `<div>That accusation was <b>incorrect</b>.</div>
+         <div style="margin-top:10px;">Verdict: <b>🕊 NOT GUILTY</b>.</div>
+         <div style="margin-top:10px;">You are eliminated from taking turns, but you will still be asked to refute suggestions.</div>
+         <div style="margin-top:10px;color:var(--muted);font-size:12px;">Click OK to continue. The pieces will return to their previous positions.</div>`
+      );
+
+      // After dismissing the prompt: revert centre + pieces
+      this.restoreTrial();
+      renderAll(this);
+      return { correct:false };
+    }
+
+    // AI: do NOT show another prompt here.
+    // The NOT GUILTY display should remain visible during the end-of-turn summary,
+    // and we will restore after the summary is dismissed (handled in aiTurn()).
+    return { correct:false, revertAfterSummary:true };
   }
 
   async beginTurn(){
@@ -1251,6 +1334,7 @@ class Game{
 
     // === Accusation logic ===
     let accused=false;
+    let accOutcome=null; // used to revert NOT GUILTY display after summary (AI only)    
 
     // A) Certain accusation (all difficulties)
     if(!pl.eliminated && pl.isConfidentSolution()){
@@ -1258,8 +1342,11 @@ class Game{
       if(!this.isActiveSession(sid)) return;
       const acc=pl.inferredAccusation();
       summary.push(`Accused (certain): ${displaySuspect(acc.suspect)} in the ${acc.room} with the ${acc.weapon}.`);
-      await this.accuse(pl,acc);
+      accOutcome = await this.accuse(pl,acc);
       accused=true;
+      if(accOutcome && accOutcome.correct===false){
+        summary.push('Verdict: 🕊 NOT GUILTY (eliminated).');
+      }
     }
     // B) Sherlock++: belief-aware early accusation (bold, sometimes wrong)
     else if(!pl.eliminated && isSherlock(this.aiDifficulty)){
@@ -1269,8 +1356,11 @@ class Game{
           await sleep(650);
           if(!this.isActiveSession(sid)) return;
           summary.push(`Accused (early, conf=${plan.confidence.toFixed(2)}): ${displaySuspect(plan.acc.suspect)} in the ${plan.acc.room} with the ${plan.acc.weapon}.`);
-          await this.accuse(pl, plan.acc);
+          accOutcome = await this.accuse(pl, plan.acc);
           accused = true;
+          if(accOutcome && accOutcome.correct===false){
+            summary.push('Verdict: 🕊 NOT GUILTY (eliminated).');
+          }
         }
       } else if (Math.random() < AI_CFG.sherlock.mistakeRate) {
         // Rare outright mistake to feel human
@@ -1278,8 +1368,11 @@ class Game{
         if(!this.isActiveSession(sid)) return;
         const b = pl.planAccusationWithBeliefs();
         summary.push(`Accused (mistake): ${displaySuspect(b.acc.suspect)} in the ${b.acc.room} with the ${b.acc.weapon}.`);
-        await this.accuse(pl, b.acc);
+        accOutcome = await this.accuse(pl, b.acc);
         accused = true;
+        if(accOutcome && accOutcome.correct===false){
+          summary.push('Verdict: 🕊 NOT GUILTY (eliminated).');
+        }
       }
     }
 
@@ -1290,6 +1383,12 @@ class Game{
 
     summary.push('Turn ended.');
     await this.showOpponentTurnSummary(pl,summary);
+    // If AI made a wrong accusation, revert the centre display AFTER the summary is dismissed
+    if(accOutcome && accOutcome.revertAfterSummary){
+      this.restoreTrial();
+      renderAll(this);
+    }
+
     if(!this.isActiveSession(sid)) return;
     await this.endTurn();
   }
@@ -1450,9 +1549,47 @@ function renderBoard(game){
   });
 
   const center=document.createElement('div');center.className='room center';placeBox(center,CENTER_CELL);
-  let centerTitle = `<span class="ico" aria-hidden="true">${ROOM_ICON["Classified Files"] || "🕵️‍♂️"}</span>Classified Files`;
+
+  const makeRoomToken = (roomName) => {
+    if(!roomName) return '';
+    const icon = ROOM_ICON[roomName] || '🏷️';
+    return `<span class="token room" title="${roomName}">
+              <span class="ico" aria-hidden="true">${icon}</span>${roomName}
+            </span>`;
+  };
+
+  // Default centre tile
+  let centerTitle = `<span class="ico" aria-hidden="true">${ROOM_ICON["Classified Files"] || "🕵️‍♂️"}</span>CLASSIFIED FILES`;
   let centerBody  = `<span class="token" style="opacity:.6;">(sealed)</span>`;
-  if (game.gameOver && game.convicted) {
+
+  // Determine centre state:
+  // 1) Trial states (ACCUSED / NOT GUILTY)
+  // 2) Game over (CONVICTED)
+  if(game.trial && (game.trial.stage==='accused' || game.trial.stage==='notguilty')){
+    const st = game.trial.stage;
+    const { acc, by } = game.trial;
+
+    if(st==='accused'){
+      center.classList.add('accused');
+      centerTitle = `<span class="ico" aria-hidden="true">👨‍⚖️</span>ACCUSED`;
+      centerBody = `<div style="margin-top:6px;font-size:12px;color:var(--muted)">
+        ${by ? `<div><b>By:</b> ${by}</div>` : ''}
+        <div><b>Suspect:</b> ${displaySuspect(acc.suspect)}</div>
+        <div><b>Weapon:</b> ${acc.weapon}</div>
+        <div><b>Room:</b> ${acc.room}</div>
+      </div>`;
+    } else {
+      center.classList.add('notguilty');
+      centerTitle = `<span class="ico" aria-hidden="true">🕊</span>NOT GUILTY`;
+      centerBody = `<div style="margin-top:6px;font-size:12px;color:var(--muted)">
+        ${by ? `<div><b>By:</b> ${by}</div>` : ''}
+        <div><b>Suspect:</b> ${displaySuspect(acc.suspect)}</div>
+        <div><b>Weapon:</b> ${acc.weapon}</div>
+        <div><b>Room:</b> ${acc.room}</div>
+      </div>`;
+    }
+  }
+  else if (game.gameOver && game.convicted) {
     const { suspect, weapon, room, winner } = game.convicted;
     center.classList.add('convicted');
     centerTitle = `<span class="ico" aria-hidden="true">👮‍♂️</span>CONVICTED`;
@@ -1463,13 +1600,23 @@ function renderBoard(game){
       <div><b>Room:</b> ${room}</div>
     </div>`;
   }
+
+  // Tokens currently held in centre (suspect + weapon moved via HOLDING_CELL_ID)
   const holdingSus=SUSPECTS
     .filter(s=>game.suspectLoc.get(s)===HOLDING_CELL_ID)
     .map(s=>`<span class="token suspect ${slug(s)}" data-color="1" title="${displaySuspect(s)}"><span class="dot"></span>${displaySuspect(s)}</span>`);
+
   const holdingWep=WEAPONS
     .filter(w=>game.weaponLoc.get(w)===HOLDING_CELL_ID)
     .map(w=>`<span class="token weapon ${slug(w)}" data-color="1" title="${w}"><span class="dot"></span>${w}</span>`);
-  const centerTokens=[...holdingSus,...holdingWep].join('');
+
+  // Room token for trial or convicted state
+  let roomToken = '';
+  if(game.trial && game.trial.acc) roomToken = makeRoomToken(game.trial.acc.room);
+  else if(game.gameOver && game.convicted) roomToken = makeRoomToken(game.convicted.room);
+
+  const centerTokens=[...holdingSus,...holdingWep, roomToken].filter(Boolean).join('');
+
   center.innerHTML=`<div class="title">${centerTitle}</div><div class="tokens">${centerTokens||centerBody}</div>`;
   board.appendChild(center);
 }
