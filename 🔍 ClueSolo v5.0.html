@@ -1559,7 +1559,7 @@ function renderBoard(game){
     if(!roomName) return '';
     const icon = ROOM_ICON[roomName] || '🏷️';
     // Render like other tokens to keep consistent sizing
-    return `<span class="token room" data-color="1" title="${roomName}"
+    return `<span class="token roomtok" data-color="1" title="${roomName}"
                   style="--token-color: rgba(248,250,252,.85);">
               <span class="ico" aria-hidden="true">${icon}</span>${roomName}
             </span>`;
