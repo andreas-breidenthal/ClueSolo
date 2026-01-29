@@ -190,7 +190,7 @@
 <body>
 <header>
   <h1>🔍 ClueSolo</h1>
-  <div class="sub">Just like the classic detective game ... but you're alone! (v6.2)</div>
+  <div class="sub">Just like the classic detective game ... but you're alone! (v6.3)</div>
 </header>
 <div class="layout">
   <div class="panel leftPanel">
@@ -601,7 +601,7 @@ class Player{
     if(!this.knownOwners.has(key)){
       this.knowledgeMeta.set(key,{status:'eliminated'});
     }
-    
+
     // Sherlock: eliminated means "not in case file"
     const w = this.ownerWeights?.get(key);
     if(w){
@@ -622,6 +622,15 @@ class Player{
   addRefuteConstraint(refuterId,cards){
     const keys=new Set(cards.map(c=>this.cardKey(c.type,c.name)));
     this.constraints.push({refuterId,keys});
+
+    // ✅ Smart-level reasoning log (observer mode): "X has one of these"
+    if(this.gameRef?.observerMode && (this.gameRef.aiDifficulty==='smart' || this.gameRef.aiDifficulty==='sherlock')){
+      const me = this.gameRef.players?.[this.id]?.name ?? `P${this.id}`;
+      const who = this.gameRef.players?.[refuterId]?.name ?? `P${refuterId}`;
+      const list = [...keys].join(', ');
+      this.gameRef.obs(`🧠 ${me}: Constraint added → ${who} must hold ONE of { ${list} }`);
+    }
+
     this.propagateConstraints();
   }
 
@@ -663,15 +672,17 @@ class Player{
             this.knowledgeMeta.set(onlyKey,{status:'deduced',ownerId:c.refuterId});
           }
 
-          // Sherlock thought-process logging (observer mode only)
-          if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
-            const ownerName = this.gameRef.players[c.refuterId]?.name ?? `P${c.refuterId}`;
-            this.gameRef.obs(`🧠 DEDUCED: ${ownerName} must own ${onlyKey} (constraint collapsed to 1 card).`);
+          // ✅ Smart + Sherlock deduction log (observer mode): collapse -> must own
+          if(this.gameRef?.observerMode && (this.gameRef.aiDifficulty==='smart' || this.gameRef.aiDifficulty==='sherlock')){
+            const me = this.gameRef.players?.[this.id]?.name ?? `P${this.id}`;
+            const ownerName = this.gameRef.players?.[c.refuterId]?.name ?? `P${c.refuterId}`;
+            this.gameRef.obs(`🧠 ${me}: Deduction → ${ownerName} MUST own ${onlyKey} (only option left in constraint).`);
           }
 
           this.constraints.splice(i,1);
           changed=true; continue;
         }
+
         // If impossible set -> drop
         if(c.keys.size===0){
           this.constraints.splice(i,1); changed=true;
@@ -688,12 +699,22 @@ class Player{
   noteNoRefute(playerId,triple){
     // For each card: downweight that player as a possible owner
     for(const c of triple){
+      const beforeCase = this._pCaseNorm(c);
+      const beforeOwn  = this._pOwner(c, playerId);
       const key=this.cardKey(c.type,c.name);
       const w=this.ownerWeights.get(key);
       if(!w) continue;
       const cur=w.get(playerId) ?? 0;
       w.set(playerId, cur*AI_CFG.sherlock.weightPenaltyNoRefute);
       this.clampAndNormalizeWeights(key);
+
+      if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
+        const who = this.gameRef.players[playerId]?.name ?? `P${playerId}`;
+        const afterCase = this._pCaseNorm(c);
+        const afterOwn  = this._pOwner(c, playerId);
+        this.gameRef.obs(`🧠 Update (no-refute by ${who}): ${c.type}:${c.name} → P(case-file) ${this._pct(beforeCase)}→${this._pct(afterCase)}, P(${who}) ${this._pct(beforeOwn)}→${this._pct(afterOwn)} (penalised owner).`);
+      }
+
       if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
         const who = this.gameRef.players[playerId]?.name ?? `P${playerId}`;
         this.gameRef.obs(`🧠 NO-REFUTE signal: ${who} could not refute (${triple.map(c=>this.cardKey(c.type,c.name)).join(', ')}). Downweighted ownership.`);
@@ -704,6 +725,8 @@ class Player{
   noteRefutePattern(refuterId,triple){
     for(const c of triple){
       const key=this.cardKey(c.type,c.name);
+      const beforeCase = this._pCaseNorm(c);
+      const beforeOwn  = this._pOwner(c, refuterId);
       const w=this.ownerWeights.get(key);
       if(!w) continue;
       // pattern memory
@@ -714,10 +737,20 @@ class Player{
       const cur=w.get(refuterId) ?? 0.0001;
       w.set(refuterId, cur + AI_CFG.sherlock.weightBoostRefutePattern);
       this.clampAndNormalizeWeights(key);
+
       if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
         const who = this.gameRef.players[refuterId]?.name ?? `P${refuterId}`;
-        this.gameRef.obs(`🧠 REFUTE pattern: ${who} refuted suggestion containing ${triple.map(c=>this.cardKey(c.type,c.name)).join(', ')}. Boosted ownership weights.`);
+        const afterCase = this._pCaseNorm(c);
+        const afterOwn  = this._pOwner(c, refuterId);
+        this.gameRef.obs(`🧠 Update (refute by ${who}): ${c.type}:${c.name} → P(case-file) ${this._pct(beforeCase)}→${this._pct(afterCase)}, P(${who}) ${this._pct(beforeOwn)}→${this._pct(afterOwn)} (boosted refuter).`);
       }
+
+      if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
+        const who = this.gameRef.players[refuterId]?.name ?? `P${refuterId}`;
+        // We log per-card after update, but need "before" – so compute before at top of loop:
+        // (Handled below by capturing before values per card.)
+      }
+
     }
   }
 
@@ -735,7 +768,10 @@ class Player{
 
     if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
       const ownerName = this.gameRef.players[ownerId]?.name ?? `P${ownerId}`;
-      this.gameRef.obs(`🧠 SAW CARD: ${ownerName} showed ${this.cardKey(card.type,card.name)} (set prob≈0 for case file).`);
+      const who = this.gameRef.players[ownerId]?.name ?? `P${ownerId}`;
+      const afterCase = this._pCaseNorm(card);
+      const afterOwn  = this._pOwner(card, ownerId);
+      this.gameRef.obs(`🧠 Saw exact card: ${who} showed ${card.type}:${card.name} → P(case-file)=${this._pct(afterCase)}; P(${who})=${this._pct(afterOwn)} (locked owner).`);
     }
   }
 
@@ -791,6 +827,18 @@ class Player{
     const pCase = w ? (w.get(CASE_FILE_ID) ?? 0) : 0;
 
     return pCase / sum;
+  }
+
+  _pct(x){ return `${Math.round(Math.max(0, Math.min(1, x)) * 100)}%`; }
+
+  _pCaseNorm(card){
+    return this.caseFileProbNormalized(card.type, card.name);
+  }
+
+  _pOwner(card, ownerId){
+    const key = this.cardKey(card.type, card.name);
+    const w = this.ownerWeights.get(key);
+    return w ? (w.get(ownerId) ?? 0) : 0;
   }
 
   // Entropy of ownership distribution for a card (higher => more uncertain/informative)
@@ -880,21 +928,29 @@ class Game{
     this.dice=null;this.reachable=new Set();
     this.awaitingMove=false;this.awaitingDecision=false;this.stayedInsteadOfRoll=false;
     this.aiDifficulty='basic';this.humanTurnsStarted=0;this.gameOver=false;
-    this.trial=null; // { stage:'accused'|'notguilty', by, acc:{suspect,weapon,room}, prev:{sus, wep} }    
-    this.observerMode = false; // NEW
-    this.observerFocusId = 0; // NEW (Player 1 is focus)
-    this.obsLog = []; // NEW deductions log
-    this.obsLogMax = 250; // NEW cap to prevent runaway
-    this.sessionId=0;this.resetPlayers(2);
+    this.trial=null;
+    this.observerMode = false;
+    this.observerFocusId = 0;
+    this.obsLog = [];
+    this.obsLogMax = 250;
+    this.sessionId=0;
+    this.turnCounter = 0; // ✅ optional: for readable deduction log grouping
+    this.resetPlayers(2);
   }
 
   obs(msg){
-    // Rolling observer deductions log (Smart/Sherlock)
+    // Rolling observer deductions log (Smart/Sherlock only)
+    if(!this.observerMode) return;
+    if(this.aiDifficulty === 'basic') return;
     const t = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
     this.obsLog.push(`[${t}] ${msg}`);
     if(this.obsLog.length > this.obsLogMax) this.obsLog.shift();
-  } 
+  }
+
   newSession(){this.sessionId++;return this.sessionId;}
+  isActiveSession(id){return id===this.sessionId;}
+
+  // ... keep the rest of your Game methods here (initAllSuspectPawns, setup, makeSuggestion, aiTurn, etc.)
   isActiveSession(id){return id===this.sessionId;}
 
   initAllSuspectPawns(){
@@ -1086,7 +1142,7 @@ class Game{
     log(`${pl.name} suggests: ${displaySuspect(suspect)} in the ${room} with the ${weapon}.`);
 
     if(this.observerMode){
-      this.obs(`💬 ${pl.name} suggests: ${displaySuspect(suspect)} / ${weapon} / ${room}`);
+      this.obs(`🧠 Observed suggestion: ${pl.name} tested { Suspect:${suspect}, Weapon:${weapon}, Room:${room} } to gain information.`);
     }
 
     // Resolve refutations in order
@@ -1104,8 +1160,9 @@ class Game{
         }else{
           shown=choice(matches);log(`${other.name} refutes the suggestion.`);
           if(this.observerMode){
-            this.obs(`🛑 Refuted by ${other.name}.`);
+            this.obs(`🧠 Observation: nobody refuted → any suggested card not in ${pl.name}'s hand must be in the case file (no-refute rule applied).`);
           }
+
         }
 
         // Sherlock++: learning signals
@@ -1148,6 +1205,13 @@ class Game{
             obs.noteNoRefute(other.id, triple);
           }
         }
+
+        // ✅ Smart/Sherlock reasoning log (observer mode): "X could not refute → X has none of {A,B,C}"
+        if(this.observerMode && (this.aiDifficulty==='smart' || this.aiDifficulty==='sherlock')){
+          const cards = triple.map(c=>`${c.type}:${c.name}`).join(', ');
+          this.obs(`🧠 Observed: ${other.name} could not refute → ${other.name} holds NONE of { ${cards} }`);
+        }
+
         // continue to next 'other'
       }
     }
@@ -1535,19 +1599,53 @@ class Game{
       renderAll(this);
     }
 
-    // Sherlock++: suggestion target selection
+    // Sherlock++: suggestion target selection + thought process logging
     let suspect, weapon;
+    const room = pl.location;
+
     if (isSherlock(this.aiDifficulty)) {
+      // Compute top entropy candidates (informative picks)
+      const rankEntropy = (type, list) => {
+        const arr = list.map(n => ({
+          n,
+          e: pl.entropyForCardKey(pl.cardKey(type, n))
+        }));
+        arr.sort((a,b)=>b.e-a.e);
+        return arr.slice(0,3);
+      };
+
+      const susPool = pl.possibleSet('Suspect');
+      const wepPool = pl.possibleSet('Weapon');
+
+      const susCands = susPool.length ? susPool : SUSPECTS;
+      const wepCands = wepPool.length ? wepPool : WEAPONS;
+
+      const topSus = rankEntropy('Suspect', susCands);
+      const topWep = rankEntropy('Weapon',  wepCands);
+
       const pick = pl.pickSmartSuggestionParts();
       suspect = pick.suspect;
       weapon  = pick.weapon;
+
+      if(this.observerMode){
+        this.obs(`🧠 ${pl.name} suggestion reasoning (Sherlock): choose high-information cards (entropy). Top suspects: ${topSus.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')}; picked ${suspect}. Top weapons: ${topWep.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')}; picked ${weapon}. Room is current location (${room}).`);
+      }
+
     } else {
-      const sC=pl.possibleSet('Suspect');
-      const wC=pl.possibleSet('Weapon');
-      suspect=choice(sC.length?sC:SUSPECTS);
-      weapon =choice(wC.length?wC:WEAPONS);
+      // Smart/basic: pick from remaining (uncleared) candidates
+      const sC = pl.possibleSet('Suspect');
+      const wC = pl.possibleSet('Weapon');
+
+      const susCands = sC.length ? sC : SUSPECTS;
+      const wepCands = wC.length ? wC : WEAPONS;
+
+      suspect = choice(susCands);
+      weapon  = choice(wepCands);
+
+      if(this.observerMode && this.aiDifficulty==='smart'){
+        this.obs(`🧠 ${pl.name} suggestion reasoning (Smart): choose from uncleared candidates → suspects remaining=${susCands.length}, weapons remaining=${wepCands.length}. Picked ${suspect} + ${weapon}. Room is current location (${room}).`);
+      }
     }
-    const room=pl.location;
 
     summary.push(`Suggested: ${displaySuspect(suspect)} in the ${room} with the ${weapon}.`);
     const result=await this.makeSuggestion(pl,suspect,weapon,room);
@@ -1566,6 +1664,11 @@ class Game{
       await sleep(650);
       if(!this.isActiveSession(sid)) return;
       const acc=pl.inferredAccusation();
+
+      if(this.observerMode){
+        this.obs(`🧠 ${pl.name} accusation reasoning: ONLY ONE candidate left in each category → suspect=${acc.suspect}, weapon=${acc.weapon}, room=${acc.room}. Accusing with certainty.`);
+      }
+
       summary.push(`Accused (certain): ${displaySuspect(acc.suspect)} in the ${acc.room} with the ${acc.weapon}.`);
       accOutcome = await this.accuse(pl,acc);
       accused=true;
@@ -1576,6 +1679,10 @@ class Game{
     // B) Sherlock++: belief-aware early accusation (bold, sometimes wrong)
     else if(!pl.eliminated && isSherlock(this.aiDifficulty)){
       const plan = pl.planAccusationWithBeliefs();
+      if(this.observerMode && plan){
+        this.obs(`🧠 ${pl.name} accusation consideration (Sherlock): top guesses by category with confidence≈${plan.confidence.toFixed(2)} → suspect=${plan.acc.suspect}, weapon=${plan.acc.weapon}, room=${plan.acc.room}. Will accuse only if evidence+threshold met.`);
+      }
+
       const hasEvidence = (pl.seen.size > pl.own.size) || pl.constraints.length > 0 || pl.unrefuted.length > 0;
       if (hasEvidence && plan && plan.confidence >= AI_CFG.sherlock.earlyAccuseMinConfidence) {
         if (Math.random() < AI_CFG.sherlock.earlyAccuseChance) {
