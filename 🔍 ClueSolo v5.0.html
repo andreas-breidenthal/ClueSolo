@@ -60,6 +60,26 @@
   .room.reachable{outline:2px solid rgba(96,165,250,.55)}.room.here{outline:2px solid rgba(52,211,153,.55)}
   .room button{position:absolute;right:10px;top:10px;padding:6px 8px;border-radius:10px;font-size:12px}
   .log{height:200px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.35;background:rgba(0,0,0,.18);border:1px solid var(--border);border-radius:12px;padding:10px;white-space:pre-wrap}
+
+  .probWrap{
+    position:relative;
+    height:10px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:rgba(0,0,0,.18);
+    overflow:hidden;
+  }
+  .probBar{
+    height:100%;
+    background:linear-gradient(90deg, rgba(96,165,250,.65), rgba(52,211,153,.55));
+  }
+  .probPct{
+    position:absolute;
+    top:-18px;
+    right:0;
+    font-size:10px;
+    color:var(--muted);
+  }
   
 /* Ensure centre room-token doesn't inflate compared to other tokens */
   .room.center .tokens .token.room{ line-height:1.1; padding:3px 7px; }
@@ -398,6 +418,7 @@ async function promptGameSetup(){
           <option value="3">3 opponents (4 players)</option>
           <option value="4">4 opponents (5 players)</option>
           <option value="5">5 opponents (6 players)</option>
+          <option value="observer">6 opponents — Observer mode (all AI)</option>
         </select>
       </label>
     </div>
@@ -407,9 +428,14 @@ async function promptGameSetup(){
   const diffRaw = document.getElementById('diffSel')?.value || 'basic';
   const diff = normDiff(diffRaw);
   const oppRaw = document.getElementById('oppCountSel')?.value;
-  const opp = clampInt(oppRaw, 2, 5, 2);
+  const observer = (oppRaw === 'observer');
+  // IMPORTANT: there are only 6 suspects, so total players must remain 6.
+  // We'll implement "6 opponents" as "observer mode with 6 AI players total".
+  // That means we internally create 6 players = player0 + 5 others.
+  const opp = observer ? 5 : clampInt(oppRaw, 2, 5, 2);
+  
   clearGameplayPrompt();
-  return { opp, diff };
+  return { opp, diff, observer };
 }
 
 async function promptHumanSuspect(available){
@@ -469,6 +495,8 @@ class Player{
     this.hand=[];this.location='Hall';this.eliminated=false;
     this.seen=new Set();this.own=new Set();
     this.knownOwners=new Map(); // cardKey -> playerId
+    this.knowledgeMeta = new Map(); // cardKey -> { status:'own'|'seen'|'deduced'|'eliminated', ownerId?:number }
+    this.gameRef = null; // set by Game.resetPlayers so Player can log in Sherlock
     this.constraints=[];this.unrefuted=[];
     this.arrivedByOpponentSuggestion=false;
 
@@ -483,11 +511,14 @@ class Player{
   cardKey(type,name){return `${type}:${name}`;}
 
   initKnowledge(){
-    for(const c of this.hand){
-      const k=this.cardKey(c.type,c.name);
-      this.own.add(k); this.seen.add(k); this.knownOwners.set(k,this.id);
-    }
+  for(const c of this.hand){
+    const k=this.cardKey(c.type,c.name);
+    this.own.add(k);
+    this.seen.add(k);
+    this.knownOwners.set(k,this.id);
+    this.knowledgeMeta.set(k, { status:'own', ownerId:this.id });
   }
+}
 
   // --- Sherlock++ belief init (called after dealing)
   initBeliefs(players){
@@ -531,6 +562,16 @@ class Player{
     const k=this.cardKey(card.type,card.name);
     this.seen.add(k);
     if(ownerId!==null&&ownerId!==undefined) this.knownOwners.set(k,ownerId);
+
+    // provenance
+    if(this.own.has(k)){
+      this.knowledgeMeta.set(k,{status:'own',ownerId:this.id});
+    }else if(ownerId!==null && ownerId!==undefined){
+      this.knowledgeMeta.set(k,{status:'seen',ownerId});
+    }else{
+      // seen but unknown owner => treat as eliminated (not in case file)
+      this.knowledgeMeta.set(k,{status:'eliminated'});
+    }  
   }
 
   // Negative knowledge: mark someone does NOT own a card
@@ -539,6 +580,15 @@ class Player{
     let set=this.notOwners.get(key);
     if(!set){set=new Set(); this.notOwners.set(key,set);}
     set.add(playerId);
+  }
+
+  markEliminated(type,name){
+    const key=this.cardKey(type,name);
+    if(this.own.has(key)) return; // never eliminate own card
+    this.seen.add(key);
+    if(!this.knownOwners.has(key)){
+      this.knowledgeMeta.set(key,{status:'eliminated'});
+    }
   }
 
   isCleared(type,name){return this.seen.has(this.cardKey(type,name));}
@@ -585,8 +635,21 @@ class Player{
         // If only one remains -> deduce ownership
         if(c.keys.size===1){
           const [onlyKey]=c.keys;
+
           this.seen.add(onlyKey);
           this.knownOwners.set(onlyKey,c.refuterId);
+
+          // provenance: deduced
+          if(!this.own.has(onlyKey)){
+            this.knowledgeMeta.set(onlyKey,{status:'deduced',ownerId:c.refuterId});
+          }
+
+          // Sherlock thought-process logging (observer mode only)
+          if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
+            const ownerName = this.gameRef.players[c.refuterId]?.name ?? `P${c.refuterId}`;
+            this.gameRef.obs(`🧠 DEDUCED: ${ownerName} must own ${onlyKey} (constraint collapsed to 1 card).`);
+          }
+
           this.constraints.splice(i,1);
           changed=true; continue;
         }
@@ -612,6 +675,10 @@ class Player{
       const cur=w.get(playerId) ?? 0;
       w.set(playerId, cur*AI_CFG.sherlock.weightPenaltyNoRefute);
       this.clampAndNormalizeWeights(key);
+      if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
+        const who = this.gameRef.players[playerId]?.name ?? `P${playerId}`;
+        this.gameRef.obs(`🧠 NO-REFUTE signal: ${who} could not refute (${triple.map(c=>this.cardKey(c.type,c.name)).join(', ')}). Downweighted ownership.`);
+      }
     }
   }
 
@@ -628,6 +695,10 @@ class Player{
       const cur=w.get(refuterId) ?? 0.0001;
       w.set(refuterId, cur + AI_CFG.sherlock.weightBoostRefutePattern);
       this.clampAndNormalizeWeights(key);
+      if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
+        const who = this.gameRef.players[refuterId]?.name ?? `P${refuterId}`;
+        this.gameRef.obs(`🧠 REFUTE pattern: ${who} refuted suggestion containing ${triple.map(c=>this.cardKey(c.type,c.name)).join(', ')}. Boosted ownership weights.`);
+      }
     }
   }
 
@@ -640,6 +711,10 @@ class Player{
       for(const [pid] of w) w.set(pid, AI_CFG.sherlock.weightFloor);
       w.set(ownerId, AI_CFG.sherlock.weightCeil);
       this.clampAndNormalizeWeights(key);
+    }
+    if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
+      const ownerName = this.gameRef.players[ownerId]?.name ?? `P${ownerId}`;
+      this.gameRef.obs(`🧠 SAW CARD: ${ownerName} showed ${this.cardKey(card.type,card.name)} (set prob≈0 for case file).`);
     }
   }
 
@@ -728,8 +803,19 @@ class Game{
     this.awaitingMove=false;this.awaitingDecision=false;this.stayedInsteadOfRoll=false;
     this.aiDifficulty='basic';this.humanTurnsStarted=0;this.gameOver=false;
     this.trial=null; // { stage:'accused'|'notguilty', by, acc:{suspect,weapon,room}, prev:{sus, wep} }    
+    this.observerMode = false; // NEW
+    this.observerFocusId = 0; // NEW (Player 1 is focus)
+    this.obsLog = []; // NEW deductions log
+    this.obsLogMax = 250; // NEW cap to prevent runaway
     this.sessionId=0;this.resetPlayers(2);
   }
+
+  obs(msg){
+    // Rolling observer deductions log (Smart/Sherlock)
+    const t = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    this.obsLog.push(`[${t}] ${msg}`);
+    if(this.obsLog.length > this.obsLogMax) this.obsLog.shift();
+  } 
   newSession(){this.sessionId++;return this.sessionId;}
   isActiveSession(id){return id===this.sessionId;}
 
@@ -810,7 +896,9 @@ class Game{
   computeReachable(start,steps){return diceReachable(start,steps);}
   updateTurnUI(){
     const pl=this.currentPlayer();
-    const who=pl.isHuman?`You (${pl.name})`:pl.name;
+    const who = (this.observerMode && pl.id===this.observerFocusId)
+     ? `Observer Focus (${pl.name})`
+     : (pl.isHuman ? `You (${pl.name})` : pl.name);
     el('turnPill').textContent=`Turn: ${who}${pl.eliminated?' (eliminated)':''}`;
     el('locPill').textContent=`Location: ${pl.location}`;
     renderAll(this);
@@ -823,15 +911,19 @@ class Game{
   basicNoRefuteDeduction(pl, { suspect, weapon, room }){
     const owns = (type, name) => pl.hand.some(c => c.type === type && c.name === name);
 
-    const markAllOthersSeen = (type, keepName, list) => {
+    const markAllOthersEliminated = (type, keepName, list) => {
       for(const n of list){
-        if(n !== keepName) pl.seen.add(pl.cardKey(type, n));
+        if(n !== keepName) pl.markEliminated(type, n);
       }
     };
 
-    if(!owns('Suspect', suspect)) markAllOthersSeen('Suspect', suspect, SUSPECTS);
-    if(!owns('Weapon',  weapon))  markAllOthersSeen('Weapon',  weapon,  WEAPONS);
-    if(!owns('Room',    room))    markAllOthersSeen('Room',    room,    ROOMS);
+    if(!owns('Suspect', suspect)) markAllOthersEliminated('Suspect', suspect, SUSPECTS);
+    if(!owns('Weapon', weapon)) markAllOthersEliminated('Weapon', weapon, WEAPONS);
+    if(!owns('Room',  room))  markAllOthersEliminated('Room',  room,  ROOMS);
+
+    if(pl.gameRef?.observerMode){
+      pl.gameRef.obs(`🧾 BASIC elimination: No one refuted ${pl.name}'s suggestion; category exclusions applied.`);
+    }
   }
 
   applyMildInference(pl){
@@ -840,9 +932,9 @@ class Game{
             w=pl.isCleared('Weapon',t.weapon),
             r=pl.isCleared('Room',t.room);
       if((s?1:0)+(w?1:0)+(r?1:0)===2){
-        if(!s){SUSPECTS.forEach(x=>{if(x!==t.suspect) pl.seen.add(pl.cardKey('Suspect',x));});}
-        if(!w){WEAPONS.forEach(x=>{if(x!==t.weapon) pl.seen.add(pl.cardKey('Weapon',x));});}
-        if(!r){ROOMS.forEach(x=>{if(x!==t.room) pl.seen.add(pl.cardKey('Room',x));});}
+        if(!s){SUSPECTS.forEach(x=>{if(x!==t.suspect) pl.markEliminated('Suspect',x);});}
+        if(!w){WEAPONS.forEach(x=>{if(x!==t.weapon) pl.markEliminated('Weapon',x);});}
+        if(!r){ROOMS.forEach(x=>{if(x!==t.room) pl.markEliminated('Room',x);});}
       }
     }
   }
@@ -890,6 +982,10 @@ class Game{
     }
     renderAll(this);
     log(`${pl.name} suggests: ${displaySuspect(suspect)} in the ${room} with the ${weapon}.`);
+
+    if(this.observerMode){
+      this.obs(`💬 ${pl.name} suggests: ${displaySuspect(suspect)} / ${weapon} / ${room}`);
+    }
 
     // Resolve refutations in order
     const order=[];for(let i=1;i<this.players.length;i++) order.push(this.players[(this.turnIndex+i)%this.players.length]);
@@ -951,6 +1047,10 @@ class Game{
       }
     }
 
+    if(this.observerMode){
+      this.obs(`🛑 Refuted by ${other.name} (card known only to suggester).`);
+    }
+
     // No one could refute
     log(`No one could refute ${pl.name}'s suggestion.`);
 
@@ -964,6 +1064,10 @@ class Game{
 
     this.applyInference(pl);
     return {refuted:false};
+
+    if(this.observerMode){
+      this.obs(`✅ No one refuted ${pl.name}'s suggestion.`);
+    }
   }
 
   // === Centre-tile "trial" helpers (ACCUSED → NOT GUILTY → revert) ===
@@ -1019,6 +1123,10 @@ class Game{
        <div style="margin-top:10px;color:var(--muted);font-size:12px;">Click OK to reveal the verdict…</div>`
     );
 
+    if(this.observerMode){
+      this.obs(`⚖️ ${pl.name} ACCUSES: ${displaySuspect(acc.suspect)} / ${acc.weapon} / ${acc.room}`);
+    }
+
     // 2) Determine verdict
     const ok = this.checkAccusation(acc);
 
@@ -1031,6 +1139,10 @@ class Game{
       this.trial = null;
 
       renderAll(this);
+
+      if(this.observerMode){
+        this.obs(`👮‍♂️ CONVICTED: ${pl.name} wins.`);
+      }
 
       await showInfoPrompt('Game Over',
         `<div><b>${pl.name}</b> wins!</div>
@@ -1049,6 +1161,10 @@ class Game{
     // Switch centre tile to NOT GUILTY (pale yellow), keep tokens there for the prompt/summary
     if(this.trial) this.trial.stage = 'notguilty';
     renderAll(this);
+
+    if(this.observerMode){
+      this.obs(`🕊 NOT GUILTY: ${pl.name} eliminated from taking turns.`);
+    }
 
     if(pl.isHuman){
       // Human: use the existing Wrong Accusation prompt (plus the revert behaviour after OK)
@@ -1227,6 +1343,7 @@ class Game{
 
     const summary=[];
     log(`${pl.name}'s turn…`);
+    if(this.observerMode) this.obs(`▶ ${pl.name} turn started.`);
     summary.push('Turn started.');
     await sleep(650);
     if(!this.isActiveSession(sid)) return;
@@ -1386,6 +1503,8 @@ class Game{
       if (this.gameOver) return;
     }
 
+    if(this.observerMode) this.obs(`■ ${pl.name} turn ended.`);
+
     summary.push('Turn ended.');
     await this.showOpponentTurnSummary(pl,summary);
     // If AI made a wrong accusation, revert the centre display AFTER the summary is dismissed
@@ -1431,7 +1550,9 @@ function renderPlayers(game){
     div.style.alignItems='center';div.style.padding='6px 0';
     div.style.borderBottom='1px solid rgba(255,255,255,.06)';
     const left=document.createElement('div');
-    const label=p.isHuman?`You (${p.name})`:p.name;
+    let label;
+    if(game.observerMode && p.id===game.observerFocusId) label = `Observer Focus (${p.name})`;
+    else label = p.isHuman ? `You (${p.name})` : p.name;
     left.innerHTML=`<b>${label}</b> <span style="color:var(--muted);font-size:12px;">@ ${p.location}</span> ${p.eliminated?`<span class="pill bad" style="margin-left:6px;">eliminated</span>`:''}`;
     const right=document.createElement('div');
     const isTurn=idx===game.turnIndex && !game.gameOver;
@@ -1496,6 +1617,149 @@ function renderNotebook(game){
   renderList('noteSuspects','Suspect',SUSPECTS);
   renderList('noteWeapons','Weapon',WEAPONS);
   renderList('noteRooms','Room',ROOMS);
+}
+
+function renderObserverCasebook(game){
+  const focus = game.players[game.observerFocusId];
+  const boxSus = el('noteSuspects');
+  const boxWep = el('noteWeapons');
+  const boxRoom = el('noteRooms');
+
+  // Replace panel headers dynamically (optional)
+  const rightPanel = document.querySelector('.rightPanel h2');
+  if(rightPanel) rightPanel.textContent = 'Observer Casebook';
+
+  // Ensure containers exist
+  if(!boxSus || !boxWep || !boxRoom) return;
+
+  // Build checklist rows
+  const playersById = new Map(game.players.map(p=>[p.id,p.name]));
+
+  const statusInfo = (type,name)=>{
+    const key = focus.cardKey(type,name);
+
+    // OWN
+    if(focus.own.has(key)) return { crossed:true, label:'(own)', cls:'own' };
+
+    const meta = focus.knowledgeMeta.get(key);
+
+    // SEEN / DEDUCED / ELIMINATED (provenance-first)
+    if(meta?.status === 'seen'){
+      return { crossed:true, label:`(seen: ${playersById.get(meta.ownerId) ?? 'unknown'})`, cls:'seen' };
+    }
+    if(meta?.status === 'deduced'){
+      return { crossed:true, label:`(deduced: ${playersById.get(meta.ownerId) ?? 'unknown'})`, cls:'deduced' };
+    }
+    if(meta?.status === 'eliminated'){
+      return { crossed:true, label:`(eliminated)`, cls:'elim' };
+    }
+
+    // If it is "seen" with known owner but meta missing
+    if(focus.seen.has(key)){
+      const ownerId = focus.knownOwners.get(key);
+      if(ownerId !== undefined) return { crossed:true, label:`(seen: ${playersById.get(ownerId) ?? 'unknown'})`, cls:'seen' };
+      return { crossed:true, label:`(eliminated)`, cls:'elim' };
+    }
+
+    // Unknown
+    return { crossed:false, label:'', cls:'' };
+  };
+
+  // Sherlock: probability of being in the case file
+  const solProb = (type,name)=>{
+    if(game.aiDifficulty!=='sherlock') return null;
+    const key = focus.cardKey(type,name);
+
+    // If it’s crossed off, treat as 0 chance
+    if(focus.seen.has(key)) return 0;
+
+    const w = focus.ownerWeights?.get(key);
+    if(!w) return 0.0;
+
+    let maxW = 0;
+    for(const v of w.values()) maxW = Math.max(maxW, v);
+    const p = Math.max(0, Math.min(1, 1 - maxW));
+    return p;
+  };
+
+  const SUS_ICON = {"Green":"🎩","Mustard":"🎖️","Scarlet":"💋","Peacock":"💎","Plum":"💼","White":"👜"};
+  const WEP_ICON = {"Candlestick":"🕯️","Dagger":"🗡️","Lead Pipe":"🦯","Revolver":"🔫","Rope":"🪢","Wrench":"🔧"};
+
+  const renderList = (target, type, list, iconMap, roomIcons=false)=>{
+    target.innerHTML = '';
+    for(const name of list){
+      const info = statusInfo(type,name);
+      const p = solProb(type,name); // sherlock only
+
+      const row = document.createElement('div');
+      row.className = 'noteitem' + (info.crossed ? ' cleared':'');
+      row.style.gridTemplateColumns = (game.aiDifficulty==='sherlock')
+       ? 'auto 1fr 160px auto'  // icon+name | prob | status
+       : 'auto 1fr auto';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'name';
+      const ico = roomIcons ? (ROOM_ICON[name] || '') : (iconMap?.[name] || '');
+      nameSpan.innerHTML = (ico ? `<span class="ico" aria-hidden="true">${ico}</span>`:'') + displayCardName(type,name);
+
+      // Sherlock progress bar
+      let probWrap = null;
+      if(game.aiDifficulty==='sherlock'){
+        probWrap = document.createElement('div');
+        probWrap.className = 'probWrap';
+        const bar = document.createElement('div');
+        bar.className = 'probBar';
+        bar.style.width = `${Math.round((p||0)*100)}%`;
+        const pct = document.createElement('div');
+        pct.className = 'probPct';
+        pct.textContent = `${Math.round((p||0)*100)}%`;
+        probWrap.appendChild(bar);
+        probWrap.appendChild(pct);
+      }
+
+      const status = document.createElement('span');
+      status.style.color = 'var(--muted)';
+      status.style.fontSize = '12px';
+      status.style.whiteSpace = 'nowrap';
+      status.textContent = info.label;
+
+      // assemble
+      if(game.aiDifficulty==='sherlock'){
+        row.appendChild(nameSpan);
+        row.appendChild(probWrap);
+        row.appendChild(status);
+      }else{
+        row.appendChild(nameSpan);
+        row.appendChild(status);
+      }
+      target.appendChild(row);
+    }
+  };
+
+  renderList(boxSus, 'Suspect', SUSPECTS, SUS_ICON, false);
+  renderList(boxWep, 'Weapon', WEAPONS, WEP_ICON, false);
+  renderList(boxRoom,'Room',  ROOMS,  null,   true);
+
+  // Smart/Sherlock: show deductions log under Rooms
+  // (or create a dedicated container if you prefer)
+  if(game.aiDifficulty==='smart' || game.aiDifficulty==='sherlock'){
+    const logId = 'observerDeduceLog';
+    let logBox = document.getElementById(logId);
+    if(!logBox){
+      logBox = document.createElement('div');
+      logBox.id = logId;
+      logBox.className = 'log';
+      logBox.style.marginTop = '10px';
+      boxRoom.parentElement?.appendChild(logBox);
+    }
+    logBox.textContent = (game.obsLog && game.obsLog.length)
+     ? game.obsLog.slice(-200).join('\n')
+     : '(deductions log will appear here)';
+  }else{
+    // Basic: remove log if present
+    const logBox = document.getElementById('observerDeduceLog');
+    if(logBox) logBox.remove();
+  }
 }
 
 function renderBoard(game){
@@ -1628,7 +1892,13 @@ function renderBoard(game){
   board.appendChild(center);
 }
 
-function renderAll(game){renderPlayers(game);renderHand(game);renderNotebook(game);renderBoard(game);}
+function renderAll(game){
+  renderPlayers(game);
+  renderHand(game);
+  if(game.observerMode) renderObserverCasebook(game);
+  else renderNotebook(game);
+  renderBoard(game);
+}
 
 /* Startup */
 const game=new Game();
@@ -1636,10 +1906,29 @@ const game=new Game();
   try{
     clearGameplayPrompt();
     const setup = await promptGameSetup();
-    game.aiDifficulty = normDiff(setup.diff);  // normalize
+    game.aiDifficulty = normDiff(setup.diff);
+    game.observerMode = !!setup.observer;
+    game.observerFocusId = 0;
+
     game.resetPlayers(setup.opp);
-    const pick=await promptHumanSuspect(SUSPECTS);
+
+    // In observer mode, Player 1 is AI (no human prompts during play)
+    if(game.observerMode){
+      game.players[0].isHuman = false; // critical: prevents "human" refute prompts
+      game.players[0].name = `Player 1`; // temporary until suspect assigned
+    }
+
+    // Choose focus suspect (optional but recommended)
+    const pick = await promptHumanSuspect(SUSPECTS);
+    // You can rename the prompt title/body if observer mode (see below)
     game.assignSuspects(pick);
+
+    // After assignSuspects, set a nicer label for Player 1 in observer mode
+    if(game.observerMode){
+      game.players[0].name = displaySuspect(game.players[0].suspect); // keep consistent
+    }
+    this.players.forEach(p => p.gameRef = this);
+
     game.setup();
     el('btnNewGame').onclick=()=>startNewGame(game);
     await game.beginTurn();
@@ -1684,12 +1973,32 @@ async function startNewGame(game,{skipConfirm=false}={}){
   if(!ok) return;
 
   resetUIForSetup();
-  const setup=await promptGameSetup();
+  const setup = await promptGameSetup();
   game.aiDifficulty = normDiff(setup.diff);
+  game.observerMode = !!setup.observer;
+  game.observerFocusId = 0;
+
   game.resetPlayers(setup.opp);
-  const pick=await promptHumanSuspect(SUSPECTS);
+
+  // In observer mode, Player 1 is AI (no human prompts during play)
+  if(game.observerMode){
+    game.players[0].isHuman = false; // critical: prevents "human" refute prompts
+    game.players[0].name = `Player 1`; // temporary until suspect assigned
+  }
+
+  // Choose focus suspect (optional but recommended)
+  const pick = await promptHumanSuspect(SUSPECTS);
+  // You can rename the prompt title/body if observer mode (see below)
   game.assignSuspects(pick);
+
+  // After assignSuspects, set a nicer label for Player 1 in observer mode
+  if(game.observerMode){
+    game.players[0].name = displaySuspect(game.players[0].suspect); // keep consistent
+  }
+  this.players.forEach(p => p.gameRef = this);
+
   game.setup();
+  el('btnNewGame').onclick=()=>startNewGame(game);
   await game.beginTurn();
 }
 </script>
