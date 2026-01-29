@@ -190,7 +190,7 @@
 <body>
 <header>
   <h1>🔍 ClueSolo</h1>
-  <div class="sub">Just like the classic detective game ... but you're alone! (v6.3)</div>
+  <div class="sub">Just like the classic detective game ... but you're alone! (v7.0)</div>
 </header>
 <div class="layout">
   <div class="panel leftPanel">
@@ -628,7 +628,7 @@ class Player{
       const me = this.gameRef.players?.[this.id]?.name ?? `P${this.id}`;
       const who = this.gameRef.players?.[refuterId]?.name ?? `P${refuterId}`;
       const list = [...keys].join(', ');
-      this.gameRef.obs(`🧠 ${me}: Constraint added → ${who} must hold ONE of { ${list} }`);
+      this.gameRef.obs(`🧠 ${me}: Constraint added → ${who} must hold ONE of { ${list} }`, { byPlayerId: this.id });
     }
 
     this.propagateConstraints();
@@ -676,7 +676,7 @@ class Player{
           if(this.gameRef?.observerMode && (this.gameRef.aiDifficulty==='smart' || this.gameRef.aiDifficulty==='sherlock')){
             const me = this.gameRef.players?.[this.id]?.name ?? `P${this.id}`;
             const ownerName = this.gameRef.players?.[c.refuterId]?.name ?? `P${c.refuterId}`;
-            this.gameRef.obs(`🧠 ${me}: Deduction → ${ownerName} MUST own ${onlyKey} (only option left in constraint).`);
+            this.gameRef.obs(`🧠 ${me}: Deduction → ${ownerName} MUST own ${onlyKey} (only option left in constraint).`, { byPlayerId: this.id });
           }
 
           this.constraints.splice(i,1);
@@ -712,12 +712,12 @@ class Player{
         const who = this.gameRef.players[playerId]?.name ?? `P${playerId}`;
         const afterCase = this._pCaseNorm(c);
         const afterOwn  = this._pOwner(c, playerId);
-        this.gameRef.obs(`🧠 Update (no-refute by ${who}): ${c.type}:${c.name} → P(case-file) ${this._pct(beforeCase)}→${this._pct(afterCase)}, P(${who}) ${this._pct(beforeOwn)}→${this._pct(afterOwn)} (penalised owner).`);
+        this.gameRef.obs(`🧠 Update (no-refute by ${who}): ${c.type}:${c.name} → P(case-file) ${this._pct(beforeCase)}→${this._pct(afterCase)}, P(${who}) ${this._pct(beforeOwn)}→${this._pct(afterOwn)} (penalised owner).`, { byPlayerId: this.id });
       }
 
       if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
         const who = this.gameRef.players[playerId]?.name ?? `P${playerId}`;
-        this.gameRef.obs(`🧠 NO-REFUTE signal: ${who} could not refute (${triple.map(c=>this.cardKey(c.type,c.name)).join(', ')}). Downweighted ownership.`);
+        this.gameRef.obs(`🧠 NO-REFUTE signal: ${who} could not refute (${triple.map(c=>this.cardKey(c.type,c.name)).join(', ')}). Downweighted ownership.`, { byPlayerId: this.id });
       }
     }
   }
@@ -742,7 +742,7 @@ class Player{
         const who = this.gameRef.players[refuterId]?.name ?? `P${refuterId}`;
         const afterCase = this._pCaseNorm(c);
         const afterOwn  = this._pOwner(c, refuterId);
-        this.gameRef.obs(`🧠 Update (refute by ${who}): ${c.type}:${c.name} → P(case-file) ${this._pct(beforeCase)}→${this._pct(afterCase)}, P(${who}) ${this._pct(beforeOwn)}→${this._pct(afterOwn)} (boosted refuter).`);
+        this.gameRef.obs(`🧠 Update (refute by ${who}): ${c.type}:${c.name} → P(case-file) ${this._pct(beforeCase)}→${this._pct(afterCase)}, P(${who}) ${this._pct(beforeOwn)}→${this._pct(afterOwn)} (boosted refuter).`, { byPlayerId: this.id });
       }
 
       if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
@@ -771,7 +771,7 @@ class Player{
       const who = this.gameRef.players[ownerId]?.name ?? `P${ownerId}`;
       const afterCase = this._pCaseNorm(card);
       const afterOwn  = this._pOwner(card, ownerId);
-      this.gameRef.obs(`🧠 Saw exact card: ${who} showed ${card.type}:${card.name} → P(case-file)=${this._pct(afterCase)}; P(${who})=${this._pct(afterOwn)} (locked owner).`);
+      this.gameRef.obs(`🧠 Saw exact card: ${who} showed ${card.type}:${card.name} → P(case-file)=${this._pct(afterCase)}; P(${who})=${this._pct(afterOwn)} (locked owner).`, { byPlayerId: this.id });
     }
   }
 
@@ -787,7 +787,7 @@ class Player{
     this.clampAndNormalizeWeights(key);
 
     if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
-      this.gameRef.obs(`🧠 CASE FILE LOCK: ${key} is placed in the case file (belief≈1.00).`);
+      this.gameRef.obs(`🧠 CASE FILE LOCK: ${key} is placed in the case file (belief≈1.00).`, { byPlayerId: this.id });
     }
   }
   // --- Sherlock: category-normalised probability that an item is in the case file ---
@@ -938,10 +938,14 @@ class Game{
     this.resetPlayers(2);
   }
 
-  obs(msg){
+  obs(msg, { byPlayerId = null } = {}){
     // Rolling observer deductions log (Smart/Sherlock only)
     if(!this.observerMode) return;
-    if(this.aiDifficulty === 'basic') return;
+    if(this.aiDifficulty === 'basic') return; // Basic shows checklist only
+
+    // ✅ Focus-only: only record if it's the observer focus player's reasoning
+    if(byPlayerId !== null && byPlayerId !== this.observerFocusId) return;
+
     const t = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
     this.obsLog.push(`[${t}] ${msg}`);
     if(this.obsLog.length > this.obsLogMax) this.obsLog.shift();
@@ -1142,7 +1146,7 @@ class Game{
     log(`${pl.name} suggests: ${displaySuspect(suspect)} in the ${room} with the ${weapon}.`);
 
     if(this.observerMode){
-      this.obs(`🧠 Observed suggestion: ${pl.name} tested { Suspect:${suspect}, Weapon:${weapon}, Room:${room} } to gain information.`);
+      this.obs(`🧠 Observed: ${pl.name} tested { Suspect:${suspect}, Weapon:${weapon}, Room:${room} } (public information).`, { byPlayerId: this.observerFocusId });
     }
 
     // Resolve refutations in order
@@ -1160,7 +1164,7 @@ class Game{
         }else{
           shown=choice(matches);log(`${other.name} refutes the suggestion.`);
           if(this.observerMode){
-            this.obs(`🧠 Observation: nobody refuted → any suggested card not in ${pl.name}'s hand must be in the case file (no-refute rule applied).`);
+            this.obs(`🧠 Inference: nobody refuted ${pl.name}'s suggestion → any suggested card NOT in ${pl.name}'s hand must be in the case file (no-refute rule).`, { byPlayerId: this.observerFocusId });
           }
 
         }
@@ -1209,7 +1213,7 @@ class Game{
         // ✅ Smart/Sherlock reasoning log (observer mode): "X could not refute → X has none of {A,B,C}"
         if(this.observerMode && (this.aiDifficulty==='smart' || this.aiDifficulty==='sherlock')){
           const cards = triple.map(c=>`${c.type}:${c.name}`).join(', ');
-          this.obs(`🧠 Observed: ${other.name} could not refute → ${other.name} holds NONE of { ${cards} }`);
+          this.obs(`🧠 Inference (from table): ${other.name} could not refute → ${other.name} holds NONE of { ${cards} }`, { byPlayerId: this.observerFocusId });
         }
 
         // continue to next 'other'
