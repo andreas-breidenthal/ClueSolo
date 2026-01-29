@@ -190,7 +190,7 @@
 <body>
 <header>
   <h1>🔍 ClueSolo</h1>
-  <div class="sub">Just like the classic detective game ... but you're alone! (v6.1)</div>
+  <div class="sub">Just like the classic detective game ... but you're alone! (v6.2)</div>
 </header>
 <div class="layout">
   <div class="panel leftPanel">
@@ -487,6 +487,10 @@ const ALL_CARDS = [
   ...ROOMS.map(n => ({type:'Room', name:n}))
 ];
 
+// Case file / envelope is treated as an additional "owner" in Sherlock beliefs
+const CASE_FILE_ID = -1;
+const CASE_FILE_NAME = 'Case File';
+
 /* Game Model */
 class Player{
   constructor(id,isHuman=false,suspect=null){
@@ -527,9 +531,17 @@ class Player{
     for(const c of ALL_CARDS){
       const key=this.cardKey(c.type,c.name);
       const w=new Map();
+
+      // All players start equally likely to own the card...
       for(const p of players) w.set(p.id, 1.0);
+
+      // ...and the case file is also a possible "owner"
+      w.set(CASE_FILE_ID, 1.0);
+
       this.ownerWeights.set(key, w);
+      this.clampAndNormalizeWeights(key);
     }
+
     // I own my cards with certainty (others near-floor)
     for(const c of this.hand){
       const key=this.cardKey(c.type,c.name);
@@ -588,6 +600,13 @@ class Player{
     this.seen.add(key);
     if(!this.knownOwners.has(key)){
       this.knowledgeMeta.set(key,{status:'eliminated'});
+    }
+    
+    // Sherlock: eliminated means "not in case file"
+    const w = this.ownerWeights?.get(key);
+    if(w){
+      w.set(CASE_FILE_ID, AI_CFG.sherlock.weightFloor);
+      this.clampAndNormalizeWeights(key);
     }
   }
 
@@ -709,13 +728,69 @@ class Player{
     const w=this.ownerWeights.get(key);
     if(w){
       for(const [pid] of w) w.set(pid, AI_CFG.sherlock.weightFloor);
+      w.set(CASE_FILE_ID, AI_CFG.sherlock.weightFloor); // ✅ cannot be in case file if shown by a player
       w.set(ownerId, AI_CFG.sherlock.weightCeil);
       this.clampAndNormalizeWeights(key);
     }
+
     if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
       const ownerName = this.gameRef.players[ownerId]?.name ?? `P${ownerId}`;
       this.gameRef.obs(`🧠 SAW CARD: ${ownerName} showed ${this.cardKey(card.type,card.name)} (set prob≈0 for case file).`);
     }
+  }
+
+  // Sherlock beliefs: lock a specific card into the case file with near-certainty
+  noteCaseFileCard(card){
+    const key = this.cardKey(card.type,card.name);
+    const w = this.ownerWeights.get(key);
+    if(!w) return;
+
+    // Set all owners (players) to floor, and case-file to ceil
+    for(const [pid] of w) w.set(pid, AI_CFG.sherlock.weightFloor);
+    w.set(CASE_FILE_ID, AI_CFG.sherlock.weightCeil);
+    this.clampAndNormalizeWeights(key);
+
+    if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
+      this.gameRef.obs(`🧠 CASE FILE LOCK: ${key} is placed in the case file (belief≈1.00).`);
+    }
+  }
+  // --- Sherlock: category-normalised probability that an item is in the case file ---
+  // Ensures probabilities within each category (Suspect/Weapon/Room) sum to 1
+  // across remaining (not cleared) candidates.
+  caseFileProbNormalized(type, name){
+    // If already cleared/eliminated/owned/seen, it cannot be in the case file
+    if(this.isCleared(type, name)) return 0;
+
+    const list = (type==='Suspect'?SUSPECTS : type==='Weapon'?WEAPONS : ROOMS);
+
+    // Remaining candidates in this category (not cleared)
+    const remaining = list.filter(n => !this.isCleared(type, n));
+
+    // If only one remains, it must be the case-file item for this category
+    if(remaining.length === 1){
+      return (remaining[0] === name) ? 1 : 0;
+    }
+
+    // Sum raw P(case file) over remaining candidates
+    let sum = 0;
+    for(const n of remaining){
+      const key = this.cardKey(type, n);
+      const w = this.ownerWeights.get(key);
+      const pCase = w ? (w.get(CASE_FILE_ID) ?? 0) : 0;
+      sum += pCase;
+    }
+
+    // If everything collapsed near zero, fall back to uniform over remaining
+    if(sum <= 1e-9){
+      return 1 / remaining.length;
+    }
+
+    // Normalised value for this item
+    const key = this.cardKey(type, name);
+    const w = this.ownerWeights.get(key);
+    const pCase = w ? (w.get(CASE_FILE_ID) ?? 0) : 0;
+
+    return pCase / sum;
   }
 
   // Entropy of ownership distribution for a card (higher => more uncertain/informative)
@@ -755,21 +830,24 @@ class Player{
     };
   }
 
-  // For solution-likelihood, we use: 1 - max_owner_weight(card).
+  // Sherlock: pick the most likely case-file item in a category using category-normalised probabilities
   beliefsTopFor(type){
-    const list = (type==='Suspect'?SUSPECTS: type==='Weapon'?WEAPONS: ROOMS);
+    const list = (type==='Suspect'?SUSPECTS : type==='Weapon'?WEAPONS : ROOMS);
+
     let bestName=null, bestVal=-1, second=-1;
+
     for(const name of list){
-      const key=this.cardKey(type,name);
-      const w=this.ownerWeights.get(key);
-      let maxW=0;
-      if(w) for(const val of w.values()) if(val>maxW) maxW=val;
-      const solLikely = 1 - maxW; // higher => more likely to be in solution
-      if(solLikely>bestVal){ second=bestVal; bestVal=solLikely; bestName=name; }
-      else if(solLikely>second){ second=solLikely; }
+      if(this.isCleared(type, name)) continue;
+
+      const p = this.caseFileProbNormalized(type, name);
+
+      if(p > bestVal){ second = bestVal; bestVal = p; bestName = name; }
+      else if(p > second){ second = p; }
     }
+
     const margin = Math.max(0.0001, bestVal - Math.max(0, second));
-    const confidence = Math.max(0, Math.min(1, (bestVal * 0.7) + (margin * 0.3)));
+    const confidence = Math.max(0, Math.min(1, (bestVal * 0.75) + (margin * 0.25)));
+
     return { name: bestName, confidence };
   }
 
@@ -907,25 +985,37 @@ class Game{
     renderAll(this);
   }
 
-  // BASIC-only rule:
-  // If NO ONE can refute the BASIC AI's own suggestion, then for each suggested card
-  // that the AI does NOT personally hold, the AI can conclude it must be in the case file.
-  // Therefore it marks all OTHER cards in that category as "seen/cleared".
-  basicNoRefuteDeduction(pl, { suspect, weapon, room }){
+  // NO-REFUTE deduction (ALL difficulties):
+  // If no one refutes an AI's suggestion, then for each suggested card that the AI does NOT hold,
+  // that card must be in the case file. Therefore eliminate all OTHER cards in that category.
+  noRefuteDeduction(pl, { suspect, weapon, room }){
     const owns = (type, name) => pl.hand.some(c => c.type === type && c.name === name);
-
-    const markAllOthersEliminated = (type, keepName, list) => {
-      for(const n of list){
-        if(n !== keepName) pl.markEliminated(type, n);
+  
+    const eliminateAllOthers = (type, keepName, list) => {
+      for (const n of list) {
+        if (n !== keepName) pl.markEliminated(type, n);
       }
     };
+  
+    // Only deduce a category if the suggester does NOT personally hold that suggested card.
+    if (!owns('Suspect', suspect)) {
+      eliminateAllOthers('Suspect', suspect, SUSPECTS);
+      // Sherlock belief: this suspect is in the case file
+      if(pl.ownerWeights && pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Suspect',name:suspect});
+    }
 
-    if(!owns('Suspect', suspect)) markAllOthersEliminated('Suspect', suspect, SUSPECTS);
-    if(!owns('Weapon', weapon)) markAllOthersEliminated('Weapon', weapon, WEAPONS);
-    if(!owns('Room',  room))  markAllOthersEliminated('Room',  room,  ROOMS);
+    if (!owns('Weapon', weapon)) {
+      eliminateAllOthers('Weapon', weapon, WEAPONS);
+      if(pl.ownerWeights && pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Weapon',name:weapon});
+    }
 
-    if(pl.gameRef?.observerMode){
-      pl.gameRef.obs(`🧾 BASIC elimination: No one refuted ${pl.name}'s suggestion; category exclusions applied.`);
+    if (!owns('Room', room)) {
+      eliminateAllOthers('Room', room, ROOMS);
+      if(pl.ownerWeights && pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Room',name:room});
+    }
+  
+    if (this.observerMode){
+      this.obs(`🧾 NO-REFUTE deduction applied for ${pl.name}: eliminated non-matching cards in any category where ${pl.name} does not hold the suggested card.`);
     }
   }
 
@@ -935,9 +1025,18 @@ class Game{
             w=pl.isCleared('Weapon',t.weapon),
             r=pl.isCleared('Room',t.room);
       if((s?1:0)+(w?1:0)+(r?1:0)===2){
-        if(!s){SUSPECTS.forEach(x=>{if(x!==t.suspect) pl.markEliminated('Suspect',x);});}
-        if(!w){WEAPONS.forEach(x=>{if(x!==t.weapon) pl.markEliminated('Weapon',x);});}
-        if(!r){ROOMS.forEach(x=>{if(x!==t.room) pl.markEliminated('Room',x);});}
+        if(!s){
+          SUSPECTS.forEach(x=>{ if(x!==t.suspect) pl.markEliminated('Suspect',x); });
+          if(pl.ownerWeights && pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Suspect',name:t.suspect});
+        }
+        if(!w){
+          WEAPONS.forEach(x=>{ if(x!==t.weapon) pl.markEliminated('Weapon',x); });
+          if(pl.ownerWeights && pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Weapon',name:t.weapon});
+        }
+        if(!r){
+          ROOMS.forEach(x=>{ if(x!==t.room) pl.markEliminated('Room',x); });
+          if(pl.ownerWeights && pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Room',name:t.room});
+        }
       }
     }
   }
@@ -1059,17 +1158,20 @@ class Game{
       this.obs(`✅ No one refuted ${pl.name}'s suggestion.`);
     }
 
-    // BASIC: apply the "no-refute" deduction immediately on the suggester's own turn only.
-    if(!pl.isHuman && this.aiDifficulty === 'basic'){
-      this.basicNoRefuteDeduction(pl, { suspect, weapon, room });
-    } else {
-      // Smart/Sherlock can keep unrefuted history for later inference rules.
+    // Apply NO-REFUTE deduction for ALL difficulties (AI only).
+    if(!pl.isHuman){
+      this.noRefuteDeduction(pl, { suspect, weapon, room });
+    }
+
+    // Smart/Sherlock can still keep unrefuted history for mild inference later.
+    // (Basic won't use it, but keeping it doesn't hurt.)
+    if(!pl.isHuman){
       pl.unrefuted.push({suspect,weapon,room});
     }
 
-    this.applyInference(pl);
-    return {refuted:false};
-  }
+        this.applyInference(pl);
+        return {refuted:false};
+      }
 
   // === Centre-tile "trial" helpers (ACCUSED → NOT GUILTY → revert) ===
   beginTrial(pl, acc){
@@ -1474,7 +1576,8 @@ class Game{
     // B) Sherlock++: belief-aware early accusation (bold, sometimes wrong)
     else if(!pl.eliminated && isSherlock(this.aiDifficulty)){
       const plan = pl.planAccusationWithBeliefs();
-      if (plan && plan.confidence >= AI_CFG.sherlock.earlyAccuseMinConfidence) {
+      const hasEvidence = (pl.seen.size > pl.own.size) || pl.constraints.length > 0 || pl.unrefuted.length > 0;
+      if (hasEvidence && plan && plan.confidence >= AI_CFG.sherlock.earlyAccuseMinConfidence) {
         if (Math.random() < AI_CFG.sherlock.earlyAccuseChance) {
           await sleep(650);
           if(!this.isActiveSession(sid)) return;
@@ -1485,7 +1588,7 @@ class Game{
             summary.push('Verdict: 🕊 NOT GUILTY (eliminated).');
           }
         }
-      } else if (Math.random() < AI_CFG.sherlock.mistakeRate) {
+      } else if (hasEvidence && Math.random() < AI_CFG.sherlock.mistakeRate) {
         // Rare outright mistake to feel human
         await sleep(650);
         if(!this.isActiveSession(sid)) return;
@@ -1674,13 +1777,17 @@ function renderObserverCasebook(game){
     // If it’s crossed off, treat as 0 chance
     if(focus.seen.has(key)) return 0;
 
+    // ✅ Use category-normalised probability so each category sums to 1 across remaining candidates
+    if(typeof focus.caseFileProbNormalized === 'function'){
+      return focus.caseFileProbNormalized(type, name);
+    }
+
+    // Fallback (shouldn't happen): raw value
     const w = focus.ownerWeights?.get(key);
     if(!w) return 0.0;
+    const pCase = w.get(CASE_FILE_ID) ?? 0;
+    return Math.max(0, Math.min(1, pCase));
 
-    let maxW = 0;
-    for(const v of w.values()) maxW = Math.max(maxW, v);
-    const p = Math.max(0, Math.min(1, 1 - maxW));
-    return p;
   };
 
   const SUS_ICON = {"Green":"🎩","Mustard":"🎖️","Scarlet":"💋","Peacock":"💎","Plum":"💼","White":"👜"};
