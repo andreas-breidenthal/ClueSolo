@@ -800,6 +800,24 @@ class Game{
     renderAll(this);
   }
 
+  // BASIC-only rule:
+  // If NO ONE can refute the BASIC AI's own suggestion, then for each suggested card
+  // that the AI does NOT personally hold, the AI can conclude it must be in the case file.
+  // Therefore it marks all OTHER cards in that category as "seen/cleared".
+  basicNoRefuteDeduction(pl, { suspect, weapon, room }){
+    const owns = (type, name) => pl.hand.some(c => c.type === type && c.name === name);
+
+    const markAllOthersSeen = (type, keepName, list) => {
+      for(const n of list){
+        if(n !== keepName) pl.seen.add(pl.cardKey(type, n));
+      }
+    };
+
+    if(!owns('Suspect', suspect)) markAllOthersSeen('Suspect', suspect, SUSPECTS);
+    if(!owns('Weapon',  weapon))  markAllOthersSeen('Weapon',  weapon,  WEAPONS);
+    if(!owns('Room',    room))    markAllOthersSeen('Room',    room,    ROOMS);
+  }
+
   applyMildInference(pl){
     for(const t of pl.unrefuted){
       const s=pl.isCleared('Suspect',t.suspect),
@@ -815,12 +833,14 @@ class Game{
 
   applyInference(pl){
     if(pl.isHuman) return;
-    if(isAdvancedAI(this.aiDifficulty)){
-      pl.propagateConstraints();
-      this.applyMildInference(pl);
-    } else {
-      this.applyMildInference(pl);
-    }
+
+    // BASIC: no inference pipeline at all.
+    // Basic only uses literal seen cards and the immediate "no one could refute MY suggestion" rule.
+    if(this.aiDifficulty === 'basic') return;
+
+    // SMART / SHERLOCK: normal inference
+    pl.propagateConstraints();
+    this.applyMildInference(pl);
   }
 
   async makeSuggestion(pl,suspect,weapon,room){
@@ -917,7 +937,15 @@ class Game{
 
     // No one could refute
     log(`No one could refute ${pl.name}'s suggestion.`);
-    pl.unrefuted.push({suspect,weapon,room});
+
+    // BASIC: apply the "no-refute" deduction immediately on the suggester's own turn only.
+    if(!pl.isHuman && this.aiDifficulty === 'basic'){
+      this.basicNoRefuteDeduction(pl, { suspect, weapon, room });
+    } else {
+      // Smart/Sherlock can keep unrefuted history for later inference rules.
+      pl.unrefuted.push({suspect,weapon,room});
+    }
+
     this.applyInference(pl);
     return {refuted:false};
   }
