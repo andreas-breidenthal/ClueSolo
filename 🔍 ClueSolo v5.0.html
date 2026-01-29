@@ -55,6 +55,8 @@
   }
   .room{border:1px solid var(--border);border-radius:12px;padding:10px;background:rgba(0,0,0,.15);min-height:96px;position:relative}
   .room .title{font-weight:900}.room .tokens{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+  .room .tokens{align-items:flex-start;align-content:flex-start;}
+  .room .tokens .token{align-self:flex-start;}
   .room.reachable{outline:2px solid rgba(96,165,250,.55)}.room.here{outline:2px solid rgba(52,211,153,.55)}
   .room button{position:absolute;right:10px;top:10px;padding:6px 8px;border-radius:10px;font-size:12px}
   .log{height:200px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.35;background:rgba(0,0,0,.18);border:1px solid var(--border);border-radius:12px;padding:10px;white-space:pre-wrap}
@@ -1553,7 +1555,9 @@ function renderBoard(game){
   const makeRoomToken = (roomName) => {
     if(!roomName) return '';
     const icon = ROOM_ICON[roomName] || '🏷️';
-    return `<span class="token room" title="${roomName}">
+    // Render like other tokens to keep consistent sizing
+    return `<span class="token room" data-color="1" title="${roomName}"
+                  style="--token-color: rgba(248,250,252,.85);">
               <span class="ico" aria-hidden="true">${icon}</span>${roomName}
             </span>`;
   };
