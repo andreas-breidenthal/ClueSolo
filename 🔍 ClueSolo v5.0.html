@@ -60,6 +60,9 @@
   .room.reachable{outline:2px solid rgba(96,165,250,.55)}.room.here{outline:2px solid rgba(52,211,153,.55)}
   .room button{position:absolute;right:10px;top:10px;padding:6px 8px;border-radius:10px;font-size:12px}
   .log{height:200px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.35;background:rgba(0,0,0,.18);border:1px solid var(--border);border-radius:12px;padding:10px;white-space:pre-wrap}
+  
+/* Ensure centre room-token doesn't inflate compared to other tokens */
+  .room.center .tokens .token.room{ line-height:1.1; padding:3px 7px; }
 
 /* —— Checklist (with per-item single-line notes) —— */
 /* Wide / default: [checkbox] [label] [note input] on one line */
