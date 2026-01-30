@@ -1,11 +1,5 @@
 <!-- SECTION: Document Skeleton + Global Styles (Head + <style>) -->
 <!-- Brief: Defines the HTML document metadata and the complete CSS theme/layout for the game UI. -->
-<!-- Detailed: -->
-<!-- - What it does: Sets charset/viewport/title, then establishes CSS variables (theme), layout grid, panels, tokens, board/room visuals, checklist UI, prompts, and responsive rules. -->
-<!-- - What depends on it: ALL DOM elements/classes/IDs rendered later (Controls/Rooms/Casebook/Log/Board tokens) rely on these selectors for positioning, visibility, and appearance. -->
-<!-- - What breaks if changed: Changing selectors/variables can make UI unreadable, misaligned, or hide interactive affordances (e.g., reachable/here outlines, token sizing, mobile stacking). -->
-<!-- ✅ Safe to edit: Purely presentational values (colors, spacing) IF you keep selectors/variable names identical. -->
-<!-- ⚠️ Dangerous to edit: Selector names, class structures, media-query logic, or anything that affects layout flow/visibility (can “break” playability even if logic is unchanged). -->
 
 <!doctype html>
 <html lang="en">
@@ -17,12 +11,6 @@
 <style>
   /* SECTION: Theme Tokens (CSS Variables) */
   /* Brief: Centralized design system for colors and key UI constants. */
-  /* Detailed: */
-  /* - What it does: Defines --bg/--panel/--text/etc. and per-suspect/per-weapon colors used by token styling. */
-  /* - What depends on it: Nearly all rules below reference var(--...) for consistent theming. Tokens also use these for glow/border mixes. */
-  /* - What breaks if changed: Renaming variables breaks all var() references -> fallback/invalid colors; changing suspect/weapon variables affects token color identity. */
-  /* ✅ Safe to edit: Color values only (keep variable names exactly). */
-  /* ⚠️ Dangerous to edit: Variable names or removing variables used elsewhere. */
   :root{
     --bg:#0f172a;
     --panel:#111c33;
@@ -35,31 +23,14 @@
     --border:rgba(255,255,255,0.12);
 
     /* Suspect colours */
-    /* SUBSECTION: Suspect token color palette */
-    /* - What it does: Provides distinct per-suspect colors referenced by .token.suspect.* rules later. */
-    /* - What depends on it: The suspect token classnames (green/mustard/...) set --token-color from these. */
-    /* - What breaks if changed: Incorrect/invalid values reduce readability; renaming variables breaks token styling. */
-    /* ✅ Safe to edit: Hex values only. */
-    /* ⚠️ Dangerous to edit: Variable names (must match later rules). */
     --sus-green:#2D9542;--sus-mustard:#D6AA28;--sus-peacock:#0085B7;--sus-plum:#9C51B6;--sus-scarlet:#ff2400;--sus-white:#f8fafc;
+
     /* Weapon colours */
-    /* SUBSECTION: Weapon token color palette */
-    /* - What it does: Provides distinct per-weapon colors referenced by .token.weapon.* rules later. */
-    /* - What depends on it: Weapon token classnames (candlestick/dagger/...) set --token-color from these. */
-    /* - What breaks if changed: Same risks as suspect palette (readability/identity). */
-    /* ✅ Safe to edit: Hex values only. */
-    /* ⚠️ Dangerous to edit: Variable names. */
     --wep-candle:#FFD700;--wep-dagger:#BB0A1E;--wep-lead:#B7C9E2;--wep-revolver:#D8D8D8;--wep-rope:#BAA38C;--wep-wrench:#879EBF;
   }
 
   /* SECTION: Base Page + Header Layout */
   /* Brief: Establishes global typography, background, and the top header bar styling. */
-  /* Detailed: */
-  /* - What it does: Sets body background gradient + default font; styles header spacing and subdued subtitle. */
-  /* - What depends on it: The <header> element and overall look/feel. */
-  /* - What breaks if changed: Major readability/contrast issues; shifting header sizing can affect sticky panel height calculations (later). */
-  /* ✅ Safe to edit: Colors, fonts, padding (carefully). */
-  /* ⚠️ Dangerous to edit: Removing body margin reset or critical background/contrast values. */
   body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 700px at 30% 0%, #1f2a4a, var(--bg));color:var(--text)}
   header{padding:14px 18px;display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.15)}
   header h1{margin:0;font-size:18px}
@@ -67,12 +38,6 @@
 
   /* SECTION: Three-Column App Layout + Panel “Card” Styling */
   /* Brief: Defines the main grid (left controls, center board, right casebook) and shared panel visuals. */
-  /* Detailed: */
-  /* - What it does: .layout sets 3 columns; .panel provides consistent borders/gradients/shadows; headings and content padding. */
-  /* - What depends on it: All major UI regions are panels inside .layout. */
-  /* - What breaks if changed: Column sizes affect usability; removing overflow hidden can spill content; border radius/shadows are visual only. */
-  /* ✅ Safe to edit: Background gradients/shadows/padding (visual). */
-  /* ⚠️ Dangerous to edit: grid-template-columns (can make UI unusable), overflow/positioning that affects scroll/sticky behavior. */
   .layout{display:grid;grid-template-columns:360px 1fr 420px;gap:12px;padding:12px;align-items:start}
   .panel{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25)}
   .panel h2{margin:0;padding:10px 12px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border);color:#cbd5e1}
@@ -82,12 +47,6 @@
 
   /* SECTION: Generic Flex Rows + Pills (Status Badges) */
   /* Brief: Utility classes for horizontal alignment and badge-like indicators (turn/location/status). */
-  /* Detailed: */
-  /* - What it does: .row creates flex groups; .pill is the small rounded UI badge; .pill.* color variants show good/bad/warn states. */
-  /* - What depends on it: Turn/Location pills, “active/eliminated” indicators, and general inline tags. */
-  /* - What breaks if changed: Removing display:flex or wrapping can cause overlaps; changing pill sizes can affect header control layout. */
-  /* ✅ Safe to edit: Colors, padding, font size (carefully). */
-  /* ⚠️ Dangerous to edit: Class names or removing variants referenced by JS-rendered markup. */
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .row.between{justify-content:space-between}
   .pill{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--muted)}
@@ -97,36 +56,16 @@
 
   /* SECTION: Form Controls (Buttons + Selects) */
   /* Brief: Styles interactive controls used in prompts and panels. */
-  /* Detailed: */
-  /* - What it does: Gives consistent button/select appearance, hover/active feedback, and variant classes (.secondary/.danger/disabled). */
-  /* - What depends on it: New Game button, prompt action buttons, dropdowns in setup/suggestion/accusation prompts. */
-  /* - What breaks if changed: Removing :disabled styles affects affordance; changing cursor/hover is visual; changing class names breaks variant styling. */
-  /* ✅ Safe to edit: Colors, border radius, padding (visual). */
-  /* ⚠️ Dangerous to edit: Class names (.secondary/.danger) because JS assigns these by name in prompts. */
   button{cursor:pointer;border:1px solid var(--border);background:rgba(96,165,250,.18);color:var(--text);padding:8px 10px;border-radius:10px;font-weight:700;transition:transform .05s ease, background .2s ease}
   button:hover{background:rgba(96,165,250,.25)}button:active{transform:translateY(1px)}button.secondary{background:rgba(255,255,255,.06)}button.danger{background:rgba(251,113,133,.18)}button:disabled{opacity:.55;cursor:not-allowed}
   select{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,.2);color:var(--text)}
 
   /* SECTION: Board Grid + Room Tiles */
   /* Brief: Defines the board as a CSS grid and each room tile’s base look/interaction states. */
-  /* Detailed: */
-  /* - What it does: .board creates a 12-column grid; .room styles each room panel; .reachable/.here outlines highlight move options and current position. */
-  /* - What depends on it: JS renders board rooms into #board with .room classes; movement UI depends on visible reachability. */
-  /* - What breaks if changed: Changing .board grid structure can misplace rooms; removing outline styles reduces usability (harder to see reachable). */
-  /* ✅ Safe to edit: Colors, shadows, border radius (visual). */
-  /* ⚠️ Dangerous to edit: Class names (.room, .reachable, .here, .center) because JS logic assigns these. */
   .board{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-rows:56px;gap:12px;padding:12px}
   .room.center{background:rgba(255,255,255,0.07);border-style:dashed}
   .room.center.convicted{border-style:solid;background:linear-gradient(180deg, rgba(52,211,153,.15), rgba(255,255,255,.04))}
 
-  /* SECTION: Centre Tile “Trial” Visual States */
-  /* Brief: Provides special styling for the center “Classified Files” tile during accusation flow. */
-  /* Detailed: */
-  /* - What it does: Adds .accused and .notguilty states for the center room tile (orange/yellow tension states). */
-  /* - What depends on it: JS toggles these classes based on game.trial stage; improves readability of accusation events. */
-  /* - What breaks if changed: Removing/renaming these classes means the visual state won’t match the game state, confusing players. */
-  /* ✅ Safe to edit: Gradient colors only (visual). */
-  /* ⚠️ Dangerous to edit: Class selectors (.room.center.accused/.notguilty/.convicted) because renderBoard() assigns them by name. */
   /* Accusation tension states for centre tile */
   .room.center.accused{
     border-style:solid;
@@ -139,12 +78,6 @@
 
   /* SECTION: Room Contents (Title, Tokens, Move Button) */
   /* Brief: Typography and flex layout for token “chips” inside each room, plus the per-room Move button positioning. */
-  /* Detailed: */
-  /* - What it does: .tokens wraps tokens; alignment rules prevent stretching; Move button is absolutely positioned top-right. */
-  /* - What depends on it: Token chips for suspects/weapons/center holdings; move button appears on reachable rooms. */
-  /* - What breaks if changed: Token alignment changes can cause cramped or overflowing rooms; moving the button can overlap titles/tokens. */
-  /* ✅ Safe to edit: Minor spacing/padding (visual). */
-  /* ⚠️ Dangerous to edit: Positioning rules that keep Move button usable and non-overlapping. */
   .room{border:1px solid var(--border);border-radius:12px;padding:10px;background:rgba(0,0,0,.15);min-height:96px;position:relative}
   .room .title{font-weight:900}.room .tokens{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
   .room .tokens{align-items:flex-start;align-content:flex-start;}
@@ -154,22 +87,10 @@
 
   /* SECTION: Game Log Panel */
   /* Brief: Fixed-height scrollable monospace log for gameplay narration and error surfacing. */
-  /* Detailed: */
-  /* - What it does: Ensures #log area scrolls and preserves line breaks (pre-wrap). */
-  /* - What depends on it: JS appends textContent logs; window.onerror also writes here. */
-  /* - What breaks if changed: Removing overflow/white-space can hide logs or collapse formatting. */
-  /* ✅ Safe to edit: Colors/border radius/font size (visual). */
-  /* ⚠️ Dangerous to edit: white-space/overflow that preserves readability and scroll behavior. */
   .log{height:200px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.35;background:rgba(0,0,0,.18);border:1px solid var(--border);border-radius:12px;padding:10px;white-space:pre-wrap}
 
   /* SECTION: Sherlock “Observer Casebook” Probability UI */
   /* Brief: Styles the probability bar + percentage label shown for Sherlock difficulty in observer mode. */
-  /* Detailed: */
-  /* - What it does: probWrap/probBar/probPct create a slim progress bar with a small percentage label above it. */
-  /* - What depends on it: renderObserverCasebook() inserts these elements when game.aiDifficulty==='sherlock'. */
-  /* - What breaks if changed: Mis-sizing can overlap text; removing positioning breaks label placement. */
-  /* ✅ Safe to edit: Colors, heights (carefully). */
-  /* ⚠️ Dangerous to edit: Positioning/overflow rules that keep the bar contained and label readable. */
   .probWrap{
     position:relative;
     height:10px;
@@ -192,25 +113,10 @@
   
   /* SECTION: Centre Room Token Sizing Fix */
   /* Brief: Prevents the special “room token” in the center tile from appearing larger than other tokens. */
-  /* Detailed: */
-  /* - What it does: Tweaks line-height/padding for .room.center token variants to match other token chips. */
-  /* - What depends on it: Center tile trial/convicted display includes a room token; this keeps layout stable. */
-  /* - What breaks if changed: Center tile may expand or look inconsistent, pushing other UI around. */
-  /* ✅ Safe to edit: Minor padding/line-height adjustments (visual). */
-  /* ⚠️ Dangerous to edit: Selector specificity; avoid breaking other tokens. */
-  /* Ensure centre room-token doesn't inflate compared to other tokens */
   .room.center .tokens .token.room{ line-height:1.1; padding:3px 7px; }
 
   /* SECTION: Manual Checklist Layout (with per-item notes) */
   /* Brief: Defines the 3-column checklist row: checkbox, label, and free-text note input. */
-  /* Detailed: */
-  /* - What it does: .noteitem is a grid; .noteText is the note input; .cleared applies strike-through. Includes mobile media query that stacks input below label. */
-  /* - What depends on it: renderNotebook() and renderObserverCasebook() generate rows using these class names. */
-  /* - What breaks if changed: Changing class names breaks styling; changing grid columns can misalign checkbox/label/input and harm usability. */
-  /* ✅ Safe to edit: Spacing, font size, colors (visual) while preserving class names. */
-  /* ⚠️ Dangerous to edit: The grid-template-columns / responsive override, because they control layout and overflow on small screens. */
-  /* —— Checklist (with per-item single-line notes) —— */
-  /* Wide / default: [checkbox] [label] [note input] on one line */
 .noteitem{
   display:grid;
   grid-template-columns: auto auto 1fr; /* checkbox | name | input (flex) */
@@ -251,13 +157,6 @@
 
 /* SECTION: Checklist Responsive Rule (<= 540px) */
  /* Brief: Stacks the note input below the label to avoid cramped horizontal layouts on small screens. */
- /* Detailed: */
- /* - What it does: Changes .noteitem to 2 columns (checkbox + label) and makes .noteText span full width below. */
- /* - What depends on it: Mobile usability; without it, inputs can become too small or overflow. */
- /* - What breaks if changed: Checklist becomes hard to use on mobile; inputs may overflow off-screen. */
- /* ✅ Safe to edit: Minor margins/padding (visual). */
- /* ⚠️ Dangerous to edit: grid-column spans and the max-width breakpoint. */
-/* Small screens: revert to stacked layout (input drops below the label) */
 @media (max-width: 540px){
   .noteitem{
     grid-template-columns: auto 1fr;  /* checkbox | label on row 1 … */
@@ -275,23 +174,10 @@
 
   /* SECTION: Checklist Container */
   /* Brief: Vertical stack container for the three checklists (Suspects/Weapons/Rooms). */
-  /* Detailed: */
-  /* - What it does: Simple grid stack with spacing. */
-  /* - What depends on it: Casebook panel layout. */
-  /* - What breaks if changed: Mostly visual spacing; renaming class breaks styling. */
-  /* ✅ Safe to edit: gap value (visual). */
-  /* ⚠️ Dangerous to edit: Class name .checklistStack. */
-  /* Container for each list (unchanged) */
 .checklistStack{ display:grid; grid-template-columns:1fr; gap:10px }
 
   /* SECTION: Prompt (Modal-like) Box Styling */
   /* Brief: Styles the in-panel gameplay prompt UI (title/body/actions). */
-  /* Detailed: */
-  /* - What it does: Defines borders/background for promptBox and typography for title/body/actions; .placeholder used when idle. */
-  /* - What depends on it: renderPrompt(), setPromptMessage(), clearGameplayPrompt(). */
-  /* - What breaks if changed: Mostly UX/readability; renaming classes breaks prompt formatting. */
-  /* ✅ Safe to edit: Colors, padding, font weights (visual). */
-  /* ⚠️ Dangerous to edit: Class names used in JS when creating elements. */
   .promptBox{border:1px solid var(--border);border-radius:12px;background:rgba(0,0,0,.12);padding:10px}
   .promptTitle{font-weight:800;margin-bottom:6px;color:#e2e8f0}
   .promptBody{margin:6px 0 10px 0}
@@ -300,57 +186,28 @@
 
   /* SECTION: Sticky Side Panels + Responsive Collapse */
   /* Brief: Keeps left/right panels sticky on wide screens; collapses to single-column layout on narrower screens. */
-  /* Detailed: */
-  /* - What it does: position:sticky with calculated height; media query at 1200px switches to static layout. */
-  /* - What depends on it: Desktop usability (controls/log/casebook remain visible while board scrolls). */
-  /* - What breaks if changed: Sticky panels might overlap/clip; wrong height calc can hide content or cause double scrollbars. */
-  /* ✅ Safe to edit: Minor top/height offsets if you understand header sizing. */
-  /* ⚠️ Dangerous to edit: position/height/overflow rules and breakpoint values (affect layout behavior). */
   .rightPanel,.leftPanel{position:sticky;top:12px;height:calc(100vh - 96px);overflow:auto}
   @media (max-width:1200px){.layout{grid-template-columns:1fr}.leftPanel,.rightPanel{position:static;height:auto;overflow:visible}}
 
   /* SECTION: Token “Chip” Styling (Suspects/Weapons/Rooms) */
   /* Brief: Visual styling for the token badges used on the board and in center tile. */
-  /* Detailed: */
-  /* - What it does: .token defines the pill shape; [data-color] enables color-mix glow using --token-color; .inactive uses dashed border; .dot provides a colored dot for some tokens. */
-  /* - What depends on it: renderBoard() outputs <span class="token ..."> markup; some variants include .ico icons and/or .dot. */
-  /* - What breaks if changed: Tokens may become unreadable, mis-sized, or lose identity. Changing selector names breaks styling of all pieces. */
-  /* ✅ Safe to edit: Pure visual aspects (shadows, padding) while keeping selectors and CSS variables intact. */
-  /* ⚠️ Dangerous to edit: Removing [data-color] styling or --token-color flow; altering class names used by JS (suspect/weapon + slug()). */
   .token{font-size:11px;padding:3px 7px;border-radius:999px;border:2px solid rgba(255,255,255,.18);background:#000;line-height:1.1;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 0 0 1px rgba(0,0,0,.35) inset}
   .token[data-color]{border-color: color-mix(in srgb, var(--token-color) 92%, transparent);color:color-mix(in srgb, var(--token-color) 92%, transparent);box-shadow:0 0 0 1px rgba(0,0,0,.35) inset,0 0 10px color-mix(in srgb, var(--token-color) 28%, transparent);text-shadow:0 1px 1px rgba(0,0,0,.85)}
   .token .dot{width:8px;height:8px;border-radius:999px;background: var(--token-color);box-shadow:0 0 0 1px rgba(0,0,0,.55), 0 0 10px color-mix(in srgb, var(--token-color) 35%, transparent)}
   .token.inactive{border-style:dashed}
 
   /* SUBSECTION: Token icon spacing */
-  /* - What it does: Adds right margin to inline emoji icons inside tokens. */
-  /* - What depends on it: Board token templates include <span class="ico">…</span>. */
-  /* - What breaks if changed: Mostly visual alignment; removing may look cramped. */
-  /* ✅ Safe to edit: margin values (visual). */
-  /* ⚠️ Dangerous to edit: Changing class name .ico which is used in markup. */
 .token .ico {
   margin-right: 6px;
 }
 
   /* SUBSECTION: Token class -> color binding */
-  /* - What it does: Maps token semantic classes to the CSS variables defined in :root. */
-  /* - What depends on it: JS uses slug() to produce class suffixes; these must align (e.g., 'Lead Pipe' -> 'lead-pipe'). */
-  /* - What breaks if changed: Color identity breaks; if slug/class mismatches, tokens lose color-mix behavior. */
-  /* ✅ Safe to edit: Underlying variable values only (prefer editing in :root). */
-  /* ⚠️ Dangerous to edit: The selector names (green/mustard/... / lead-pipe etc.) because they must match JS-generated class names. */
   .token.suspect.green{--token-color:var(--sus-green)}.token.suspect.mustard{--token-color:var(--sus-mustard)}.token.suspect.peacock{--token-color:var(--sus-peacock)}.token.suspect.plum{--token-color:var(--sus-plum)}.token.suspect.scarlet{--token-color:var(--sus-scarlet)}.token.suspect.white{--token-color:var(--sus-white)}
   .token.weapon.candlestick{--token-color:var(--wep-candle)}.token.weapon.dagger{--token-color:var(--wep-dagger)}.token.weapon.lead-pipe{--token-color:var(--wep-lead)}.token.weapon.revolver{--token-color:var(--wep-revolver)}.token.weapon.rope{--token-color:var(--wep-rope)}.token.weapon.wrench{--token-color:var(--wep-wrench)}
 .ico{ display:inline-block; margin-right:6px; line-height:1; }
 
   /* SECTION: Mobile Board Layout Override (<= 540px) */
   /* Brief: Converts the 12-column board into a single-column stacked list for small screens, overriding JS grid placement. */
-  /* Detailed: */
-  /* - What it does: Re-defines .board to 1 column and forces .room/.room.center to ignore inline grid positioning via !important. */
-  /* - What depends on it: Mobile usability; without it, the 12-column grid becomes too small and unreadable. */
-  /* - What breaks if changed: Rooms may overlap or render off-screen; without !important, JS inline placement wins and layout stays cramped. */
-  /* ✅ Safe to edit: min-height/gap values (visual). */
-  /* ⚠️ Dangerous to edit: The !important overrides and selectors (.board .room, .board .room.center) which are critical to defeat inline styles. */
-/* --- Mobile stacked layout for Rooms --- */
 @media (max-width: 540px){
   /* Turn the board into a simple stacked layout */
   .board{
@@ -377,47 +234,23 @@
 
 <!-- SECTION: Body Shell + Main UI Layout (Header + 3 Panels) -->
 <!-- Brief: Defines the visible HTML structure the game renders into (left controls, center board/prompts, right casebook). -->
-<!-- Detailed: -->
-<!-- - What it does: Creates the DOM nodes that JavaScript targets by ID/class to inject game state (turn/location, players, hand, board, log, prompts, checklist). -->
-<!-- - What depends on it: Nearly all JS rendering functions rely on these exact IDs: turnPill, locPill, btnNewGame, handBox, playersBox, log, board, gameplayPromptBox, noteSuspects/noteWeapons/noteRooms. -->
-<!-- - What breaks if changed: Renaming/removing IDs or altering nesting can cause render functions to fail (null elements), breaking UI updates, prompts, logging, and checklist. -->
-<!-- ✅ Safe to edit: Visible text content (labels/headings) IF you keep IDs/classes unchanged. -->
-<!-- ⚠️ Dangerous to edit: Any ID/class, element removal, or moving containers that JS assumes exist (board, log, gameplayPromptBox, casebook targets). -->
 
 </head>
 <body>
 <header>
   <!-- SECTION: Top Header Branding -->
   <!-- Brief: Static title/subtitle shown above the game UI. -->
-  <!-- Detailed: -->
-  <!-- - What it does: Displays the game name and version tagline. -->
-  <!-- - What depends on it: Mostly visual; some layout sizing indirectly affects sticky panel height calculations via CSS. -->
-  <!-- - What breaks if changed: Generally nothing functional unless you remove the header entirely (could affect layout/scroll expectations). -->
-  <!-- ✅ Safe to edit: Text only. -->
-  <!-- ⚠️ Dangerous to edit: Removing header or changing structure if CSS relies on it for spacing. -->
   <h1>🔍 ClueSolo</h1>
-  <div class="sub">Just like the classic detective game ... but you're alone! (v7.0)</div>
+  <div class="sub">Just like the classic detective game ... but you're alone! (v7.1)</div>
 </header>
 <div class="layout">
   <!-- SECTION: Left Panel (Controls + Status + Info Panels) -->
   <!-- Brief: Holds turn/location pills, New Game button, hand display, players list, and game log. -->
-  <!-- Detailed: -->
-  <!-- - What it does: Provides containers that JS populates during play (handBox, playersBox, log) and status pills updated each turn. -->
-  <!-- - What depends on it: Game.updateTurnUI() writes to #turnPill/#locPill; renderHand() uses #handBox; renderPlayers() uses #playersBox; log() and error handlers write to #log; startNewGame() binds #btnNewGame. -->
-  <!-- - What breaks if changed: Missing IDs will crash or silently stop UI updates; moving #log affects error surfacing and gameplay narration. -->
-  <!-- ✅ Safe to edit: Panel headings text, minor whitespace. -->
-  <!-- ⚠️ Dangerous to edit: IDs: turnPill, locPill, btnNewGame, handBox, playersBox, log; and key container structure. -->
   <div class="panel leftPanel">
     <h2>Controls</h2>
     <div class="content leftStack">
       <!-- SUBSECTION: Turn/Location Status Row + New Game -->
       <!-- Brief: Top row showing whose turn/location plus the New Game action. -->
-      <!-- Detailed: -->
-      <!-- - What it does: Two pills are dynamically updated; button triggers game reset flow. -->
-      <!-- - What depends on it: JS queries these elements by ID (turnPill, locPill, btnNewGame). -->
-      <!-- - What breaks if changed: Incorrect IDs stop updates/click handler; removing the row hides critical status. -->
-      <!-- ✅ Safe to edit: Button label text (“New Game”) and visible pill prefixes if desired, but keep IDs. -->
-      <!-- ⚠️ Dangerous to edit: IDs and structure used by JS/CSS alignment. -->
       <div class="row between" style="margin-bottom:4px;">
         <div class="row">
           <span class="pill" id="turnPill">Turn: —</span>
@@ -428,12 +261,6 @@
 
       <!-- SUBSECTION: Your Cards Panel -->
       <!-- Brief: Empty container populated with the human player’s dealt cards. -->
-      <!-- Detailed: -->
-      <!-- - What it does: JS inserts pill elements for each card into #handBox. -->
-      <!-- - What depends on it: renderHand(game) expects #handBox to exist. -->
-      <!-- - What breaks if changed: If #handBox is missing/renamed, your hand display disappears (and JS may error). -->
-      <!-- ✅ Safe to edit: Heading text only. -->
-      <!-- ⚠️ Dangerous to edit: ID handBox. -->
       <div class="panel">
         <h2>Your Cards</h2>
         <div class="content" id="handBox"></div>
@@ -441,12 +268,6 @@
 
       <!-- SUBSECTION: Players Panel -->
       <!-- Brief: Empty container populated with player list and current-turn indicator. -->
-      <!-- Detailed: -->
-      <!-- - What it does: JS injects per-player rows showing name, location, and active/eliminated state into #playersBox. -->
-      <!-- - What depends on it: renderPlayers(game) expects #playersBox. -->
-      <!-- - What breaks if changed: Missing #playersBox breaks player list rendering and can throw errors. -->
-      <!-- ✅ Safe to edit: Heading text only. -->
-      <!-- ⚠️ Dangerous to edit: ID playersBox. -->
       <div class="panel">
         <h2>Players</h2>
         <div class="content" id="playersBox"></div>
@@ -454,12 +275,6 @@
 
       <!-- SUBSECTION: Game Log Panel -->
       <!-- Brief: Scrollable log surface used for gameplay narration and boot/runtime errors. -->
-      <!-- Detailed: -->
-      <!-- - What it does: Provides #log where JS appends timestamped lines; window.onerror also writes here early. -->
-      <!-- - What depends on it: log(msg) and error handlers query #log by ID; prompts and actions rely on logs for feedback. -->
-      <!-- - What breaks if changed: If #log is missing, errors may only go to console; gameplay feedback is lost. -->
-      <!-- ✅ Safe to edit: Heading text only; wrapping is fine as long as #log remains. -->
-      <!-- ⚠️ Dangerous to edit: ID log, and removing the inner .log container (styling/scroll). -->
       <div class="panel">
         <h2>Game Log</h2>
         <div class="content"><div class="log" id="log"></div></div>
@@ -469,12 +284,6 @@
 
   <!-- SECTION: Center Panel (Board + Gameplay Prompt Box) -->
   <!-- Brief: The main play area: room tiles board plus the in-panel prompt area used for choices/instructions. -->
-  <!-- Detailed: -->
-  <!-- - What it does: Provides #board where JS renders room tiles and tokens; provides #gameplayPromptBox where JS renders prompts (setup, dice, suggestions, accusation, etc.). -->
-  <!-- - What depends on it: renderBoard(game) targets #board; renderPrompt()/setPromptMessage()/clearGameplayPrompt() target #gameplayPromptBox. -->
-  <!-- - What breaks if changed: Missing #board stops the game from showing rooms/movement; missing #gameplayPromptBox breaks all interactive prompts. -->
-  <!-- ✅ Safe to edit: Headings text only. -->
-  <!-- ⚠️ Dangerous to edit: IDs board and gameplayPromptBox; nested structure used by CSS for spacing. -->
   <div class="panel centerPanel">
     <h2>Rooms</h2>
     <div class="content">
@@ -491,12 +300,6 @@
 
   <!-- SECTION: Right Panel (Casebook / Checklist UI) -->
   <!-- Brief: The note-taking area; in normal mode it’s a manual checklist, in observer mode it becomes an “Observer Casebook”. -->
-  <!-- Detailed: -->
-  <!-- - What it does: Provides three containers (#noteSuspects/#noteWeapons/#noteRooms) that JS fills with checklist rows and optional deduction log. -->
-  <!-- - What depends on it: renderNotebook(game) and renderObserverCasebook(game) query these IDs and populate them. -->
-  <!-- - What breaks if changed: Missing IDs breaks checklist/observer rendering, including notes and probability bars. -->
-  <!-- ✅ Safe to edit: Panel headings (“Casebook”, “Suspects”, etc.) text only. -->
-  <!-- ⚠️ Dangerous to edit: IDs noteSuspects/noteWeapons/noteRooms; removing .checklistStack nesting can affect layout/append behavior. -->
   <div class="panel rightPanel">
     <h2>Casebook</h2>
     <div class="content rightStack">
@@ -512,14 +315,6 @@
 <script>
 /* SECTION: Boot-Time Error Surfacing (window.onerror + unhandledrejection) */
 /* Brief: Captures runtime errors/rejections and mirrors them into the in-app Game Log (#log) for visibility. */
-/* Detailed:
-   - What it does: Hooks global error handlers, formats a "[BOOT ERR]" line, appends to #log (and auto-scrolls) or falls back to console.error.
-   - What depends on it: Debuggability and player-visible error reporting. The rest of the game can still run, but failures become harder to diagnose without this.
-   - What breaks if changed: If #log lookup/append logic changes, errors may disappear or spam console only; if handler throws, you can lose the original error signal.
-   ✅ Safe to edit: Comment text only; formatting of the explanatory comments.
-   ⚠️ Dangerous to edit: Any code inside handlers (string formats, element IDs, scroll behavior), because it affects error reporting and could mask real issues.
-*/
-// --- Global error surface: log to the in-app Game Log panel ---
 window.onerror = function (msg, url, line, col, err) {
   try {
     const box = document.getElementById('log');
@@ -538,14 +333,6 @@ window.onerror = function (msg, url, line, col, err) {
 
 /* SUBSECTION: Unhandled Promise Rejection Surface */
 /* Brief: Mirrors unhandled async failures into #log similarly to window.onerror. */
-/* Detailed:
-   - What it does: Listens for 'unhandledrejection', extracts a human-readable reason, and logs it to #log or console.
-   - What depends on it: Visibility for async errors from await/Promise chains used throughout prompts and AI turns.
-   - What breaks if changed: Losing reason extraction reduces usefulness; removing handler hides silent async failures.
-   ✅ Safe to edit: Comment text only.
-   ⚠️ Dangerous to edit: Logic that reads event.reason or writes to #log.
-*/
-// (Optional) also surface unhandled Promise rejections
 window.addEventListener('unhandledrejection', (event) => {
   try {
     const box = document.getElementById('log');
@@ -565,22 +352,6 @@ window.addEventListener('unhandledrejection', (event) => {
 
 /* SECTION: Utility Helpers (Randomness, Timing, Parsing, Slugging) */
 /* Brief: Small reusable helpers for randomness, delays, safe int parsing, and CSS-class-friendly slugs. */
-/* Detailed:
-   - What it does:
-     - randInt: inclusive integer RNG used for dice rolls and other randomized choices.
-     - choice: picks a random element from an array.
-     - shuffle: in-place Fisher–Yates shuffle used for decks/room assignments.
-     - sleep: Promise-based delay used to pace AI turns and UI timing.
-     - clampInt: parses integer and clamps into a range with default fallback.
-     - slug: converts display names into lowercase hyphenated tokens used in CSS class names.
-   - What depends on it: Many core mechanics (dice, dealing, AI randomness, token class naming, async pacing).
-   - What breaks if changed:
-     - Any change to RNG or shuffle affects game behavior/determinism.
-     - Changing slug changes class names, breaking token coloring selectors (e.g., lead-pipe).
-     - Changing sleep/clampInt can break turn flow and input validation.
-   ✅ Safe to edit: Comments/whitespace only.
-   ⚠️ Dangerous to edit: Any function bodies, return shapes, or name/signature changes (widely referenced).
- */
 /* Utilities */
 const randInt=(min,max)=>Math.floor(Math.random()*(max-min+1))+min;
 const choice=arr=>arr[Math.floor(Math.random()*arr.length)];
@@ -592,20 +363,6 @@ const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^
 
 /* SECTION: Core Data Tables (Suspects, Weapons, Rooms, Display Names, Icons) */
 /* Brief: Declares the canonical lists of cards/rooms and display helpers used across UI + logic. */
-/* Detailed:
-   - What it does:
-     - Defines the suspects/weapons/rooms arrays that drive dealing, suggestions, deduction, and rendering.
-     - START_ROOMS maps initial suspect placements.
-     - displaySuspect / displayCardName provide human-friendly labels.
-     - ROOM_ICON maps room names to emojis for board/casebook visuals.
-   - What depends on it: Deck building, UI options lists, token rendering, movement lookup keys, and any place names referenced by string.
-   - What breaks if changed:
-     - Changing strings (e.g., "Billiard Room") must match everywhere (movement tables, UI, logic); otherwise lookups fail.
-     - Changing list order/contents affects starting placements and how players are assigned/represented.
-     - Changing ROOM_ICON keys must match room names exactly or icons go missing.
-   ✅ Safe to edit: Comments/whitespace only.
-   ⚠️ Dangerous to edit: Any strings, array contents, object keys, or helper logic; these are “identity” constants used as lookup keys.
- */
 /* Data */
 const SUSPECTS=["Green","Mustard","Peacock","Plum","Scarlet","White"];
 const SUSPECT_TITLES={Green:"Rev. Green",Mustard:"Col. Mustard",Peacock:"Mrs Peacock",Plum:"Prof. Plum",Scarlet:"Miss Scarlet",White:"Mrs White"};
@@ -633,21 +390,7 @@ const ROOM_ICON = {
 
 /* SECTION: Movement Map + Reachability (ROOM_DICE + diceReachable) */
 /* Brief: Encodes “from room + dice roll -> reachable rooms” and exposes a helper to compute reachable destinations. */
-/* Detailed:
-   - What it does:
-     - ROOM_DICE is a lookup: ROOM_DICE[currentRoom][dice] => array of rooms you can move to.
-     - diceReachable clamps dice to 1..6 (via bitwise |0 then clamp) and returns a Set of reachable rooms for fast membership checks.
-   - What depends on it:
-     - Human movement highlighting (reachable rooms) and AI movement decisions both rely on diceReachable() results.
-     - UI uses the Set to determine which rooms get the .reachable class and Move button.
-   - What breaks if changed:
-     - Any room name mismatch breaks lookups (empty reachables).
-     - Changing the clamping logic changes how invalid dice values behave.
-     - Changing return type (Set) breaks callers expecting Set.has().
-   ✅ Safe to edit: Comments/whitespace only.
-   ⚠️ Dangerous to edit: ROOM_DICE contents, room name strings, dice clamping, or return type.
- */
-/* Movement (kept as in your current build, including passages on any dice) */
+/* Movement */
 const ROOM_DICE={
   "Study":{1:["Kitchen","Hall"],2:["Kitchen","Hall","Library"],3:["Kitchen","Hall","Library","Lounge"],4:["Kitchen","Hall","Library","Lounge","Billiard Room"],5:["Kitchen","Hall","Library","Lounge","Billiard Room","Dining Room"],6:["Kitchen","Hall","Library","Lounge","Billiard Room","Dining Room","Conservatory"]},
   "Hall":{1:["Study"],2:["Study","Lounge"],3:["Study","Lounge","Library"],4:["Study","Lounge","Library","Dining Room"],5:["Study","Lounge","Library","Dining Room","Billiard Room"],6:["Study","Lounge","Library","Dining Room","Billiard Room","Kitchen"]},
@@ -668,15 +411,6 @@ function diceReachable(room,dice){
 
 /* SECTION: DOM Convenience + In-App Logging (el + log) */
 /* Brief: Small DOM helper and a timestamped logger that writes into #log. */
-/* Detailed:
-   - What it does:
-     - el(id) wraps document.getElementById for concise code.
-     - log(msg) prepends a timestamp and appends to the Game Log, auto-scrolling to the latest entry.
-   - What depends on it: Almost all gameplay narration calls log(); many functions use el() for element lookup.
-   - What breaks if changed: Changing the #log ID, timestamp formatting, or scroll behavior affects both usability and debugging; changing el() affects many call sites.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: The ID 'log', textContent usage, or function names/signatures.
- */
 /* DOM */
 const el=id=>document.getElementById(id);
 function log(msg){
@@ -689,24 +423,6 @@ function log(msg){
 
 /* SECTION: Prompt System (renderPrompt + helpers) */
 /* Brief: Centralized UI prompt renderer for in-panel interactions (setup, choices, info, play again). */
-/* Detailed:
-   - What it does:
-     - renderPrompt({title, bodyHTML, actions}) builds a prompt inside #gameplayPromptBox and resolves a Promise when a button is clicked.
-     - setPromptMessage shows a non-interactive message (title/body) with an empty actions row.
-     - clearGameplayPrompt restores the placeholder message.
-     - showInfoPrompt wraps renderPrompt with a single OK button.
-     - showChoicePrompt builds a button list from choices, with optional Cancel.
-     - promptPlayAgain shows a dedicated “Play Again?” prompt and returns a boolean.
-   - What depends on it:
-     - Nearly all human-facing interactions: setup, showing cards, suggestion/accusation confirmations, AI summary OK prompts.
-     - The prompt box element ID 'gameplayPromptBox' and CSS classes 'promptTitle/promptBody/promptActions/placeholder'.
-   - What breaks if changed:
-     - Changing element IDs or class names breaks prompt layout/styling.
-     - Altering resolve values changes game flow logic expecting true/null/etc.
-     - Changing innerHTML usage changes how HTML strings are rendered in prompts.
-   ✅ Safe to edit: Comments and whitespace only.
-   ⚠️ Dangerous to edit: Any strings/IDs/class names, resolve logic, default labels, or DOM building order (used throughout gameplay).
- */
 /* Prompt helpers */
 function renderPrompt({title="",bodyHTML="",actions=[]}){
   return new Promise(resolve=>{
@@ -759,19 +475,6 @@ async function promptPlayAgain(){
 
 /* SECTION: Difficulty Labels + Difficulty Predicates */
 /* Brief: Human-readable labels and helper predicates for branching AI logic by difficulty mode. */
-/* Detailed:
-   - What it does:
-     - DIFF_LABELS maps internal difficulty keys to display strings.
-     - normDiff maps legacy "deep" to "smart" (backwards compatibility).
-     - isAdvancedAI checks for smart/sherlock/deep modes.
-     - isSherlock checks for sherlock mode specifically.
-   - What depends on it: Setup UI label display, AI inference/observer logging toggles, and any conditional branches keyed by difficulty.
-   - What breaks if changed:
-     - Renaming keys breaks saved/back-compat behavior (e.g., "deep").
-     - Changing predicate logic alters which AI features activate for a given mode.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: Keys/strings used by save/back-compat, and the boolean logic in helper predicates.
- */
 // Difficulty helpers & labels
 const DIFF_LABELS = {
   basic   : 'Basic inference',
@@ -786,24 +489,10 @@ const isSherlock   = (d) => (d === 'sherlock');
 
 /* SECTION: Setup Prompts (New Game Setup + Human Suspect Selection) */
 /* Brief: Collects initial game parameters (difficulty/opponents/observer) and the human/focus suspect selection. */
-/* Detailed:
-   - What it does: Builds HTML prompt bodies, renders them via renderPrompt(), then reads selected values from the DOM to return structured setup info.
-   - What depends on it: Startup flow and “New Game” flow call these to configure players, difficulty, and observer mode; IDs diffSel/oppCountSel/humanSusSel must match.
-   - What breaks if changed: Changing prompt HTML IDs or return object shape breaks downstream setup (difficulty normalization, player count, observer-mode behavior).
-   ✅ Safe to edit: Prompt copy/text inside the HTML strings (labels/help text) IF you do NOT change element IDs or option values.
-   ⚠️ Dangerous to edit: Any IDs (diffSel, oppCountSel, humanSusSel), option values (basic/smart/sherlock/observer), or logic that maps/returns settings.
-*/
 /* Setup prompts */
 async function promptGameSetup(){
   /* SUBSECTION: Prompt markup for difficulty + opponent count */
   /* Brief: Defines the interactive HTML (selects) injected into the gameplay prompt box. */
-  /* Detailed:
-     - What it does: Creates two <select> inputs whose values are read after renderPrompt resolves.
-     - What depends on it: document.getElementById('diffSel') and ('oppCountSel') below.
-     - What breaks if changed: If these IDs or option values change, the subsequent reads and mode selection fail.
-     ✅ Safe to edit: Visible labels (“Choose game setup”, “Opponents”, etc.).
-     ⚠️ Dangerous to edit: id="diffSel", id="oppCountSel", and option value strings.
-  */
   const body = `
     <div style="margin-bottom:10px;">Choose game setup:</div>
     <div class="row" style="margin-bottom:10px;">
@@ -831,13 +520,6 @@ async function promptGameSetup(){
 
   /* SUBSECTION: Render + extract user selections */
   /* Brief: Waits for the user to click Continue, then reads selected values directly from the DOM. */
-  /* Detailed:
-     - What it does: renderPrompt blocks until user action; then diffSel/oppCountSel are read with optional chaining and defaults.
-     - What depends on it: renderPrompt(), normDiff(), clampInt(), clearGameplayPrompt().
-     - What breaks if changed: Altering defaults changes behaviour; changing normDiff call affects back-compat mapping.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Value reads, default fallbacks, and returned object keys.
-  */
   await renderPrompt({ title:'New Game Setup', bodyHTML: body, actions:[{label:'Continue', value:true}] });
   const diffRaw = document.getElementById('diffSel')?.value || 'basic';
   const diff = normDiff(diffRaw);
@@ -846,13 +528,6 @@ async function promptGameSetup(){
 
   /* SUBSECTION: Player-count constraint + observer-mode mapping */
   /* Brief: Ensures the game never exceeds 6 total players (because there are 6 suspects). */
-  /* Detailed:
-     - What it does: Treats “observer” as a special UI option that internally uses opp=5 (total 6 players, all AI).
-     - What depends on it: Game.resetPlayers expects opponent count in a 2..5 range; other code assumes suspects map to players.
-     - What breaks if changed: Allowing >6 players would exceed available suspects; changing this mapping can desync observer mode expectations.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: The opp calculation and the 'observer' sentinel value.
-  */
   // IMPORTANT: there are only 6 suspects, so total players must remain 6.
   // We'll implement "6 opponents" as "observer mode with 6 AI players total".
   // That means we internally create 6 players = player0 + 5 others.
@@ -860,13 +535,6 @@ async function promptGameSetup(){
   
   /* SUBSECTION: Prompt cleanup + return */
   /* Brief: Resets the prompt area to placeholder and returns the setup settings to the caller. */
-  /* Detailed:
-     - What it does: clearGameplayPrompt removes prompt DOM and restores placeholder; returns {opp,diff,observer}.
-     - What depends on it: Startup/new-game logic reads these exact keys.
-     - What breaks if changed: Different key names/shapes break assignment (aiDifficulty, observerMode, resetPlayers input).
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Returned object shape and clearGameplayPrompt call.
-  */
   clearGameplayPrompt();
   return { opp, diff, observer };
 }
@@ -874,23 +542,9 @@ async function promptGameSetup(){
 
 /* SECTION: Prompt for Human/Focus Suspect (Character Selection) */
 /* Brief: Lets the human player (or observer focus) pick a suspect from a provided list. */
-/* Detailed:
-   - What it does: Builds <option> list from `available`, renders a prompt with a <select id="humanSusSel">, then returns the selected value (or fallback).
-   - What depends on it: Game.assignSuspects uses the returned suspect string; startup/new-game calls this.
-   - What breaks if changed: Changing id="humanSusSel" breaks the DOM read; changing returned value format breaks suspect assignment.
-   ✅ Safe to edit: Display text copy in the HTML body (not the IDs).
-   ⚠️ Dangerous to edit: The select ID, option values, and fallback logic (available[0]).
-*/
 async function promptHumanSuspect(available){
   /* SUBSECTION: Build <option> list */
   /* Brief: Converts suspect IDs into <option> tags using displaySuspect for readable labels. */
-  /* Detailed:
-     - What it does: Option value remains the raw suspect ID string; label uses displaySuspect(s).
-     - What depends on it: assignSuspects expects exact suspect IDs (e.g., "Green").
-     - What breaks if changed: If option values are not raw IDs, game logic won’t match suspects to data tables.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Template strings that set value="${s}".
-  */
   const opts=available.map(s=>`<option value="${s}">${displaySuspect(s)}</option>`).join("");
   const body=`<div style="margin-bottom:10px;">Pick your character:</div>
     <div class="row"><label><b>Suspect:</b> <select id="humanSusSel">${opts}</select></label></div>
@@ -898,13 +552,6 @@ async function promptHumanSuspect(available){
 
   /* SUBSECTION: Render + read selection */
   /* Brief: Waits for user to click Start, then reads the chosen suspect from #humanSusSel. */
-  /* Detailed:
-     - What it does: renderPrompt resolves on button click; then the selected value is read and defaulted to available[0].
-     - What depends on it: renderPrompt(), clearGameplayPrompt().
-     - What breaks if changed: Missing ID breaks selection read; changing fallback changes behaviour when DOM isn't found.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: ID 'humanSusSel' and return value.
-  */
   await renderPrompt({title:'Choose Your Character',bodyHTML:body,actions:[{label:'Start',value:true}]});
   const pick=document.getElementById('humanSusSel')?.value||available[0];
   clearGameplayPrompt();return pick;
@@ -913,15 +560,6 @@ async function promptHumanSuspect(available){
 
 /* SECTION: Manual Checklist Persistence (localStorage keys + CRUD helpers) */
 /* Brief: Stores and retrieves the player’s checklist ticks and per-item notes using localStorage. */
-/* Detailed:
-   - What it does: Defines two keys and helper functions to load/save/clear JSON objects for:
-     - CHECKLIST_KEY: which items are checked/cleared
-     - CHECK_NOTES_KEY: free-text notes per item
-   - What depends on it: renderNotebook() calls loadChecklist/loadCheckNotes and writes via saveChecklist/saveCheckNotes; reset flow calls clearChecklist/clearCheckNotes.
-   - What breaks if changed: Changing key strings loses compatibility with existing saved notes; altering JSON shapes breaks rendering and persistence.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: localStorage key strings and function behavior (JSON parse/stringify).
-*/
 /* Manual Checklist: ticks + per-item text notes */
 const CHECKLIST_KEY='cluedo_checklist_v1'; // ticked items
 const CHECK_NOTES_KEY='cluedo_checkitem_notes_v1'; // per-item note text
@@ -935,13 +573,6 @@ function clearCheckNotes(){localStorage.removeItem(CHECK_NOTES_KEY)}
 
 /* SECTION: Sherlock++ Tuning Parameters (AI_CFG.sherlock) */
 /* Brief: Central configuration for the “Sherlock” AI’s learning rates, probability bounds, and behavioral quirks. */
-/* Detailed:
-   - What it does: Provides numeric constants used throughout Sherlock belief updates, decay, exploration, and early-accusation logic.
-   - What depends on it: Player’s Sherlock methods (belief init/updates, noteNoRefute/noteRefutePattern/noteCardShown, decayBeliefs, early accusation thresholds).
-   - What breaks if changed: AI behavior shifts (difficulty/feel), and extreme values can destabilize probabilities (e.g., floor/ceil, decay).
-   ✅ Safe to edit: Values only IF you accept changing difficulty/behavior (still “behavioural change” for the game experience).
-   ⚠️ Dangerous to edit: Keys/property names (must match all call sites); changing structure breaks lookups (AI_CFG.sherlock.*).
-*/
 /* --- Sherlock++ tuning --- */
 const AI_CFG = {
   sherlock: {
@@ -967,13 +598,6 @@ const AI_CFG = {
 
 /* SECTION: ALL_CARDS (Flattened Card List for Belief Initialization) */
 /* Brief: Produces a single array of all suspect/weapon/room cards with {type,name} pairs. */
-/* Detailed:
-   - What it does: Expands SUSPECTS/WEAPONS/ROOMS into a uniform structure used to initialize per-card belief maps.
-   - What depends on it: Player.initBeliefs iterates ALL_CARDS to seed ownerWeights for every card.
-   - What breaks if changed: Missing or altered entries cause beliefs to ignore cards or misclassify types; changing shapes breaks iterators expecting {type,name}.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: The mapping logic, object keys (type/name), or the source arrays.
-*/
 // Flattened list of all cards (for belief initialization)
 const ALL_CARDS = [
   ...SUSPECTS.map(n => ({type:'Suspect', name:n})),
@@ -984,48 +608,17 @@ const ALL_CARDS = [
 
 /* SECTION: Case File “Owner” Constants (CASE_FILE_ID / CASE_FILE_NAME) */
 /* Brief: Represents the envelope/case file as a special pseudo-owner in Sherlock belief distributions. */
-/* Detailed:
-   - What it does: Uses CASE_FILE_ID (-1) as an additional owner key in probability maps; CASE_FILE_NAME is a display label.
-   - What depends on it: Belief maps (ownerWeights) include CASE_FILE_ID; multiple methods reference CASE_FILE_ID to update case-file probability.
-   - What breaks if changed: Changing CASE_FILE_ID breaks all Maps keyed by -1; case-file inference would stop working or collide with real player IDs.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: The numeric ID (-1) and any references to it.
-*/
 // Case file / envelope is treated as an additional "owner" in Sherlock beliefs
 const CASE_FILE_ID = -1;
 const CASE_FILE_NAME = 'Case File';
 
 /* SECTION: Game Model — Player (Constructor + Core Knowledge + Belief Initialisation) */
 /* Brief: Defines the Player class and the early “knowledge + Sherlock beliefs” setup used right after dealing. */
-/* Detailed:
-   - What it does:
-     - constructor(...): creates all per-player state containers (hand, knowledge Sets/Maps, Sherlock belief Maps, constraint lists).
-     - cardKey(...): produces the canonical string key used everywhere to identify a card.
-     - initKnowledge(): marks your own dealt hand as known/seen/owned immediately after dealing.
-     - initBeliefs(players): (Sherlock++) builds per-card owner probability maps for all players + case file, then “locks” your own cards.
-   - What depends on it:
-     - Dealing/setup calls initKnowledge() and initBeliefs().
-     - Inference and rendering depend on the existence and names of: seen, own, knownOwners, knowledgeMeta, ownerWeights, refutationCounts, notOwners, constraints, unrefuted, gameRef.
-     - Any later deduction steps assume cardKey() format is stable.
-   - What breaks if changed:
-     - Changing property names breaks all downstream lookups (null/undefined errors, missing UI, broken inference).
-     - Changing cardKey() formatting breaks all Maps/Sets keyed by card identity (knowledge “resets” and inference fails).
-     - Changing initKnowledge/initBeliefs logic alters gameplay/difficulty and can corrupt Sherlock probabilities.
-   ✅ Safe to edit: Comments/blank lines only (per Phase 1 rules).
-   ⚠️ Dangerous to edit: Any executable code, any IDs/keys, method signatures, or the exact `${type}:${name}` cardKey format.
-*/
 
 /* Game Model */
 class Player{
   /* SUBSECTION: constructor(id, isHuman=false, suspect=null) */
   /* Brief: Initializes identity, UI name, starting location, and all knowledge/belief containers. */
-  /* Detailed:
-     - What it does: Sets up baseline game state plus Sherlock++ data structures used later for probability tracking and inference.
-     - What depends on it: Everything that reads player state each turn, and all inference code expecting these fields to exist.
-     - What breaks if changed: Missing/renamed fields cause inference/rendering to throw or silently stop updating.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Any of the assignments, container types (Set/Map/Array), or defaults like location='Hall'.
-  */
   constructor(id,isHuman=false,suspect=null){
     this.id=id;this.isHuman=isHuman;this.suspect=suspect;
     this.name=suspect?displaySuspect(suspect):(isHuman?'You':`AI-${id}`);
@@ -1047,24 +640,10 @@ class Player{
 
   /* SUBSECTION: cardKey(type, name) */
   /* Brief: Canonical identifier for a card used as a Map/Set key everywhere. */
-  /* Detailed:
-     - What it does: Combines type and name into a single stable string key.
-     - What depends on it: knownOwners, knowledgeMeta, ownerWeights, refutationCounts, notOwners, constraints all use this key.
-     - What breaks if changed: Any change makes all existing key-based lookups fail (knowledge and beliefs become inconsistent).
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: The returned template string format.
-  */
   cardKey(type,name){return `${type}:${name}`;}
 
   /* SUBSECTION: initKnowledge() */
   /* Brief: Marks the player’s own hand as “owned and seen” immediately after dealing. */
-  /* Detailed:
-     - What it does: For each dealt card, records ownership and provenance metadata.
-     - What depends on it: Deduction logic assumes your own cards are cleared; observer/provenance UI relies on knowledgeMeta status='own'.
-     - What breaks if changed: AI/human knowledge diverges; cards you hold may be treated as unknown.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: The Set/Map writes and the knowledgeMeta object shape.
-  */
   initKnowledge(){
   for(const c of this.hand){
     const k=this.cardKey(c.type,c.name);
@@ -1077,17 +656,6 @@ class Player{
 
   /* SUBSECTION: initBeliefs(players) — Sherlock++ belief init (called after dealing) */
   /* Brief: Initializes per-card owner weight maps across players + case file, then locks this player's own cards. */
-  /* Detailed:
-     - What it does:
-       - Creates ownerWeights entries for every card in ALL_CARDS.
-       - Seeds uniform weights across each player id plus CASE_FILE_ID.
-       - Normalizes each distribution via clampAndNormalizeWeights().
-       - For this player’s hand: sets all owners to floor, this.id to ceil, then renormalizes.
-     - What depends on it: Sherlock difficulty probability model and later belief updates.
-     - What breaks if changed: Case-file ownership modeling or normalization can become invalid, breaking Sherlock behaviour and probability UI.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Inclusion of CASE_FILE_ID, the normalization call, and the “lock own cards” loop.
-  */
   // --- Sherlock++ belief init (called after dealing)
   initBeliefs(players){
     this.playerCount = players.length;
@@ -1119,20 +687,6 @@ class Player{
 
 /* SECTION: Sherlock++ Weight Normalization (Single-Card Distribution) */
   /* Brief: Clamps and normalizes the owner-weights Map for one card key. */
-  /* Detailed:
-     - What it does:
-       - Fetches the Map of owner weights for this card key.
-       - Clamps each weight into [AI_CFG.sherlock.weightFloor, AI_CFG.sherlock.weightCeil].
-       - Sums the clamped weights, then (if sum > 0) divides each by sum so the distribution totals 1.
-     - What depends on it:
-       - Any Sherlock belief update that tweaks weights relies on this to keep distributions bounded and comparable.
-       - Probability UI (e.g., percent bars) and any “most likely owner/case-file” comparisons assume weights are normalized.
-     - What breaks if changed:
-       - Changing clamping bounds or removing clamping can let values explode/collapse and dominate the distribution.
-       - Changing normalization (or skipping it) makes weights stop summing to 1, breaking probability interpretation and downstream logic.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: Any executable code, especially clamp bounds, sum logic, or the normalization loop.
-  */
   clampAndNormalizeWeights(key){
     const w=this.ownerWeights.get(key); if(!w) return;
     let sum=0;
@@ -1143,29 +697,11 @@ class Player{
     if(sum>0){for(const [pid,val] of w) w.set(pid,val/sum);}
   }
 
-/* SECTION: Player inference + belief upkeep (SAFE PASTE VERSION) */
+/* SECTION: Player inference + belief upkeep */
 /* Brief: This block is core to Smart/Sherlock reasoning: belief decay, knowledge recording, negative knowledge, and constraint deduction. */
-/* Detailed:
-   - What it does: Updates belief weights (decay), records seen cards + provenance, tracks "not owner" facts, eliminates case-file candidates, and deduces owners from refute constraints.
-   - What depends on it: AI turns, observer-mode deductions log, and anything that calls possibleSet/hasAnyOf/addRefuteConstraint/propagateConstraints.
-   - What breaks if changed: Any logic/key/status change can stop inference, corrupt knowledge, or crash turn flow.
-   ✅ Safe to edit: Comments/blank lines only.
-   ⚠️ Dangerous to edit: Any executable code, especially Map/Set updates, loop conditions, and status strings.
-*/
-
-/* NOTE (important): I am NOT outputting any HTML entities in executable code.
-   If your editor/file ever contains things like &gt; or &amp;&amp; inside <script>, JS will stop and startup prompts will vanish.
-   The code lines below use literal operators only (>, &&, =>, >=). */
 
   /* SUBSECTION: decayBeliefs() */
   /* Brief: Applies slow belief decay each turn, then normalises each card distribution. */
-  /* Detailed:
-     - What it does: Multiplies each owner weight by AI_CFG.sherlock.decay, then calls clampAndNormalizeWeights for each card key.
-     - What depends on it: Sherlock AI "feel" and probability stability.
-     - What breaks if changed: Beliefs can freeze or become too random; skipping normalisation corrupts distributions.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Any math or iteration structure.
-  */
   decayBeliefs(){
     for(const [key,w] of this.ownerWeights){
       for(const [pid,val] of w) w.set(pid, val*AI_CFG.sherlock.decay);
@@ -1175,13 +711,6 @@ class Player{
 
   /* SUBSECTION: markSeen(card, ownerId=null) */
   /* Brief: Records that a card is cleared/known, with provenance used by observer UI. */
-  /* Detailed:
-     - What it does: Adds card key to seen; optionally records knownOwners; sets knowledgeMeta to one of: own / seen / eliminated.
-     - What depends on it: Observer Casebook status labels and constraint pruning later.
-     - What breaks if changed: Wrong provenance or owner tracking leads to misleading UI and incorrect deductions.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: ownerId checks, status strings, and metadata object shape.
-  */
   markSeen(card,ownerId=null){
     const k=this.cardKey(card.type,card.name);
     this.seen.add(k);
@@ -1200,13 +729,6 @@ class Player{
 
   /* SUBSECTION: markNotOwner(card, playerId) */
   /* Brief: Negative knowledge: records that a player cannot own a given card. */
-  /* Detailed:
-     - What it does: Stores playerId inside notOwners[cardKey] Set.
-     - What depends on it: propagateConstraints prunes impossible keys using this.
-     - What breaks if changed: Constraints won’t shrink correctly, weakening or breaking deductions.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Map/Set structure and keying.
-  */
   // Negative knowledge: mark someone does NOT own a card
   markNotOwner(card, playerId){
     const key=this.cardKey(card.type,card.name);
@@ -1217,13 +739,6 @@ class Player{
 
   /* SUBSECTION: markEliminated(type, name) */
   /* Brief: Marks a card as not in the case file (and updates Sherlock belief if available). */
-  /* Detailed:
-     - What it does: Adds key to seen; sets knowledgeMeta eliminated when owner unknown; floors CASE_FILE_ID weight then normalises.
-     - What depends on it: Deduction correctness and Sherlock probability model.
-     - What breaks if changed: Eliminated cards may still appear possible in the case file, skewing AI planning.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: CASE_FILE_ID update and normalisation call.
-  */
   markEliminated(type,name){
     const key=this.cardKey(type,name);
     if(this.own.has(key)) return; // never eliminate own card
@@ -1242,13 +757,6 @@ class Player{
 
   /* SUBSECTION: Query helpers */
   /* Brief: Small helpers for cleared checks, remaining candidates, and refutation matching. */
-  /* Detailed:
-     - What it does: isCleared checks seen set; possibleSet lists uncleared candidates; hasAnyOf finds matching cards in hand.
-     - What depends on it: Suggestion/refutation flow and AI selection logic.
-     - What breaks if changed: Players may fail to refute correctly or AI may choose invalid targets.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Category comparisons and predicates.
-  */
   isCleared(type,name){return this.seen.has(this.cardKey(type,name));}
   possibleSet(type){
     const list=type==='Suspect'?SUSPECTS:type==='Weapon'?WEAPONS:ROOMS;
@@ -1260,13 +768,6 @@ class Player{
 
   /* SUBSECTION: addRefuteConstraint(refuterId, cards) */
   /* Brief: Stores “refuter has ONE of these” and triggers propagation. */
-  /* Detailed:
-     - What it does: Converts cards to cardKey Set, pushes {refuterId, keys}, logs in observer mode, then propagateConstraints().
-     - What depends on it: Smart/Sherlock inference and observer deductions log.
-     - What breaks if changed: Deductions stop or become wrong; log gating may spam or go silent.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Constraint object shape and when propagation is invoked.
-  */
   addRefuteConstraint(refuterId,cards){
     const keys=new Set(cards.map(c=>this.cardKey(c.type,c.name)));
     this.constraints.push({refuterId,keys});
@@ -1284,13 +785,6 @@ class Player{
 
   /* SUBSECTION: propagateConstraints() */
   /* Brief: Reduces constraints until stable; deduces exact ownership when only one key remains. */
-  /* Detailed:
-     - What it does: Walks constraints backwards; removes satisfied; prunes keys owned by others or forbidden by notOwners; deduces when size becomes 1; drops when size becomes 0.
-     - What depends on it: Smart/Sherlock deduction correctness and speed.
-     - What breaks if changed: Missed deductions, wrong owners, or inference getting stuck.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Loop bounds, splice logic, and deduction branch.
-  */
   propagateConstraints(){
     let changed=true;
     while(changed){
@@ -1350,21 +844,6 @@ class Player{
 
 /* SECTION: Mild inference note + Sherlock++ learning hooks (refute/no-refute pattern updates) */
   /* Brief: This block adds Sherlock-specific learning signals on table events (no-refute vs refute) and logs updates in observer focus mode. */
-  /* Detailed:
-     - What it does:
-       - noteNoRefute: when a player cannot refute a triple, downweights that player as owner for each card in the triple.
-       - noteRefutePattern: when a player refutes a triple, slightly boosts that player as owner for each card and tracks refutation counts.
-       - Both optionally emit observer logs (Sherlock + observer focus only) describing before/after probability shifts.
-     - What depends on it:
-       - Sherlock AI belief model (ownerWeights) and any UI that shows case-file probabilities.
-       - Observer deductions log and explanation trail (gameRef.obs).
-     - What breaks if changed:
-       - Changing weight updates or normalization calls changes AI behaviour and can destabilize probabilities.
-       - Changing gating conditions can spam logs or hide all reasoning.
-       - Changing map keys (cardKey/type/name) breaks belief lookups.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: Any executable code, especially weight multipliers/boosts and clampAndNormalizeWeights calls.
-  */
 
   // Mild inference (unchanged)
   // If two of a triple are cleared, the third must be solution (eliminate all others in that category)
@@ -1375,13 +854,6 @@ class Player{
 
   /* SUBSECTION: noteNoRefute(playerId, triple) */
   /* Brief: Penalises a player's ownership probability for each card when they fail to refute a triple. */
-  /* Detailed:
-     - What it does: For each card, scales that player's weight by weightPenaltyNoRefute, then normalizes.
-     - What depends on it: Sherlock inference quality and observer focus logging.
-     - What breaks if changed: Wrong scaling/normalisation corrupts beliefs and downstream decisions.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Weight math and normalisation.
-  */
   noteNoRefute(playerId,triple){
     // For each card: downweight that player as a possible owner
     for(const c of triple){
@@ -1396,13 +868,6 @@ class Player{
 
       /* SUBSECTION: Observer focus log (Sherlock only) — per-card before/after */
       /* Brief: Emits a detailed update line for probability changes caused by the penalty. */
-      /* Detailed:
-         - What it does: Re-reads probabilities after the update and logs them for the observer focus player only.
-         - What depends on it: gameRef.obs and the observer focus gating.
-         - What breaks if changed: Misleading logs or excessive noise.
-         ✅ Safe to edit: Comments only.
-         ⚠️ Dangerous to edit: Gating conditions and probability reads.
-      */
       if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
         const who = this.gameRef.players[playerId]?.name ?? `P${playerId}`;
         const afterCase = this._pCaseNorm(c);
@@ -1412,13 +877,6 @@ class Player{
 
       /* SUBSECTION: Observer focus log (Sherlock only) — “signal” line */
       /* Brief: Records the no-refute event context for the deduction trail. */
-      /* Detailed:
-         - What it does: Logs the triple card keys that triggered the penalty update.
-         - What depends on it: observer deductions log readability.
-         - What breaks if changed: Reduced clarity in observer mode.
-         ✅ Safe to edit: Comments only.
-         ⚠️ Dangerous to edit: cardKey mapping inside the log.
-      */
       if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
         const who = this.gameRef.players[playerId]?.name ?? `P${playerId}`;
         this.gameRef.obs(`🧠 NO-REFUTE signal: ${who} could not refute (${triple.map(c=>this.cardKey(c.type,c.name)).join(', ')}). Downweighted ownership.`, { byPlayerId: this.id });
@@ -1428,13 +886,6 @@ class Player{
 
   /* SUBSECTION: noteRefutePattern(refuterId, triple) */
   /* Brief: Slightly boosts a refuter's ownership probability for each card in the triple and tracks frequency. */
-  /* Detailed:
-     - What it does: Increments refutationCounts for each card, adds weightBoostRefutePattern to that refuter's weight, then normalizes.
-     - What depends on it: Sherlock pattern learning and observer focus logging.
-     - What breaks if changed: Over/under boosting changes AI behaviour; breaking counts breaks “memory” feel.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Weight boost amount, counts map structure, and normalization.
-  */
   noteRefutePattern(refuterId,triple){
     for(const c of triple){
       const key=this.cardKey(c.type,c.name);
@@ -1453,13 +904,6 @@ class Player{
 
       /* SUBSECTION: Observer focus log (Sherlock only) — per-card before/after */
       /* Brief: Emits the probability delta caused by the boost. */
-      /* Detailed:
-         - What it does: Re-reads afterCase/afterOwn after updating weights and logs a single line per card.
-         - What depends on it: observerMode + focus gating to prevent log spam.
-         - What breaks if changed: Confusing or excessive logs.
-         ✅ Safe to edit: Comments only.
-         ⚠️ Dangerous to edit: Gating conditions and probability reads.
-      */
       if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
         const who = this.gameRef.players[refuterId]?.name ?? `P${refuterId}`;
         const afterCase = this._pCaseNorm(c);
@@ -1469,13 +913,6 @@ class Player{
 
       /* SUBSECTION: Placeholder / note for future logging detail */
       /* Brief: This block is intentionally empty except for comments. */
-      /* Detailed:
-         - What it does: No runtime effect; documents an intended “before value” logging note.
-         - What depends on it: Nothing at runtime.
-         - What breaks if changed: Nothing functional, but keep as-is to preserve behaviour and intent.
-         ✅ Safe to edit: Comments only.
-         ⚠️ Dangerous to edit: Do not add executable code here unless you intend behavioural change.
-      */
       if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
         const who = this.gameRef.players[refuterId]?.name ?? `P${refuterId}`;
         // We log per-card after update, but need "before" – so compute before at top of loop:
@@ -1487,39 +924,9 @@ class Player{
 
 /* SECTION: Sherlock++ “Hard Evidence” + Case-File Probability Model + Decision Helpers */
   /* Brief: This block is the heart of Sherlock mode: locking shown cards, locking case-file cards, computing category-normalised case-file chances, and using entropy/probability to pick suggestions and plan accusations. */
-  /* Detailed:
-     - What it does:
-       - noteCardShown(): locks a specifically shown card to its owner and forces case-file probability to near-zero for that card.
-       - noteCaseFileCard(): locks a card into the case file (solution) with near-certainty in the belief model.
-       - caseFileProbNormalized(): converts raw case-file weights into a per-category distribution that sums to 1 across remaining candidates.
-       - _pct/_pCaseNorm/_pOwner(): small helpers for logging and probability access.
-       - entropyForCardKey(): computes an information score used to pick informative suggestion cards.
-       - pickSmartSuggestionParts(): chooses suspect/weapon that maximises information gain (plus small randomness).
-       - beliefsTopFor()/planAccusationWithBeliefs(): chooses top case-file candidates per category and combines confidences.
-       - Player.prototype.isConfidentSolution / inferredAccusation: “certain accuse” helpers when only one candidate remains in each category.
-     - What depends on it:
-       - Sherlock AI’s behaviour, observer focus logging, and the observer casebook probability bars.
-       - Any code that compares “most likely case-file” items relies on the category-normalised probabilities.
-     - What breaks if changed:
-       - Changing any of the weight locking, normalisation, or probability math will change AI behaviour and can destabilise beliefs.
-       - Changing status/probability helper outputs will mislead logs and downstream decisions.
-     ✅ Safe to edit: Comments/blank lines only (Phase 1).
-     ⚠️ Dangerous to edit: Any executable logic, especially CASE_FILE_ID weight updates, normalisation, entropy math, and return shapes.
-  */
 
   /* SUBSECTION: noteCardShown(card, ownerId) */
   /* Brief: “Hard evidence” update when an AI sees the exact shown card. */
-  /* Detailed:
-     - What it does: Marks the card seen, records its owner, then:
-       - floors all owners,
-       - floors CASE_FILE_ID (cannot be in solution if shown),
-       - sets ownerId to ceil (locked),
-       - normalises distribution.
-     - What depends on it: Sherlock probability accuracy and correct observer casebook display.
-     - What breaks if changed: Shown cards might remain possible for the case file, or ownership won’t lock correctly.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: The floor/ceil assignments and the clampAndNormalizeWeights call.
-  */
   noteCardShown(card,ownerId){
     const key=this.cardKey(card.type,card.name);
     this.seen.add(key);
@@ -1534,13 +941,6 @@ class Player{
 
     /* SUBSECTION: Observer focus log (Sherlock only) */
     /* Brief: Emits a single line showing the locked owner and resulting probabilities. */
-    /* Detailed:
-       - What it does: Reads afterCase/afterOwn after locking and logs via gameRef.obs.
-       - What depends on it: Observer deductions log readability.
-       - What breaks if changed: Incorrect logging can misrepresent the belief state.
-       ✅ Safe to edit: Comments only.
-       ⚠️ Dangerous to edit: The gating conditions and probability reads.
-    */
     if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
       const ownerName = this.gameRef.players[ownerId]?.name ?? `P${ownerId}`;
       const who = this.gameRef.players[ownerId]?.name ?? `P${ownerId}`;
@@ -1552,13 +952,6 @@ class Player{
 
   /* SUBSECTION: noteCaseFileCard(card) */
   /* Brief: Forces a card into the “case file” owner bucket (solution lock). */
-  /* Detailed:
-     - What it does: Floors all owners, sets CASE_FILE_ID to ceil, then normalises.
-     - What depends on it: No-refute / mild inference paths that conclude “this must be in the solution”.
-     - What breaks if changed: Solution locks won’t reflect as near-certain in the belief model.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: CASE_FILE_ID assignment and normalisation.
-  */
   // Sherlock beliefs: lock a specific card into the case file with near-certainty
   noteCaseFileCard(card){
     const key = this.cardKey(card.type,card.name);
@@ -1577,20 +970,7 @@ class Player{
 
   /* SECTION: Category-normalised case-file probability */
   /* Brief: Produces a per-category probability where remaining candidates sum to 1 within Suspects/Weapons/Rooms. */
-  /* Detailed:
-     - What it does:
-       - Returns 0 if the card is already cleared.
-       - If only one remaining candidate exists in that category, returns 1 for it.
-       - Otherwise, sums raw P(case-file) over remaining, then returns this item’s share.
-       - If the sum collapses near zero, falls back to uniform probability over remaining.
-     - What depends on it: Observer casebook percentage bars and Sherlock accusation planning.
-     - What breaks if changed: Percentages become misleading; confidence computations drift.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Remaining filtering, near-zero fallback threshold, and return formula.
-  */
   // --- Sherlock: category-normalised probability that an item is in the case file ---
-  // Ensures probabilities within each category (Suspect/Weapon/Room) sum to 1
-  // across remaining (not cleared) candidates.
   caseFileProbNormalized(type, name){
     // If already cleared/eliminated/owned/seen, it cannot be in the case file
     if(this.isCleared(type, name)) return 0;
@@ -1629,15 +1009,6 @@ class Player{
 
   /* SECTION: Probability helper accessors */
   /* Brief: Small utilities for formatting and retrieving case-file/owner probabilities. */
-  /* Detailed:
-     - _pct: clamps to [0..1] and formats as an integer percent string.
-     - _pCaseNorm: calls caseFileProbNormalized for a card object.
-     - _pOwner: retrieves current probability/weight for a specific ownerId for a card.
-     - What depends on it: Observer logs and debugging output.
-     - What breaks if changed: Logs become misleading; downstream code expecting numbers may misbehave.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Return types, clamp behaviour, Map access.
-  */
   _pct(x){ return `${Math.round(Math.max(0, Math.min(1, x)) * 100)}%`; }
 
   _pCaseNorm(card){
@@ -1652,13 +1023,6 @@ class Player{
 
   /* SECTION: entropyForCardKey(key) */
   /* Brief: Computes an information score (entropy) over the owner distribution for a card. */
-  /* Detailed:
-     - What it does: Treats weights as probabilities and computes Shannon entropy.
-     - What depends on it: pickSmartSuggestionParts uses entropy to select informative suggestion components.
-     - What breaks if changed: Suggestion selection quality shifts and can become biased or noisy.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: The math and zero-handling.
-  */
   // Entropy of ownership distribution for a card (higher => more uncertain/informative)
   entropyForCardKey(key){
     const w=this.ownerWeights.get(key); if(!w) return 0;
@@ -1670,13 +1034,6 @@ class Player{
 
   /* SECTION: pickSmartSuggestionParts() */
   /* Brief: Chooses suspect and weapon that are likely to yield the most information, plus small randomness for human-like variety. */
-  /* Detailed:
-     - What it does: Scores candidates by entropy plus jitter; sometimes picks a “second best” to avoid robotic determinism.
-     - What depends on it: Sherlock AI suggestion selection in aiTurn().
-     - What breaks if changed: AI behaviour/difficulty changes; removing randomness makes play predictable.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Scoring formula, candidate pool selection, and randomness gates.
-  */
   // Sherlock++: pick suspect & weapon that look most informative (entropy + tiny jitter)
   pickSmartSuggestionParts(){
     const pickFrom=(type)=>{
@@ -1707,13 +1064,6 @@ class Player{
 
   /* SECTION: beliefsTopFor(type) */
   /* Brief: Finds the most likely case-file candidate in a category using category-normalised probabilities. */
-  /* Detailed:
-     - What it does: Scans uncleared items, tracks best and second-best probabilities, then computes a confidence blending best value and margin.
-     - What depends on it: planAccusationWithBeliefs() and early-accuse logic elsewhere.
-     - What breaks if changed: Confidence estimates change and can skew accusation timing.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Comparison logic, confidence formula, and return shape.
-  */
   // Sherlock: pick the most likely case-file item in a category using category-normalised probabilities
   beliefsTopFor(type){
     const list = (type==='Suspect'?SUSPECTS : type==='Weapon'?WEAPONS : ROOMS);
@@ -1737,13 +1087,6 @@ class Player{
 
   /* SECTION: planAccusationWithBeliefs() */
   /* Brief: Produces a belief-based accusation plan with a combined confidence score. */
-  /* Detailed:
-     - What it does: Takes top candidate per category and combines confidences via geometric mean.
-     - What depends on it: Sherlock early-accuse logic elsewhere.
-     - What breaks if changed: Accusations may happen earlier/later or target different triples.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Combination math and return shape.
-  */
   planAccusationWithBeliefs(){
     const s=this.beliefsTopFor('Suspect');
     const w=this.beliefsTopFor('Weapon');
@@ -1755,15 +1098,6 @@ class Player{
 
   /* SECTION: Prototype helpers for “certain” accusation path */
   /* Brief: When only one candidate remains in each category, the AI can accuse with certainty. */
-  /* Detailed:
-     - What it does:
-       - isConfidentSolution(): checks remaining candidates count equals 1 for each category.
-       - inferredAccusation(): returns the single remaining candidate in each category as an accusation object.
-     - What depends on it: AI accusation logic uses these to trigger certain accusations.
-     - What breaks if changed: AI may never accuse when it should, or accuse incorrectly.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: The category names and the array indexing.
-  */
 Player.prototype.isConfidentSolution = function(){
   return this.possibleSet('Suspect').length === 1
       && this.possibleSet('Weapon').length  === 1
@@ -1779,34 +1113,11 @@ Player.prototype.inferredAccusation = function(){
 
 /* SECTION: Game Model — Game Class (Core State + Sessions + Setup + Turn UI + No‑Refute/Mild Inference) */
 /* Brief: Defines the Game controller object that owns global state, coordinates turns, and runs key inference rules. */
-/* Detailed:
-   - What it does:
-     - Holds all cross-player state (players, solution, board piece locations, dice/reachable rooms, trial/observer logs).
-     - Provides session guards for async safety, setup routines (deal cards, place pawns/weapons), and UI updates.
-     - Implements inference rules that eliminate case-file candidates when suggestions are unrefuted (noRefuteDeduction) and when 2-of-3 is known (applyMildInference).
-   - What depends on it:
-     - Startup flow and New Game flow construct/reset Game and call setup()/beginTurn().
-     - Rendering functions read Game state (players, locations, reachable, observer log) each update.
-     - AI/human turn flow relies on awaitingMove/awaitingDecision flags and sessionId checks.
-   - What breaks if changed:
-     - Renaming fields/methods breaks turn flow, rendering, and inference.
-     - Altering setup/deal logic changes game behaviour and can desync UI from model.
-     - Changing observer gating can spam logs or hide reasoning, especially in observer mode.
-   ✅ Safe to edit: Comments/blank lines only (Phase 1).
-   ⚠️ Dangerous to edit: Any executable code, especially property names, session logic, dealing/setup, and inference rules.
-*/
 
 class Game{
 
   /* SUBSECTION: constructor() — initialise global game state */
   /* Brief: Creates initial state containers and defaults, then creates an initial player set via resetPlayers(2). */
-  /* Detailed:
-     - What it does: Establishes baseline for a new run: players array, solution, piece locations, dice/reachables, turn flags, observer logging, and session counters.
-     - What depends on it: Nearly every method expects these properties to exist and have the right types (Map/Set/Array/booleans).
-     - What breaks if changed: Missing/renamed properties cause runtime errors that can prevent startup prompts/turn loop from running.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: Any property names, initial types, or the resetPlayers(2) call.
-  */
   constructor(){
     this.players=[];this.turnIndex=0;this.solution=null;
     this.suspectLoc=new Map();this.weaponLoc=new Map();
@@ -1825,15 +1136,6 @@ class Game{
 
   /* SECTION: Observer deductions log (obs) */
   /* Brief: Records Smart/Sherlock reasoning lines for observer mode, optionally focus-filtered. */
-  /* Detailed:
-     - What it does: Appends a timestamped line to obsLog only when observerMode is on and difficulty is not basic.
-     - Focus-only gating: byPlayerId must match observerFocusId if provided.
-     - Trims obsLog to obsLogMax by shifting the oldest entry.
-     - What depends on it: Observer Casebook rendering reads obsLog and shows it under Rooms.
-     - What breaks if changed: Log may spam, disappear, or grow unbounded; observer UI becomes confusing.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: Gating conditions and length trimming.
-  */
   obs(msg, { byPlayerId = null } = {}){
     // Rolling observer deductions log (Smart/Sherlock only)
     if(!this.observerMode) return;
@@ -1849,13 +1151,6 @@ class Game{
 
   /* SECTION: Session guards (newSession / isActiveSession) */
   /* Brief: Prevents async AI/human flows from continuing after a reset/new game. */
-  /* Detailed:
-     - What it does: sessionId increments on newSession(); callers capture it and check isActiveSession(sid) before continuing after awaits.
-     - What depends on it: aiTurn() and other async flows use this to avoid updating a stale game instance.
-     - What breaks if changed: You can get “ghost” updates from a prior game after New Game is started.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: The increment/check semantics.
-  */
   newSession(){this.sessionId++;return this.sessionId;}
   isActiveSession(id){return id===this.sessionId;}
 
@@ -1864,14 +1159,6 @@ class Game{
 
   /* SECTION: Board piece placement (suspects/weapons) */
   /* Brief: Resets on-board locations for suspects and weapons. */
-  /* Detailed:
-     - initAllSuspectPawns: places each suspect into a start room (START_ROOMS) with fallback to 'Hall'.
-     - initWeaponsOnBoard: shuffles ROOMS and assigns weapons to rooms cyclically.
-     - What depends on it: Board rendering and movement/room context rely on these Maps.
-     - What breaks if changed: Tokens appear in wrong rooms or become missing; suggestion moves and rendering can desync.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: Room/suspect strings and Map set logic.
-  */
   initAllSuspectPawns(){
     this.suspectLoc=new Map();
     SUSPECTS.forEach((s,i)=>this.suspectLoc.set(s,START_ROOMS[i]||'Hall'));
@@ -1884,17 +1171,6 @@ class Game{
 
   /* SECTION: resetPlayers(n) — rebuild players list and reset per-game flags */
   /* Brief: Creates Player instances, links them back to this Game, clears per-player knowledge, and resets turn state. */
-  /* Detailed:
-     - What it does:
-       - Clamps opponent count and starts a new session.
-       - Re-initialises suspect pawns and weapon locations.
-       - Creates players (player 0 human by default; others AI) and resets each player's internal knowledge containers.
-       - Resets game turn flags and clears solution/dice/reachable/trial status.
-     - What depends on it: New game setup, observer mode setup, and any time the game is restarted.
-     - What breaks if changed: Stale player state persists between games; observer logging may fail if gameRef is not linked.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: Player creation order, gameRef linkage, and the resets of Sets/Maps/flags.
-  */
   resetPlayers(n){
     n=clampInt(n,2,5,2);
     this.newSession();
@@ -1922,13 +1198,6 @@ class Game{
 
   /* SECTION: assignSuspects(human) — map suspects to players and set their locations */
   /* Brief: Assigns the chosen suspect to player 0 and distributes remaining suspects to AI players. */
-  /* Detailed:
-     - What it does: Removes the human choice from the pool, shuffles remaining, assigns in order, and sets each player location from suspectLoc.
-     - What depends on it: Rendering names/tokens and movement start positions.
-     - What breaks if changed: Players may have null/duplicate suspects; locations may not match tokens.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: Pool manipulation, shuffle, and suspectLoc lookups.
-  */
   assignSuspects(human){
     const pool=SUSPECTS.slice();const i=pool.indexOf(human);if(i>=0) pool.splice(i,1);
     shuffle(pool);
@@ -1939,12 +1208,6 @@ class Game{
 
   /* SECTION: buildDeck() — assemble full card list */
   /* Brief: Creates the full list of Suspect/Weapon/Room cards as {type,name} objects. */
-  /* Detailed:
-     - What depends on it: setup() uses this to build the deal deck after removing solution cards.
-     - What breaks if changed: Dealing and solution filtering can fail if types/names don't match.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: Card object shapes and type strings.
-  */
   buildDeck(){
     const cards=[];
     for(const s of SUSPECTS) cards.push({type:'Suspect',name:s});
@@ -1955,18 +1218,6 @@ class Game{
 
   /* SECTION: setup() — choose solution, deal cards, initialise knowledge/beliefs, and render */
   /* Brief: Performs the full game setup sequence and initial UI render. */
-  /* Detailed:
-     - What it does:
-       - Chooses random suspect/weapon/room as the hidden solution.
-       - Builds a deck excluding those three cards, shuffles, and deals round-robin.
-       - Calls initKnowledge() for all players and resets piece locations.
-       - Calls initBeliefs() for Sherlock belief model.
-       - Logs setup summary and renders.
-     - What depends on it: Start-of-game correctness (who holds what) and all later inference.
-     - What breaks if changed: Wrong dealing/solution filtering breaks the core logic of Clue.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: Filtering conditions, dealing loop, and initBeliefs/initKnowledge calls.
-  */
   setup(){
     log('Setting up game…');
     this.solution={suspect:choice(SUSPECTS),weapon:choice(WEAPONS),room:choice(ROOMS)};
@@ -1994,12 +1245,6 @@ class Game{
 
   /* SECTION: Turn helpers (currentPlayer / nextTurnIndex / computeReachable / updateTurnUI) */
   /* Brief: Accesses the active player, advances turns skipping eliminated players, computes movement, and updates UI pills and renders. */
-  /* Detailed:
-     - What depends on it: Human and AI turn loops; board highlighting; status pills.
-     - What breaks if changed: Turn order can get stuck; UI may not update; reachable rooms may be wrong.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: Loop bounds, eliminated checks, and DOM IDs ('turnPill','locPill').
-  */
   currentPlayer(){return this.players[this.turnIndex];}
   nextTurnIndex(i){
     let x=i;for(let s=0;s<100;s++){x=(x+1)%this.players.length;if(!this.players[x].eliminated) return x;}return i;
@@ -2017,13 +1262,6 @@ class Game{
 
   /* SECTION: NO‑REFUTE deduction (all difficulties; AI only) */
   /* Brief: If nobody refutes an AI suggestion, any suggested card not in the AI’s hand must be the solution for that category. */
-  /* Detailed:
-     - What it does: For each category where the suggester does not own the suggested card, eliminates all other cards in that category and optionally locks belief to case file.
-     - What depends on it: Core inference step for speeding AI deduction; observer logging.
-     - What breaks if changed: AI may fail to deduce obvious outcomes or deduce incorrectly.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: owns/eliminateAllOthers logic and the per-category checks.
-  */
   // NO-REFUTE deduction (ALL difficulties):
   // If no one refutes an AI's suggestion, then for each suggested card that the AI does NOT hold,
   // that card must be in the case file. Therefore eliminate all OTHER cards in that category.
@@ -2060,13 +1298,6 @@ class Game{
 
   /* SECTION: Mild inference (Smart/Sherlock) */
   /* Brief: If two cards from an unrefuted triple are cleared, the third must be the solution for that category. */
-  /* Detailed:
-     - What it does: For each saved unrefuted triple, counts cleared categories; if exactly two are cleared, eliminates all other cards in the remaining category and locks belief.
-     - What depends on it: AI inference pipeline and belief locking (noteCaseFileCard).
-     - What breaks if changed: AI may miss deterministic deductions or eliminate wrong candidates.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: The “exactly two cleared” condition and elimination loops.
-  */
   applyMildInference(pl){
     for(const t of pl.unrefuted){
       const s=pl.isCleared('Suspect',t.suspect),
@@ -2091,34 +1322,9 @@ class Game{
 
 /* SECTION: Inference Pipeline + Suggestion Resolution + Trial Helpers (Partial) */
   /* Brief: Runs AI inference after table events, resolves a suggestion through refutations, and sets up the centre-tile “trial” state for accusations. */
-  /* Detailed:
-     - What it does:
-       - applyInference(pl): gates inference by difficulty (basic does none; smart/sherlock runs constraint propagation + mild inference).
-       - makeSuggestion(...): performs the public suggestion actions (move suspect/weapon), then iterates players to find a refuter and processes learning/logging.
-       - beginTrial/restoreTrial/checkAccusation: manage the temporary centre-tile display state and compare accusations against the hidden solution.
-     - What depends on it:
-       - Turn flow for both human and AI.
-       - Sherlock/Smart learning hooks (noteRefutePattern, noteNoRefute, noteCardShown, markNotOwner, addRefuteConstraint).
-       - Observer-mode log output (obs) and deduction explanations.
-     - What breaks if changed:
-       - Any changes to refutation order, early returns, or learning hook calls alter core gameplay behaviour and can stop prompts/turn flow.
-       - Changing string/HTML in prompts can break prompt rendering or change player-visible text (and is risky).
-     ✅ Safe to edit: Comments/blank lines only (Phase 1).
-     ⚠️ Dangerous to edit: Any executable code, especially refutation flow, learning hook calls, early returns, and object shapes returned.
-  */
 
   /* SECTION: applyInference(pl) — difficulty-gated inference */
   /* Brief: Runs the inference steps that are enabled for the current AI difficulty. */
-  /* Detailed:
-     - What it does:
-       - Humans do not run AI inference here.
-       - Basic difficulty does no inference pipeline.
-       - Smart/Sherlock perform constraint propagation + mild inference.
-     - What depends on it: AI deduction strength and when deductions are applied after table events.
-     - What breaks if changed: AI difficulty behaviour changes; deductions may never occur or occur at wrong times.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: The difficulty checks and the calls to propagateConstraints/applyMildInference.
-  */
   applyInference(pl){
     if(pl.isHuman) return;
 
@@ -2133,23 +1339,6 @@ class Game{
 
   /* SECTION: makeSuggestion(pl,suspect,weapon,room) — core suggestion + refutation resolution */
   /* Brief: Executes a suggestion, moves pieces, checks refutations in turn order, updates knowledge/beliefs, and returns the outcome. */
-  /* Detailed:
-     - What it does:
-       - Builds a triple of {type,name} cards.
-       - Moves the suggested suspect pawn and weapon to the suggested room (public board state).
-       - Iterates other players in order to find the first refuter; handles human-vs-AI refuter behaviour.
-       - Triggers Sherlock/Smart learning hooks for observers and for the suggester (shown-card lock).
-       - Records knowledge (markSeen for AI) and constraints (addRefuteConstraint for observers), then applies inference.
-       - If no one refutes: logs, applies NO-REFUTE deduction for AI, stores unrefuted triple, applies inference, returns refuted:false.
-     - What depends on it:
-       - Game rules correctness (refutation order, movement side effects).
-       - AI learning/deduction and observer-mode explanation logs.
-     - What breaks if changed:
-       - Any change to early returns, the order loop, or the “no one could refute” branch changes gameplay outcomes.
-       - Altering returned object shapes ({refuted:true,...} etc.) breaks callers expecting those fields.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Any executable logic, especially loop flow and learning hook calls.
-  */
   async makeSuggestion(pl,suspect,weapon,room){
     const triple=[{type:'Suspect',name:suspect},{type:'Weapon',name:weapon},{type:'Room',name:room}];
 
@@ -2184,8 +1373,6 @@ class Game{
 
     /* SUBSECTION: Observer-mode public event log */
     /* Brief: Records the suggestion triple as public information in observer mode. */
-    /* Detailed: This does not reveal private hands; it logs what was tested at the table. */
-    /* ✅ Safe to edit: Comments only. ⚠️ Dangerous to edit: The call signature and byPlayerId usage. */
     if(this.observerMode){
       this.obs(`🧠 Observed: ${pl.name} tested { Suspect:${suspect}, Weapon:${weapon}, Room:${room} } (public information).`, { byPlayerId: this.observerFocusId });
     }
@@ -2284,15 +1471,6 @@ class Game{
 
   /* SECTION: Centre-tile "trial" helpers (ACCUSED -> NOT GUILTY -> revert) */
   /* Brief: Manages temporary centre-tile state used during accusation resolution. */
-  /* Detailed:
-     - beginTrial: stores previous locations and moves accused suspect/weapon to HOLDING_CELL_ID.
-     - restoreTrial: restores pieces to previous locations and clears trial state.
-     - checkAccusation: compares an accusation triple to the hidden solution.
-     - What depends on it: Accusation UI states in renderBoard() and the accuse() flow.
-     - What breaks if changed: Pieces can get “stuck” in the centre, or verdict checks can be wrong.
-     ✅ Safe to edit: Comments only.
-     ⚠️ Dangerous to edit: Map updates, stored structure of this.trial, and solution comparison logic.
-  */
   // === Centre-tile "trial" helpers (ACCUSED → NOT GUILTY → revert) ===
   beginTrial(pl, acc){
     // Save previous locations so we can revert after NOT GUILTY
@@ -2329,26 +1507,8 @@ class Game{
            a.room===this.solution.room;
   }
 
-/* SECTION: accuse(pl,acc) — accusation flow + verdict resolution
-   Brief: Handles an accusation by showing the centre trial state, prompting, then applying CONVICTED (win) or NOT GUILTY (elimination) outcomes.
-   Detailed:
-     - What it does:
-       - Logs the accusation, starts the centre "trial" display via beginTrial(pl, acc), and re-renders the board.
-       - Shows an Accusation info prompt (awaited) before computing the verdict.
-       - Checks the accusation via checkAccusation(acc) and branches:
-         - If correct: sets gameOver + convicted, clears trial state, re-renders, shows Game Over, offers Play Again.
-         - If wrong: sets pl.eliminated, switches centre tile to NOT GUILTY, and either restores immediately (human) or returns a flag for aiTurn() to restore after summary (AI).
-     - What depends on it:
-       - beginTrial()/restoreTrial()/checkAccusation() and renderBoard() centre-tile states (accused/notguilty/convicted).
-       - aiTurn() relies on the return shape { correct:false, revertAfterSummary:true } for AI cleanup timing.
-       - showInfoPrompt()/promptPlayAgain()/startNewGame() for UI flow.
-     - What breaks if changed:
-       - Changing trial stage strings or convicted object fields can desync centre-tile rendering.
-       - Changing return object shapes/flags can break AI post-summary restore behaviour.
-       - Reordering beginTrial/renderAll or removing awaits can alter pacing/state visibility.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: Any executable logic, especially trial state mutations, awaits, and return shapes.
-*/
+/* SECTION: accuse(pl,acc) — accusation flow + verdict resolution */
+/* Brief: Handles an accusation by showing the centre trial state, prompting, then applying CONVICTED (win) or NOT GUILTY (elimination) outcomes. */
 async accuse(pl,acc){
     // 1) Move pieces to centre + show "ACCUSED" prompt first (tension)
     log(`${pl.name} ACCUSES: ${displaySuspect(acc.suspect)} in the ${acc.room} with the ${acc.weapon}!`);
@@ -2430,15 +1590,8 @@ async accuse(pl,acc){
     return { correct:false, revertAfterSummary:true };
   }
 
-/* SECTION: Human Turn Loop + Prompt Flow (beginTurn → endTurn)
-   Brief: Coordinates the active player’s turn, routing to human prompts or AI turn logic, and advancing turns safely.
-   Detailed:
-     - What it does: Resets per-turn flags (dice/reachable/awaitingMove/awaitingDecision), updates UI, then executes human or AI turn paths.
-     - What depends on it: beginTurn()/endTurn() are the main loop; prompts and movement handlers assume these flags are set correctly.
-     - What breaks if changed: Turn order can desync, prompts can appear at the wrong time, and movement/suggestion phases can become unreachable.
-   ✅ Safe to edit: Comments/blank lines only.
-   ⚠️ Dangerous to edit: Any logic/flags, turn routing, or awaited calls (affects gameplay timing and correctness).
-*/
+/* SECTION: Human Turn Loop + Prompt Flow (beginTurn → endTurn) */
+/* Brief: Coordinates the active player’s turn, routing to human prompts or AI turn logic, and advancing turns safely. */
 async beginTurn(){
     if(this.gameOver) return;
     const pl=this.currentPlayer();
@@ -2452,15 +1605,8 @@ async beginTurn(){
     else { await this.aiTurn(pl); }
   }
 
-  /* SUBSECTION: showRollPromptForHuman() — human decision prompt (roll/stay/accuse)
-     Brief: Builds and shows the “Your Turn” prompt for humans, choosing available actions based on state.
-     Detailed:
-       - What it does: Computes which buttons to show, renders the prompt, then dispatches to roll/stay/accuse handlers.
-       - What depends on it: awaitingDecision + humanTurnsStarted gating; downstream handlers humanAccuse/humanStayAndSuggest/humanRollAndMove.
-       - What breaks if changed: Wrong options appear, cancel loops break, or the human can get stuck without a valid action.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: Action values ('roll'/'stay'/'accuse'), prompt flow, and handler calls.
-  */
+  /* SUBSECTION: showRollPromptForHuman() — human decision prompt (roll/stay/accuse) */
+  /* Brief: Builds and shows the “Your Turn” prompt for humans, choosing available actions based on state. */
   async showRollPromptForHuman(){
     const pl=this.currentPlayer();
     if(!pl.isHuman||this.gameOver||pl.eliminated) return;
@@ -2483,15 +1629,8 @@ async beginTurn(){
     if(pick==='roll'){ await this.humanRollAndMove(); return; }
   }
 
-  /* SUBSECTION: humanRollAndMove() — roll dice, compute reachable rooms, enter move-await state
-     Brief: Rolls the dice, computes reachable rooms, and sets awaitingMove so the board shows Move buttons.
-     Detailed:
-       - What it does: Clears “arrivedByOpponentSuggestion” decision state, sets dice/reachable, logs, updates UI, and sets the Dice Result prompt.
-       - What depends on it: computeReachable()/diceReachable(), renderBoard() highlight logic (awaitingMove + reachable Set).
-       - What breaks if changed: Movement highlighting fails, move clicks may be rejected, or dice results won’t drive reachable rooms.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: dice/reachable/awaitingMove flags and setPromptMessage content/sequence.
-  */
+  /* SUBSECTION: humanRollAndMove() — roll dice, compute reachable rooms, enter move-await state */
+  /* Brief: Rolls the dice, computes reachable rooms, and sets awaitingMove so the board shows Move buttons. */
   async humanRollAndMove(){
     const pl=this.currentPlayer();
     if(!pl.isHuman||this.gameOver||pl.eliminated) return;
@@ -2505,15 +1644,8 @@ async beginTurn(){
     setPromptMessage('Dice Result',`<div>You rolled a <b>${this.dice}</b>.</div><div style="margin-top:8px;">Now click <b>Move</b> on a highlighted room.</div>`);
   }
 
-  /* SUBSECTION: humanStayAndSuggest() — skip roll when moved by suggestion, then suggest
-     Brief: Allows a human moved by an opponent’s suggestion to stay put (no roll) and go straight to suggesting.
-     Detailed:
-       - What it does: Validates awaitingDecision, flips flags, logs, updates UI, then opens the suggestion prompt.
-       - What depends on it: awaitingDecision meaning “eligible to stay”; openSuggestionPromptAuto() for the next phase.
-       - What breaks if changed: Humans may incorrectly stay/roll, or suggestion phase may never open.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: awaitingDecision/stayedInsteadOfRoll/arrivedByOpponentSuggestion state transitions.
-  */
+  /* SUBSECTION: humanStayAndSuggest() — skip roll when moved by suggestion, then suggest */
+  /* Brief: Allows a human moved by an opponent’s suggestion to stay put (no roll) and go straight to suggesting. */
   async humanStayAndSuggest(){
     const pl=this.currentPlayer(); if(!pl.isHuman||this.gameOver||pl.eliminated) return;
     if(!this.awaitingDecision) return;
@@ -2523,15 +1655,8 @@ async beginTurn(){
     await this.openSuggestionPromptAuto();
   }
 
-  /* SUBSECTION: humanMoveTo(room) — complete a move, update pawn location, then suggest
-     Brief: Finalizes a human move to a reachable room and transitions into the suggestion prompt.
-     Detailed:
-       - What it does: Validates awaitingMove + reachability, updates player location (and pawn map), clears awaitingMove, logs, updates UI, then opens suggestion prompt.
-       - What depends on it: reachable Set membership, suspectLoc map updates for board tokens.
-       - What breaks if changed: Illegal moves may be allowed/blocked incorrectly; pawn location can desync from player location.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: reachability checks and Map updates.
-  */
+  /* SUBSECTION: humanMoveTo(room) — complete a move, update pawn location, then suggest */
+  /* Brief: Finalizes a human move to a reachable room and transitions into the suggestion prompt. */
   async humanMoveTo(room){
     const pl=this.currentPlayer();
     if(!pl.isHuman||!this.awaitingMove) return;
@@ -2543,15 +1668,8 @@ async beginTurn(){
     await this.openSuggestionPromptAuto();
   }
 
-  /* SUBSECTION: openSuggestionPromptAuto() — suggestion UI (room fixed, pick suspect/weapon)
-     Brief: Renders the suggestion prompt for the current room and executes makeSuggestion() if confirmed.
-     Detailed:
-       - What it does: Builds <select> options, renders prompt, reads selections, then either makes a suggestion + post-result prompt or ends the turn.
-       - What depends on it: IDs selSuspect/selWeapon, makeSuggestion() logic, showPostSuggestionPrompt() branching.
-       - What breaks if changed: Wrong element IDs break selection reads; ending-turn logic can trigger prematurely or not at all.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: select IDs, option templates, and go/suspect/weapon gating.
-  */
+  /* SUBSECTION: openSuggestionPromptAuto() — suggestion UI (room fixed, pick suspect/weapon) */
+  /* Brief: Renders the suggestion prompt for the current room and executes makeSuggestion() if confirmed. */
   async openSuggestionPromptAuto(){
     const pl=this.currentPlayer(); if(!pl.isHuman||pl.eliminated||this.gameOver) return;
     if(this.awaitingMove) return;
@@ -2576,15 +1694,8 @@ async beginTurn(){
     }
   }
 
-  /* SUBSECTION: showPostSuggestionPrompt(result,triple) — after-suggestion choice (end/accuse)
-     Brief: After making a suggestion, lets the human either end the turn or proceed to an accusation.
-     Detailed:
-       - What it does: Builds a result-dependent message, renders prompt, then either calls humanAccuse() or endTurn().
-       - What depends on it: result.refuted flag shape returned by makeSuggestion(); onCancel callback loops back here.
-       - What breaks if changed: Humans may lose the chance to accuse or get stuck in prompt loops.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: action values ('end'/'accuse') and callback wiring.
-  */
+  /* SUBSECTION: showPostSuggestionPrompt(result,triple) — after-suggestion choice (end/accuse) */
+  /* Brief: After making a suggestion, lets the human either end the turn or proceed to an accusation. */
   async showPostSuggestionPrompt(result,triple){
     const pl=this.currentPlayer(); if(!pl.isHuman||this.gameOver) return;
     const title=result.refuted?'Suggestion Result':'No One Could Refute!';
@@ -2602,15 +1713,8 @@ async beginTurn(){
     else await this.endTurn();
   }
 
-  /* SUBSECTION: humanAccuse({onCancel}={}) — accusation UI and dispatch to accuse()
-     Brief: Renders accusation prompt (suspect/weapon/room), then calls accuse() if confirmed or returns to prior flow on cancel.
-     Detailed:
-       - What it does: Builds <select> lists, renders prompt, reads accSus/accWeap/accRoom, then either accuses or cancels back to the correct prompt.
-       - What depends on it: IDs accSus/accWeap/accRoom, roomsOptionsHTML(), accuse() flow, and onCancel callback.
-       - What breaks if changed: Wrong IDs break DOM reads; cancel handling can strand the player or skip required prompts.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: element IDs, go/acc gating, and the onCancel decision tree.
-  */
+  /* SUBSECTION: humanAccuse({onCancel}={}) — accusation UI and dispatch to accuse() */
+  /* Brief: Renders accusation prompt (suspect/weapon/room), then calls accuse() if confirmed or returns to prior flow on cancel. */
   async humanAccuse({onCancel}={}){
     const pl=this.currentPlayer(); if(!pl.isHuman||pl.eliminated||this.gameOver) return;
     if(this.awaitingMove) return;
@@ -2643,26 +1747,12 @@ async beginTurn(){
     }
   }
 
-  /* SUBSECTION: roomsOptionsHTML() — builds <option> list for rooms
-     Brief: Returns the HTML <option> markup for the room dropdown used in the accusation prompt.
-     Detailed:
-       - What it does: Maps ROOMS to <option value="...">...</option> strings.
-       - What depends on it: humanAccuse() expects exact values to match room names.
-       - What breaks if changed: Room selection can mismatch ROOMS strings, breaking accusation comparisons.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: Option value strings and ROOMS mapping.
-  */
+  /* SUBSECTION: roomsOptionsHTML() — builds <option> list for rooms */
+  /* Brief: Returns the HTML <option> markup for the room dropdown used in the accusation prompt. */
   roomsOptionsHTML(){ return ROOMS.map(r => `<option value="${r}">${r}</option>`).join(""); }
 
-  /* SUBSECTION: endTurn() — advance to next active player and begin their turn
-     Brief: Moves turnIndex to the next non-eliminated player, updates UI, then calls beginTurn() again.
-     Detailed:
-       - What it does: Skips eliminated players via nextTurnIndex(), refreshes UI, and continues the main loop.
-       - What depends on it: nextTurnIndex() correctness; beginTurn() as the loop entry.
-       - What breaks if changed: Turn order can get stuck, eliminated players may take turns, or recursion can misbehave.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: turnIndex updates, awaited beginTurn(), and eliminated-player skipping.
-  */
+  /* SUBSECTION: endTurn() — advance to next active player and begin their turn */
+  /* Brief: Moves turnIndex to the next non-eliminated player, updates UI, then calls beginTurn() again. */
   async endTurn(){
     if(this.gameOver) return;
     this.turnIndex=this.nextTurnIndex(this.turnIndex);
@@ -2670,26 +1760,8 @@ async beginTurn(){
     await this.beginTurn();
   }
 
-/* SECTION: aiTurn(pl) — AI full turn automation (move, suggest, accuse, summary)
-   Brief: Runs one complete AI turn with pacing delays, movement decisions, suggestion selection, optional accusation, and end-of-turn summary.
-   Detailed:
-     - What it does:
-       - Uses session guards (sid + isActiveSession) to prevent stale async updates after New Game.
-       - Decides whether to stay (if moved by suggestion) or roll/move; updates dice/reachable and renders.
-       - Chooses suggestion cards (Sherlock: entropy-based; Smart/basic: random from remaining), then calls makeSuggestion().
-       - Optionally accuses (certain solution, or Sherlock belief-based early/mistake), then shows a summary prompt.
-       - If AI accused wrong, restores centre trial display after the summary (revertAfterSummary).
-     - What depends on it:
-       - sessionId/newSession() + isActiveSession() for async safety.
-       - Movement tables (ROOM_DICE) via computeReachable(), and renderAll() for UI sync.
-       - Sherlock belief helpers (entropy/pickSmartSuggestionParts/planAccusationWithBeliefs/decayBeliefs) and accuse() return shape.
-     - What breaks if changed:
-       - Altering session checks can cause “ghost turns” after reset.
-       - Changing decision thresholds affects AI behaviour/difficulty.
-       - Changing summary/revert flow can leave centre tile stuck in NOT GUILTY or skip restores.
-   ✅ Safe to edit: Comments/blank lines only.
-   ⚠️ Dangerous to edit: Any executable logic, especially session checks, decision thresholds, and returned flags used later.
-*/
+/* SECTION: aiTurn(pl) — AI full turn automation (move, suggest, accuse, summary) */
+/* Brief: Runs one complete AI turn with pacing delays, movement decisions, suggestion selection, optional accusation, and end-of-turn summary. */
 async aiTurn(pl){
     const sid=this.sessionId;
     if(this.gameOver) return;
@@ -2703,15 +1775,8 @@ async aiTurn(pl){
 
     let choseStay=false;
 
-    /* SUBSECTION: Stay vs Roll decision (arrivedByOpponentSuggestion)
-       Brief: If the AI was moved by an opponent’s suggestion, it may stay (no roll) or roll normally.
-       Detailed:
-         - What it does: Uses cleared-room status + difficulty-specific probabilities to set choseStay, then clears arrivedByOpponentSuggestion.
-         - What depends on it: Correct meaning of arrivedByOpponentSuggestion and isCleared/possibleSet('Room').
-         - What breaks if changed: AI may stay/roll incorrectly, skewing pacing and room coverage.
-       ✅ Safe to edit: Comments/blank lines only.
-       ⚠️ Dangerous to edit: Probability thresholds and flag resets.
-    */
+    /* SUBSECTION: Stay vs Roll decision (arrivedByOpponentSuggestion) */
+    /* Brief: If the AI was moved by an opponent’s suggestion, it may stay (no roll) or roll normally. */
     // Stay vs Roll decision (Sherlock a bit more intentional)
     if (pl.arrivedByOpponentSuggestion) {
       const roomCleared=pl.isCleared('Room',pl.location);
@@ -2733,15 +1798,8 @@ async aiTurn(pl){
       if(!this.isActiveSession(sid)) return;
     }
 
-    /* SUBSECTION: Roll + move selection (reachables → dest)
-       Brief: Rolls dice, evaluates reachable rooms, and picks a destination (with Sherlock “second-best” flavour).
-       Detailed:
-         - What it does: Computes reachables, scores destinations by next-turn potential, moves pawn, logs, renders, and pauses.
-         - What depends on it: computeReachable/ROOM_DICE integrity, suspectLoc updates, and renderAll() timing.
-         - What breaks if changed: AI movement can become illegal/stuck or desync board tokens from player location.
-       ✅ Safe to edit: Comments/blank lines only.
-       ⚠️ Dangerous to edit: Destination scoring, fallback, and pawn/location updates.
-    */
+    /* SUBSECTION: Roll + move selection (reachables → dest) */
+    /* Brief: Rolls dice, evaluates reachable rooms, and picks a destination (with Sherlock “second-best” flavour). */
     if(!choseStay){
       // Roll and compute reachables
       this.dice = randInt(1,6);
@@ -2797,15 +1855,8 @@ async aiTurn(pl){
       renderAll(this);
     }
 
-    /* SUBSECTION: Suggestion selection (Sherlock entropy vs Smart/basic remaining)
-       Brief: Chooses suspect/weapon for the suggestion; Sherlock uses information gain (entropy), others pick from uncleared.
-       Detailed:
-         - What it does: Computes candidate pools from possibleSet(); Sherlock ranks entropy and calls pickSmartSuggestionParts(); logs reasoning in observer mode.
-         - What depends on it: entropyForCardKey(), pickSmartSuggestionParts(), and observerMode logging.
-         - What breaks if changed: AI deduction strength/feel shifts; observer reasoning logs may become misleading.
-       ✅ Safe to edit: Comments/blank lines only.
-       ⚠️ Dangerous to edit: Candidate pools, ranking logic, and logging string keys.
-    */
+    /* SUBSECTION: Suggestion selection (Sherlock entropy vs Smart/basic remaining) */
+    /* Brief: Chooses suspect/weapon for the suggestion; Sherlock uses information gain (entropy), others pick from uncleared. */
     // Sherlock++: suggestion target selection + thought process logging
     let suspect, weapon;
     const room = pl.location;
@@ -2852,15 +1903,8 @@ async aiTurn(pl){
     // Sherlock++: beliefs decay each AI turn
     if (isSherlock(this.aiDifficulty)) pl.decayBeliefs();
 
-    /* SUBSECTION: Accusation logic (certain vs Sherlock early/mistake)
-       Brief: Decides whether to accuse: always when certain, sometimes early in Sherlock mode based on belief confidence.
-       Detailed:
-         - What it does: Checks isConfidentSolution(); else for Sherlock uses planAccusationWithBeliefs() + thresholds/evidence + randomness.
-         - What depends on it: Player belief methods, AI_CFG.sherlock tuning, and accuse() side effects/return shape.
-         - What breaks if changed: AI may accuse too early/late, or never accuse; wrong revertAfterSummary handling can stick centre display.
-       ✅ Safe to edit: Comments/blank lines only.
-       ⚠️ Dangerous to edit: Thresholds, randomness, and accOutcome handling.
-    */
+    /* SUBSECTION: Accusation logic (certain vs Sherlock early/mistake) */
+    /* Brief: Decides whether to accuse: always when certain, sometimes early in Sherlock mode based on belief confidence. */
     // === Accusation logic ===
     let accused=false;
     let accOutcome=null; // used to revert NOT GUILTY display after summary (AI only)
@@ -2921,15 +1965,8 @@ async aiTurn(pl){
     summary.push('Turn ended.');
     await this.showOpponentTurnSummary(pl,summary);
 
-    /* SUBSECTION: Post-summary trial restore (AI wrong accusation)
-       Brief: Restores the centre-tile trial state AFTER the summary prompt if accuse() requested deferred restore.
-       Detailed:
-         - What it does: Checks accOutcome.revertAfterSummary then calls restoreTrial() and re-renders.
-         - What depends on it: accuse() returning {revertAfterSummary:true} for AI wrong accusations.
-         - What breaks if changed: Centre tile may remain in NOT GUILTY state or pieces may stay stuck in centre.
-       ✅ Safe to edit: Comments/blank lines only.
-       ⚠️ Dangerous to edit: Flag name/value and restoreTrial/renderAll order.
-    */
+    /* SUBSECTION: Post-summary trial restore (AI wrong accusation) */
+    /* Brief: Restores the centre-tile trial state AFTER the summary prompt if accuse() requested deferred restore. */
     // If AI made a wrong accusation, revert the centre display AFTER the summary is dismissed
     if(accOutcome && accOutcome.revertAfterSummary){
       this.restoreTrial();
@@ -2940,22 +1977,8 @@ async aiTurn(pl){
     await this.endTurn();
   }
 
-/* SECTION: showOpponentTurnSummary(player,lines) — Opponent Turn Summary prompt
-   Brief: Formats an AI turn’s “summary” array into a readable bullet list and shows it in an OK-only info prompt.
-   Detailed:
-     - What it does:
-       - Turns `lines` into a single string where each entry is prefixed with "• " and separated by "\n".
-       - Wraps that text in a styled HTML container that uses `white-space:pre-wrap` so newlines display properly.
-       - Awaits showInfoPrompt(...) so the game pauses until the player clicks OK.
-     - What depends on it:
-       - aiTurn(pl) builds the `summary` array and calls this to present it before continuing to the next turn.
-       - The newline join + `white-space:pre-wrap` are paired: together they produce the multi-line bullet list.
-     - What breaks if changed:
-       - If the join delimiter or `white-space` styling changes, the summary can collapse into a single unreadable line.
-       - If the `await` is removed, turn flow timing changes (next turn may start before the summary is seen).
-   ✅ Safe to edit: Comments/blank lines only.
-   ⚠️ Dangerous to edit: Any executable logic, especially the join '\n', the HTML string structure, and the awaited prompt call.
-*/
+/* SECTION: showOpponentTurnSummary(player,lines) — Opponent Turn Summary prompt */
+/* Brief: Formats an AI turn’s “summary” array into a readable bullet list and shows it in an OK-only info prompt. */
 async showOpponentTurnSummary(player,lines){
     const pretty=lines.map(l=>`• ${l}`).join('\n');
     const html=`<div style="margin-bottom:8px;"><b>${player.name}</b> finished their turn.</div>
@@ -2966,23 +1989,8 @@ async showOpponentTurnSummary(player,lines){
   }
 }
 
-/* SECTION: Rendering Constants (HOLDING_CELL_ID, BOARD_LAYOUT, CENTER_CELL)
-   Brief: Defines the fixed IDs and grid coordinates used by the board renderer to position rooms and the centre tile.
-   Detailed:
-     - What it does:
-       - HOLDING_CELL_ID is the special “centre” location key used to park tokens during trial/accusation display.
-       - BOARD_LAYOUT maps each room name to its grid column/row spans for CSS grid placement.
-       - CENTER_CELL defines the grid span for the centre tile.
-     - What depends on it:
-       - renderBoard() uses BOARD_LAYOUT and CENTER_CELL to set inline grid positioning.
-       - Trial/convicted centre display relies on HOLDING_CELL_ID matching token-location logic.
-     - What breaks if changed:
-       - Room names must match everywhere (ROOMS list, movement tables, token placement). Any mismatch breaks lookups and positioning.
-       - Changing coordinates can overlap rooms, hide rooms, or make the board unusable.
-       - Changing HOLDING_CELL_ID breaks centre-tile token moves (pieces can “disappear” from expected render paths).
-   ✅ Safe to edit: Comments/blank lines only.
-   ⚠️ Dangerous to edit: Any strings/keys/room names or coordinate arrays (core rendering + lookup identity).
-*/
+/* SECTION: Rendering Constants (HOLDING_CELL_ID, BOARD_LAYOUT, CENTER_CELL) */
+/* Brief: Defines the fixed IDs and grid coordinates used by the board renderer to position rooms and the centre tile. */
 /* Rendering */
 const HOLDING_CELL_ID='HoldingCell';
 const BOARD_LAYOUT={
@@ -2999,25 +2007,8 @@ const BOARD_LAYOUT={
 const CENTER_CELL={col:[5,9],row:[4,6]};
 
 
-/* SECTION: renderPlayers(game) — Players panel list renderer
-   Brief: Rebuilds the Players panel UI each render: name/role, location, eliminated flag, and “active” turn marker.
-   Detailed:
-     - What it does:
-       - Clears #playersBox then creates a row per player with left/right columns.
-       - Left column shows the player label + current room + optional eliminated badge.
-       - Right column shows “active” pill for the current turn (unless gameOver), otherwise a placeholder pill.
-       - Observer mode: labels the observer focus player as “Observer Focus (name)”.
-     - What depends on it:
-       - DOM element ID: playersBox must exist.
-       - CSS classes: pill / pill good / pill bad are used inside innerHTML for styling.
-       - State: game.turnIndex, game.gameOver, game.observerMode, game.observerFocusId, p.location, p.eliminated.
-     - What breaks if changed:
-       - Changing 'playersBox' breaks rendering (null element / empty UI).
-       - Changing class names ('pill', 'good', 'bad') breaks styling for status badges.
-       - Changing label logic can confuse observer focus and “You (…)” labeling.
-   ✅ Safe to edit: Comments/blank lines only.
-   ⚠️ Dangerous to edit: Any IDs/class strings in innerHTML and any logic that determines active/observer labels.
-*/
+/* SECTION: renderPlayers(game) — Players panel list renderer */
+/* Brief: Rebuilds the Players panel UI each render: name/role, location, eliminated flag, and “active” turn marker. */
 function renderPlayers(game){
   const box=el('playersBox');box.innerHTML='';
   game.players.forEach((p,idx)=>{
@@ -3037,24 +2028,8 @@ function renderPlayers(game){
   });
 }
 
-/* SECTION: renderHand(game) — “Your Cards” panel renderer
-   Brief: Clears and redraws the human player’s hand as sorted badge pills.
-   Detailed:
-     - What it does:
-       - Reads game.players[0].hand, sorts by type then name, and creates a pill badge per card.
-       - Uses displayCardName() so suspect titles render nicely (e.g., Rev. Green).
-       - Shows a fallback “(no cards?)” pill if the hand is empty.
-     - What depends on it:
-       - DOM element with id="handBox" must exist.
-       - Card objects must have the shape {type, name}.
-       - displayCardName(type,name) must stay compatible with those types.
-     - What breaks if changed:
-       - Changing the DOM id or clearing logic stops the hand from rendering/refreshing.
-       - Changing sort/comparison logic can reorder cards (UX change).
-       - Changing the badge class names breaks CSS styling of the pills.
-   ✅ Safe to edit: Comments/blank lines only.
-   ⚠️ Dangerous to edit: Any code, DOM id 'handBox', class strings, or assumptions about card object shape.
-*/
+/* SECTION: renderHand(game) — “Your Cards” panel renderer */
+/* Brief: Clears and redraws the human player’s hand as sorted badge pills. */
 function renderHand(game){
   const you=game.players[0];
   const box=el('handBox');box.innerHTML='';
@@ -3069,26 +2044,8 @@ function renderHand(game){
 }
 
 
-/* SECTION: renderNotebook(game) — manual checklist UI (ticks + per-item notes)
-   Brief: Builds the 3 checklists (Suspects/Weapons/Rooms) with checkbox + label + text note for each entry.
-   Detailed:
-     - What it does:
-       - Defines icon maps (uses global SUSPECT_ICON/WEAPON_ICON if present, else defaults).
-       - Loads saved checklist ticks and note text (loadChecklist/loadCheckNotes).
-       - Renders each category list into its target container (noteSuspects/noteWeapons/noteRooms).
-       - Persists changes: checkbox onchange saves ticks; text oninput saves note text.
-     - What depends on it:
-       - Storage helpers: loadChecklist/saveChecklist and loadCheckNotes/saveCheckNotes.
-       - DOM ids: noteSuspects, noteWeapons, noteRooms must exist.
-       - CSS classes used by layout/styling: noteitem, cleared, name, noteText, ico.
-       - Key format `${type}:${name}` must remain consistent with storage + other notebook code.
-     - What breaks if changed:
-       - Changing `${type}:${name}` key format breaks persistence and “cleared” matching.
-       - Renaming DOM ids or classes breaks rendering/styling.
-       - Changing event handlers can stop saving or cause re-render loops to fail.
-   ✅ Safe to edit: Comments/blank lines only.
-   ⚠️ Dangerous to edit: Any executable code, key format, DOM ids, class names, or persistence calls.
-*/
+/* SECTION: renderNotebook(game) — manual checklist UI (ticks + per-item notes) */
+/* Brief: Builds the 3 checklists (Suspects/Weapons/Rooms) with checkbox + label + text note for each entry. */
 function renderNotebook(game){
   // Reuse global icon maps if they exist; otherwise built-ins.
   const SUS_ICON = (typeof SUSPECT_ICON !== 'undefined') ? SUSPECT_ICON : {
@@ -3103,23 +2060,8 @@ function renderNotebook(game){
 
   const chk=loadChecklist(); const notes=loadCheckNotes();
 
-  /* SUBSECTION: renderList(targetId,type,list) — per-category list builder
-     Brief: Renders one checklist category into its target container.
-     Detailed:
-       - What it does:
-         - Creates one row per item with checkbox + name label (+ optional icon) + note input.
-         - Checkbox onchange updates checklist storage then re-renders to apply strike-through.
-         - Note input oninput updates notes storage without forcing full re-render.
-       - What depends on it:
-         - Consistent key format `${type}:${name}` for both chk and notes objects.
-         - CSS grid layout for .noteitem and input class .noteText.
-       - What breaks if changed:
-         - Changing key format breaks saved data mapping.
-         - Changing class names breaks layout and “cleared” styling.
-         - Removing renderNotebook(game) call after saving ticks can leave UI out of sync.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: Key construction, DOM ids, class names, and persistence + rerender logic.
-  */
+  /* SUBSECTION: renderList(targetId,type,list) — per-category list builder */
+  /* Brief: Renders one checklist category into its target container. */
   const renderList=(targetId,type,list)=>{
     const box=el(targetId); box.innerHTML='';
     list.forEach(name=>{
@@ -3151,25 +2093,8 @@ function renderNotebook(game){
   renderList('noteRooms','Room',ROOMS);
 }
 
-/* SECTION: renderObserverCasebook(game) — Observer mode casebook (status + Sherlock probabilities + deductions log)
-   Brief: Renders the right-panel casebook for observer mode, showing each item’s status (own/seen/deduced/eliminated) and (Sherlock) case-file probability bars.
-   Detailed:
-     - What it does:
-       - Switches the right-panel header to “Observer Casebook”, then rebuilds the three lists (Suspects/Weapons/Rooms) for the focus player.
-       - Derives per-item status from focus.own / focus.seen / focus.knownOwners / focus.knowledgeMeta.
-       - In Sherlock difficulty, computes a per-item case-file probability (preferring caseFileProbNormalized) and displays a progress bar.
-       - In Smart/Sherlock, appends an observer deductions log under Rooms and auto-scrolls it to latest.
-     - What depends on it:
-       - DOM IDs: noteSuspects, noteWeapons, noteRooms and selector '.rightPanel h2' must exist.
-       - Focus player fields/methods: cardKey(), own, seen, knownOwners, knowledgeMeta; (Sherlock) ownerWeights, caseFileProbNormalized.
-       - CSS classes: noteitem/cleared/name/ico/probWrap/probBar/probPct/log; and CSS variables used in inline styles.
-     - What breaks if changed:
-       - Changing IDs/class names breaks rendering/styling; changing status mapping can make the observer UI misleading.
-       - Changing solProb() math or bar sizing changes meaning/UX of Sherlock probabilities.
-       - Removing the deductions log creation or auto-scroll affects observer-mode readability.
-   ✅ Safe to edit: Comments/blank lines only.
-   ⚠️ Dangerous to edit: Any executable logic (status/probability mapping, DOM IDs/class strings, log creation, and auto-scroll timing).
-*/
+/* SECTION: renderObserverCasebook(game) — Observer mode casebook (status + Sherlock probabilities + deductions log) */
+/* Brief: Renders the right-panel casebook for observer mode, showing each item’s status (own/seen/deduced/eliminated) and (Sherlock) case-file probability bars. */
 function renderObserverCasebook(game){
   const focus = game.players[game.observerFocusId];
   const boxSus = el('noteSuspects');
@@ -3186,15 +2111,8 @@ function renderObserverCasebook(game){
   // Build checklist rows
   const playersById = new Map(game.players.map(p=>[p.id,p.name]));
 
-  /* SUBSECTION: statusInfo(type,name) — derive UI status label from focus knowledge
-     Brief: Computes whether an item is crossed off and what label to display (own/seen/deduced/eliminated/unknown).
-     Detailed:
-       - What it does: Checks OWN first, then knowledgeMeta provenance (seen/deduced/eliminated), then fallback seen+knownOwners, else unknown.
-       - What depends on it: knowledgeMeta.status strings and ownerId values; focus.own/seen/knownOwners.
-       - What breaks if changed: Incorrect status labels mislead observer reasoning and can hide remaining candidates.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: Status string comparisons, ownership lookups, and return object shape.
-  */
+  /* SUBSECTION: statusInfo(type,name) — derive UI status label from focus knowledge */
+  /* Brief: Computes whether an item is crossed off and what label to display (own/seen/deduced/eliminated/unknown). */
   const statusInfo = (type,name)=>{
     const key = focus.cardKey(type,name);
 
@@ -3225,15 +2143,8 @@ function renderObserverCasebook(game){
     return { crossed:false, label:'', cls:'' };
   };
 
-  /* SUBSECTION: solProb(type,name) — Sherlock-only case-file probability for progress bars
-     Brief: Returns a probability (0..1) used to size the Sherlock progress bar for an item.
-     Detailed:
-       - What it does: Returns null unless sherlock; returns 0 for crossed items; prefers caseFileProbNormalized() if present; else falls back to raw ownerWeights CASE_FILE_ID.
-       - What depends on it: focus.caseFileProbNormalized(), focus.ownerWeights, CASE_FILE_ID constant, and focus.seen.
-       - What breaks if changed: Probability bars become inconsistent with Sherlock beliefs or misleading to the observer.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: Probability math, fallback logic, and Map access keys.
-  */
+  /* SUBSECTION: solProb(type,name) — Sherlock-only case-file probability for progress bars */
+  /* Brief: Returns a probability (0..1) used to size the Sherlock progress bar for an item. */
   // Sherlock: probability of being in the case file
   const solProb = (type,name)=>{
     if(game.aiDifficulty!=='sherlock') return null;
@@ -3257,15 +2168,8 @@ function renderObserverCasebook(game){
   const SUS_ICON = {"Green":"🎩","Mustard":"🎖️","Scarlet":"💋","Peacock":"💎","Plum":"💼","White":"👜"};
   const WEP_ICON = {"Candlestick":"🕯️","Dagger":"🗡️","Lead Pipe":"🦯","Revolver":"🔫","Rope":"🪢","Wrench":"🔧"};
 
-  /* SUBSECTION: renderList(target, type, list, iconMap, roomIcons=false) — build one observer list
-     Brief: Renders one category list into the target element, optionally including Sherlock probability bars.
-     Detailed:
-       - What it does: Clears target, then builds .noteitem rows with name (and optional icon), optional prob bar, and status label.
-       - What depends on it: statusInfo(), solProb(), and the CSS class names used for layout and bar styling.
-       - What breaks if changed: Grid column layouts can break; class-name changes can remove styling; wrong DOM structure can misalign rows.
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: gridTemplateColumns logic, class strings, and DOM assembly order.
-  */
+  /* SUBSECTION: renderList(target, type, list, iconMap, roomIcons=false) — build one observer list */
+  /* Brief: Renders one category list into the target element, optionally including Sherlock probability bars. */
   const renderList = (target, type, list, iconMap, roomIcons=false)=>{
     target.innerHTML = '';
     for(const name of list){
@@ -3321,17 +2225,8 @@ function renderObserverCasebook(game){
   renderList(boxWep, 'Weapon', WEAPONS, WEP_ICON, false);
   renderList(boxRoom,'Room',  ROOMS,  null,   true);
 
-  // Smart/Sherlock: show deductions log under Rooms
-  // (or create a dedicated container if you prefer)
-  /* SUBSECTION: Observer deductions log (Smart/Sherlock) — append and auto-scroll
-     Brief: Shows a rolling reasoning log under Rooms in observer mode for smart/sherlock difficulties.
-     Detailed:
-       - What it does: Creates #observerDeduceLog once, appends under Rooms, fills with recent obsLog lines, and auto-scrolls to latest.
-       - What depends on it: game.obsLog content and the 'log' CSS class for scroll styling.
-       - What breaks if changed: Log may not appear, may not update, or may not auto-scroll (hurts observer UX).
-     ✅ Safe to edit: Comments/blank lines only.
-     ⚠️ Dangerous to edit: Element ID 'observerDeduceLog', append target, slice/join logic, and setTimeout scroll.
-  */
+  /* SUBSECTION: Observer deductions log (Smart/Sherlock) — append and auto-scroll */
+  /* Brief: Shows a rolling reasoning log under Rooms in observer mode for smart/sherlock difficulties. */
   if(game.aiDifficulty==='smart' || game.aiDifficulty==='sherlock'){
     const logId = 'observerDeduceLog';
     let logBox = document.getElementById(logId);
@@ -3357,15 +2252,8 @@ function renderObserverCasebook(game){
   }
 }
 
-/* SECTION: renderBoard(game) — EXACT copy from your uploaded file (startup-safe)
-   Brief: Board renderer that uses literal JavaScript operators and literal HTML tags inside template strings.
-   Detailed:
-     - What it does: Clears #board, builds room tiles with tokens, then creates the centre tile and defines makeRoomToken().
-     - What depends on it: The JS in <script> must contain real operators (arrow functions, &&, comparisons), not HTML-encoded text, or the browser will stop parsing and prompts won’t appear.
-     - What breaks if changed: Any operator corruption can halt the entire script at load.
-   ✅ Safe to edit: Comments only.
-   ⚠️ Dangerous to edit: Any executable code characters/operators or string markup.
-*/
+/* SECTION: renderBoard(game) — EXACT copy from your uploaded file (startup-safe) */
+/* Brief: Board renderer that uses literal JavaScript operators and literal HTML tags inside template strings. */
 function renderBoard(game){
   const board=el('board');board.innerHTML='';
   const placeBox=(div,pos)=>{div.style.gridColumn=`${pos.col[0]} / ${pos.col[1]}`;div.style.gridRow=`${pos.row[0]} / ${pos.row[1]}`;};
@@ -3433,27 +2321,8 @@ function renderBoard(game){
             </span>`;
   };
 
-/* SECTION: Centre Tile Rendering (Default / Trial / Convicted + Holding Tokens)
-   Brief: Builds the centre tile’s title/body based on current trial/convicted state, then injects any held suspect/weapon tokens plus an optional room token.
-   Detailed:
-     - What it does:
-       - Sets default “CLASSIFIED FILES” title + “(sealed)” body.
-       - If a trial is active (ACCUSED / NOT GUILTY), switches centre styling + body to show accusation details.
-       - Else if the game is over and someone is convicted, switches to CONVICTED styling + body and shows winner/details.
-       - Collects any suspects/weapons currently parked in HOLDING_CELL_ID and renders them as token chips.
-       - Adds a “room token” for trial/convicted so the centre tile always shows the accused/solution room.
-       - Writes the final composed HTML into the centre tile and appends it to the board.
-     - What depends on it:
-       - game.trial.stage strings ('accused','notguilty') and game.convicted shape ({suspect,weapon,room,winner}).
-       - HOLDING_CELL_ID-based token parking (suspectLoc/weaponLoc Maps) for showing held pieces.
-       - Token CSS classes ('token', 'suspect', 'weapon', 'dot', etc.) and slug() naming for consistent styling.
-     - What breaks if changed:
-       - Changing stage strings or convicted/trial object shapes can desync centre-tile visuals from game state.
-       - Changing token markup/class strings can break token coloring/layout and centre tile readability.
-       - Removing the roomToken logic can make trial/convicted centre state ambiguous (missing room context).
-   ✅ Safe to edit: Comments/blank lines only.
-   ⚠️ Dangerous to edit: Any executable code, especially state checks, stage strings, object destructuring, and HTML templates.
-*/
+/* SECTION: Centre Tile Rendering (Default / Trial / Convicted + Holding Tokens) */
+/* Brief: Builds the centre tile’s title/body based on current trial/convicted state, then injects any held suspect/weapon tokens plus an optional room token. */
 // Default centre tile
   let centerTitle = `<span class="ico" aria-hidden="true">${ROOM_ICON["Classified Files"] || "🕵️‍♂️"}</span>CLASSIFIED FILES`;
   let centerBody  = `<span class="token" style="opacity:.6;">(sealed)</span>`;
@@ -3517,22 +2386,8 @@ function renderBoard(game){
   board.appendChild(center);
 }
 
-/* SECTION: renderAll(game) — master UI render dispatcher
-   Brief: Central “draw everything” function that keeps the UI in sync with the game model.
-   Detailed:
-     - What it does:
-       - Re-renders the left panel (players + hand), then the right panel (observer casebook OR manual notebook),
-         then the board (rooms + centre tile).
-       - This is called throughout gameplay after state changes so the UI stays current.
-     - What depends on it:
-       - All render* functions it calls must exist and the target DOM IDs must be present (playersBox, handBox, note* boxes, board).
-       - The observerMode flag controls which right-panel renderer is used.
-     - What breaks if changed:
-       - Changing call order can cause stale or confusing UI (e.g., board updates without corresponding panel updates).
-       - Changing the observerMode branching can show the wrong panel or break observer mode completely.
-   ✅ Safe to edit: Comments/blank lines only.
-   ⚠️ Dangerous to edit: Any executable logic, especially the observerMode branch and which renderers are called.
-*/
+/* SECTION: renderAll(game) — master UI render dispatcher */
+/* Brief: Central “draw everything” function that keeps the UI in sync with the game model. */
 function renderAll(game){
   renderPlayers(game);
   renderHand(game);
@@ -3541,25 +2396,8 @@ function renderAll(game){
   renderBoard(game);
 }
 
-/* SECTION: Startup boot sequence — create Game, gather setup, bind New Game, begin first turn
-   Brief: Runs once on page load to initialise game settings, assign suspects, deal cards, and start the turn loop.
-   Detailed:
-     - What it does:
-       - Clears prompt UI, shows the setup prompt, applies difficulty/observer settings, resets players.
-       - In observer mode, forces Player 1 to be AI (prevents human-only prompts during play).
-       - Prompts for a focus suspect, assigns suspects, runs game.setup() to deal cards and render initial state.
-       - Binds the New Game button handler and begins the first turn.
-       - On error, logs to console and shows a friendly error prompt.
-     - What depends on it:
-       - promptGameSetup(), normDiff(), resetPlayers(), promptHumanSuspect(), assignSuspects(), setup(), beginTurn().
-       - DOM id 'btnNewGame' must exist for the click binding.
-     - What breaks if changed:
-       - Changing the order of calls can leave the game in an inconsistent state (e.g., beginTurn before setup).
-       - Removing the observer-mode “Player 1 is AI” switch can re-enable human prompts in observer mode (behaviour change).
-       - Breaking the try/catch can hide boot failures and make prompts disappear with no message.
-   ✅ Safe to edit: Comments/blank lines only.
-   ⚠️ Dangerous to edit: Any executable code, especially the startup call sequence and observer-mode branching.
-*/
+/* SECTION: Startup boot sequence — create Game, gather setup, bind New Game, begin first turn */
+/* Brief: Runs once on page load to initialise game settings, assign suspects, deal cards, and start the turn loop. */
 /* Startup */
 const game=new Game();
 (async function start(){
@@ -3599,22 +2437,8 @@ const game=new Game();
   }
 })();
 
-/* SECTION: resetUIForSetup() — clears UI + saved checklist state before a new setup flow
-   Brief: Resets visible UI panels and clears checklist persistence so a new game starts cleanly.
-   Detailed:
-     - What it does:
-       - Clears prompt box, wipes log/players/hand/board and notebook containers.
-       - Clears checklist + notes via clearChecklist/clearCheckNotes (wrapped in try/catch).
-       - Resets status pills to “Turn: —” and “Location: —”.
-     - What depends on it:
-       - DOM IDs: log, playersBox, handBox, board, noteSuspects/noteWeapons/noteRooms, turnPill, locPill.
-       - Checklist persistence helpers: clearChecklist() and clearCheckNotes().
-     - What breaks if changed:
-       - Removing clears can leave old UI/state visible, confusing the next game.
-       - Changing IDs breaks the reset (stale content remains or code errors).
-   ✅ Safe to edit: Comments/blank lines only.
-   ⚠️ Dangerous to edit: Any executable code, especially DOM IDs and the persistence clear calls.
-*/
+/* SECTION: resetUIForSetup() — clears UI + saved checklist state before a new setup flow */
+/* Brief: Resets visible UI panels and clears checklist persistence so a new game starts cleanly. */
 function resetUIForSetup() {
   clearGameplayPrompt();
   const logBox = el('log'); if (logBox) logBox.textContent = '';
@@ -3629,25 +2453,8 @@ function resetUIForSetup() {
   const locPill  = el('locPill');  if (locPill)  locPill.textContent  = 'Location: —';
 }
 
-/* SECTION: startNewGame(game,{skipConfirm=false}={}) — new game flow (optional confirm + setup prompts)
-   Brief: Runs the full “New Game” process: optional confirmation, UI reset, setup prompts, re-init, then begin turn loop.
-   Detailed:
-     - What it does:
-       - If skipConfirm is false, shows a confirmation prompt (Cancel/New Game).
-       - Resets UI and persistence, re-runs promptGameSetup(), sets difficulty/observer flags, resets players.
-       - In observer mode, forces Player 1 to be AI, then prompts for focus suspect, assigns suspects, runs setup, and begins the first turn.
-       - Re-binds the New Game button to this same flow.
-     - What depends on it:
-       - renderPrompt()/clearGameplayPrompt() for confirm UI.
-       - promptGameSetup()/promptHumanSuspect()/assignSuspects()/setup()/beginTurn() for the actual new-game boot.
-       - Observer-mode flags and “Player 1 is AI” line must remain intact for correct observer behaviour.
-     - What breaks if changed:
-       - Changing prompt IDs/flow can strand the user mid-setup.
-       - Changing observer mode handling can reintroduce human-only prompts or desync labels.
-       - Removing the resetUIForSetup() call can leave stale UI/persistence.
-   ✅ Safe to edit: Comments/blank lines only.
-   ⚠️ Dangerous to edit: Any executable code, especially confirm flow, setup sequencing, and observer-mode branching.
-*/
+/* SECTION: startNewGame(game,{skipConfirm=false}={}) — new game flow (optional confirm + setup prompts) */
+/* Brief: Runs the full “New Game” process: optional confirmation, UI reset, setup prompts, re-init, then begin turn loop. */
 async function startNewGame(game,{skipConfirm=false}={}){
   let ok=true;
   if(!skipConfirm){
