@@ -124,6 +124,12 @@
   min-width:160px;            /* comfortable min size next to short labels */
 }
 
+/* Hide Sherlock probability bar when an item is crossed off */
+.noteitem.cleared .probWrap,
+.noteitem.cleared .probPct{
+  display:none !important;
+}
+
 /* Small screens: revert to stacked layout (input drops below the label) */
 @media (max-width: 540px){
   .noteitem{
@@ -190,7 +196,7 @@
 <body>
 <header>
   <h1>🔍 ClueSolo</h1>
-  <div class="sub">Just like the classic detective game ... but you're alone! (v7.0)</div>
+  <div class="sub">Just like the classic detective game ... but you're alone! (v8.0)</div>
 </header>
 <div class="layout">
   <div class="panel leftPanel">
@@ -628,7 +634,7 @@ class Player{
       const me = this.gameRef.players?.[this.id]?.name ?? `P${this.id}`;
       const who = this.gameRef.players?.[refuterId]?.name ?? `P${refuterId}`;
       const list = [...keys].join(', ');
-      this.gameRef.obs(`🧠 ${me}: Constraint added → ${who} must hold ONE of { ${list} }`, { byPlayerId: this.id });
+      this.gameRef.obs(`🤔 Hmm! ${who} has one of ${list}`, { byPlayerId: this.id });
     }
 
     this.propagateConstraints();
@@ -676,7 +682,7 @@ class Player{
           if(this.gameRef?.observerMode && (this.gameRef.aiDifficulty==='smart' || this.gameRef.aiDifficulty==='sherlock')){
             const me = this.gameRef.players?.[this.id]?.name ?? `P${this.id}`;
             const ownerName = this.gameRef.players?.[c.refuterId]?.name ?? `P${c.refuterId}`;
-            this.gameRef.obs(`🧠 ${me}: Deduction → ${ownerName} MUST own ${onlyKey} (only option left in constraint).`, { byPlayerId: this.id });
+            this.gameRef.obs(`😏 Aha! ${ownerName} has ${onlyKey}`, { byPlayerId: this.id });
           }
 
           this.constraints.splice(i,1);
@@ -712,12 +718,10 @@ class Player{
         const who = this.gameRef.players[playerId]?.name ?? `P${playerId}`;
         const afterCase = this._pCaseNorm(c);
         const afterOwn  = this._pOwner(c, playerId);
-        this.gameRef.obs(`🧠 Update (no-refute by ${who}): ${c.type}:${c.name} → P(case-file) ${this._pct(beforeCase)}→${this._pct(afterCase)}, P(${who}) ${this._pct(beforeOwn)}→${this._pct(afterOwn)} (penalised owner).`, { byPlayerId: this.id });
       }
 
       if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
         const who = this.gameRef.players[playerId]?.name ?? `P${playerId}`;
-        this.gameRef.obs(`🧠 NO-REFUTE signal: ${who} could not refute (${triple.map(c=>this.cardKey(c.type,c.name)).join(', ')}). Downweighted ownership.`, { byPlayerId: this.id });
       }
     }
   }
@@ -742,7 +746,6 @@ class Player{
         const who = this.gameRef.players[refuterId]?.name ?? `P${refuterId}`;
         const afterCase = this._pCaseNorm(c);
         const afterOwn  = this._pOwner(c, refuterId);
-        this.gameRef.obs(`🧠 Update (refute by ${who}): ${c.type}:${c.name} → P(case-file) ${this._pct(beforeCase)}→${this._pct(afterCase)}, P(${who}) ${this._pct(beforeOwn)}→${this._pct(afterOwn)} (boosted refuter).`, { byPlayerId: this.id });
       }
 
       if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
@@ -771,7 +774,6 @@ class Player{
       const who = this.gameRef.players[ownerId]?.name ?? `P${ownerId}`;
       const afterCase = this._pCaseNorm(card);
       const afterOwn  = this._pOwner(card, ownerId);
-      this.gameRef.obs(`🧠 Saw exact card: ${who} showed ${card.type}:${card.name} → P(case-file)=${this._pct(afterCase)}; P(${who})=${this._pct(afterOwn)} (locked owner).`, { byPlayerId: this.id });
     }
   }
 
@@ -787,7 +789,7 @@ class Player{
     this.clampAndNormalizeWeights(key);
 
     if(this.gameRef?.observerMode && this.gameRef.aiDifficulty==='sherlock' && this.id===this.gameRef.observerFocusId){
-      this.gameRef.obs(`🧠 CASE FILE LOCK: ${key} is placed in the case file (belief≈1.00).`, { byPlayerId: this.id });
+      this.gameRef.obs(`🕵️‍♂️ Right! ${key} is guilty`, { byPlayerId: this.id });
     }
   }
   // --- Sherlock: category-normalised probability that an item is in the case file ---
@@ -938,13 +940,16 @@ class Game{
     this.resetPlayers(2);
   }
 
-  obs(msg, { byPlayerId = null } = {}){
+  obs(msg, { byPlayerId } = {}){
     // Rolling observer deductions log (Smart/Sherlock only)
     if(!this.observerMode) return;
-    if(this.aiDifficulty === 'basic') return; // Basic shows checklist only
+    if(this.aiDifficulty === 'basic') return;
 
-    // ✅ Focus-only: only record if it's the observer focus player's reasoning
-    if(byPlayerId !== null && byPlayerId !== this.observerFocusId) return;
+    // ✅ MUST be explicitly attributed to a player
+    if(byPlayerId === undefined || byPlayerId === null) return;
+
+    // ✅ Focus-only: only keep logs for the focused player
+    if(byPlayerId !== this.observerFocusId) return;
 
     const t = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
     this.obsLog.push(`[${t}] ${msg}`);
@@ -1145,10 +1150,6 @@ class Game{
     renderAll(this);
     log(`${pl.name} suggests: ${displaySuspect(suspect)} in the ${room} with the ${weapon}.`);
 
-    if(this.observerMode){
-      this.obs(`🧠 Observed: ${pl.name} tested { Suspect:${suspect}, Weapon:${weapon}, Room:${room} } (public information).`, { byPlayerId: this.observerFocusId });
-    }
-
     // Resolve refutations in order
     const order=[];for(let i=1;i<this.players.length;i++) order.push(this.players[(this.turnIndex+i)%this.players.length]);
 
@@ -1163,10 +1164,6 @@ class Game{
           shown=pick;log(`You show a card to ${pl.name}.`);
         }else{
           shown=choice(matches);log(`${other.name} refutes the suggestion.`);
-          if(this.observerMode){
-            this.obs(`🧠 Inference: nobody refuted ${pl.name}'s suggestion → any suggested card NOT in ${pl.name}'s hand must be in the case file (no-refute rule).`, { byPlayerId: this.observerFocusId });
-          }
-
         }
 
         // Sherlock++: learning signals
@@ -1213,7 +1210,6 @@ class Game{
         // ✅ Smart/Sherlock reasoning log (observer mode): "X could not refute → X has none of {A,B,C}"
         if(this.observerMode && (this.aiDifficulty==='smart' || this.aiDifficulty==='sherlock')){
           const cards = triple.map(c=>`${c.type}:${c.name}`).join(', ');
-          this.obs(`🧠 Inference (from table): ${other.name} could not refute → ${other.name} holds NONE of { ${cards} }`, { byPlayerId: this.observerFocusId });
         }
 
         // continue to next 'other'
@@ -1514,7 +1510,6 @@ class Game{
 
     const summary=[];
     log(`${pl.name}'s turn…`);
-    if(this.observerMode) this.obs(`▶ ${pl.name} turn started.`);
     summary.push('Turn started.');
     await sleep(650);
     if(!this.isActiveSession(sid)) return;
@@ -1632,7 +1627,7 @@ class Game{
       weapon  = pick.weapon;
 
       if(this.observerMode){
-        this.obs(`🧠 ${pl.name} suggestion reasoning (Sherlock): choose high-information cards (entropy). Top suspects: ${topSus.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')}; picked ${suspect}. Top weapons: ${topWep.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')}; picked ${weapon}. Room is current location (${room}).`);
+        this.obs(`💭 Thinking... Top suspects are ${topSus.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')} and top weapons are ${topWep.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')}. I'll check out ${suspect} and ${weapon} in the ${room}.`, { byPlayerId: pl.id });
       }
 
     } else {
@@ -1647,7 +1642,7 @@ class Game{
       weapon  = choice(wepCands);
 
       if(this.observerMode && this.aiDifficulty==='smart'){
-        this.obs(`🧠 ${pl.name} suggestion reasoning (Smart): choose from uncleared candidates → suspects remaining=${susCands.length}, weapons remaining=${wepCands.length}. Picked ${suspect} + ${weapon}. Room is current location (${room}).`);
+        this.obs(`💭 Thinking... suspects remaining are ${susCands.length} and weapons remaining are ${wepCands.length}. I'll check out ${suspect} and ${weapon} in the ${room}.`, { byPlayerId: pl.id });
       }
     }
 
@@ -1670,7 +1665,7 @@ class Game{
       const acc=pl.inferredAccusation();
 
       if(this.observerMode){
-        this.obs(`🧠 ${pl.name} accusation reasoning: ONLY ONE candidate left in each category → suspect=${acc.suspect}, weapon=${acc.weapon}, room=${acc.room}. Accusing with certainty.`);
+        this.obs(`🕵️‍♂️ The net closes on ${acc.suspect} with the ${acc.weapon} in the ${acc.room}.`, { byPlayerId: pl.id });
       }
 
       summary.push(`Accused (certain): ${displaySuspect(acc.suspect)} in the ${acc.room} with the ${acc.weapon}.`);
@@ -1684,7 +1679,7 @@ class Game{
     else if(!pl.eliminated && isSherlock(this.aiDifficulty)){
       const plan = pl.planAccusationWithBeliefs();
       if(this.observerMode && plan){
-        this.obs(`🧠 ${pl.name} accusation consideration (Sherlock): top guesses by category with confidence≈${plan.confidence.toFixed(2)} → suspect=${plan.acc.suspect}, weapon=${plan.acc.weapon}, room=${plan.acc.room}. Will accuse only if evidence+threshold met.`);
+        this.obs(`❓ Do I have enough evidence? Was it ${plan.acc.suspect} with the ${plan.acc.weapon} in the ${plan.acc.room}? I'll only accuse if the evidence holds.`, { byPlayerId: pl.id });
       }
 
       const hasEvidence = (pl.seen.size > pl.own.size) || pl.constraints.length > 0 || pl.unrefuted.length > 0;
@@ -1718,8 +1713,6 @@ class Game{
       if (this.gameOver) return;
     }
 
-    if(this.observerMode) this.obs(`■ ${pl.name} turn ended.`);
-
     summary.push('Turn ended.');
     await this.showOpponentTurnSummary(pl,summary);
     // If AI made a wrong accusation, revert the centre display AFTER the summary is dismissed
@@ -1737,7 +1730,7 @@ class Game{
     const html=`<div style="margin-bottom:8px;"><b>${player.name}</b> finished their turn.</div>
       <div style="color:var(--muted);font-size:12px;margin-bottom:10px;">Click OK to continue.</div>
       <div style="background:rgba(0,0,0,0.18);border:1px solid var(--border);border-radius:12px;padding:10px;
-                  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.35;white-space:pre-wrap;">${pretty}</div>`;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.35;white-space:pre-wrap;">${pretty}</div>`;
     await showInfoPrompt('Opponent Turn Summary',html);
   }
 }
@@ -2166,6 +2159,10 @@ const game=new Game();
 function resetUIForSetup() {
   clearGameplayPrompt();
   const logBox = el('log'); if (logBox) logBox.textContent = '';
+  // Clear observer deductions log (DOM + memory) at the same time as game log
+  const deduceBox = document.getElementById('observerDeduceLog');
+  if (deduceBox) deduceBox.textContent = '';
+  game.obsLog = [];
   const playersBox = el('playersBox'); if (playersBox) playersBox.innerHTML = '';
   const handBox = el('handBox'); if (handBox) handBox.innerHTML = '';
   const board = el('board'); if (board) board.innerHTML = '';
