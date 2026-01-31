@@ -424,7 +424,7 @@ async function promptGameSetup(){
           <option value="3">3 opponents (4 players)</option>
           <option value="4">4 opponents (5 players)</option>
           <option value="5">5 opponents (6 players)</option>
-          <option value="observer">6 opponents — Observer mode (all AI)</option>
+          <option value="observer">Coach mode (AI coach + you choose)</option>
         </select>
       </label>
     </div>
@@ -478,11 +478,11 @@ const AI_CFG = {
     weightCeil:  4.00,
 
     // Decision-making & mistakes
-    mistakeRate: 0.07,              // chance to make a plainly bad call
-    earlyAccuseMinConfidence: 0.82, // confidence threshold to consider early accuse
-    earlyAccuseChance: 0.25,        // chance to actually take the early accuse
+    mistakeRate: 0.00,              // never intentionally throw
+    earlyAccuseMinConfidence: 0.90, // still earlier than "certain", but much smarter
+    earlyAccuseChance: 1.00,        // will be controlled by smarter logic in Patch 2 (not randomness)
     explorationEpsilon: 0.12,       // randomness in suggestion targets
-    pickSecondBestChance: 0.10      // sometimes pick second-best to feel human
+    pickSecondBestChance: 0.03      // fewer "human quirks" that reduce strength
   }
 };
 
@@ -933,6 +933,7 @@ class Game{
     this.trial=null;
     this.observerMode = false;
     this.observerFocusId = 0;
+    this.coachMode = false; // Coach mode = observer logging + human executes focus player's choices
     this.obsLog = [];
     this.obsLogMax = 250;
     this.sessionId=0;
@@ -1044,6 +1045,9 @@ class Game{
   }
 
   currentPlayer(){return this.players[this.turnIndex];}
+  isCoachFocus(pl){
+    return !!this.coachMode && !!this.observerMode && pl && (pl.id === this.observerFocusId);
+  }  
   nextTurnIndex(i){
     let x=i;for(let s=0;s<100;s++){x=(x+1)%this.players.length;if(!this.players[x].eliminated) return x;}return i;
   }
@@ -1051,8 +1055,8 @@ class Game{
   updateTurnUI(){
     const pl=this.currentPlayer();
     const who = (this.observerMode && pl.id===this.observerFocusId)
-     ? `Observer Focus (${pl.name})`
-     : (pl.isHuman ? `You (${pl.name})` : pl.name);
+      ? `Coach Focus (${pl.name})`
+      : (pl.isHuman ? `You (${pl.name})` : pl.name);
     el('turnPill').textContent=`Turn: ${who}${pl.eliminated?' (eliminated)':''}`;
     el('locPill').textContent=`Location: ${pl.location}`;
     renderAll(this);
@@ -1126,6 +1130,76 @@ class Game{
     this.applyMildInference(pl);
   }
 
+  coachAccusationPlan(pl){
+    if(!pl || pl.eliminated) return null;
+
+    // Certain accusation (all difficulties) — matches aiTurn's "certain" branch
+    if(pl.isConfidentSolution()) return pl.inferredAccusation();
+
+    // Sherlock: belief-aware early accusation if evidence threshold met
+    if(isSherlock(this.aiDifficulty)){
+      const hasEvidence =
+        (pl.seen.size > pl.own.size) ||
+        (pl.constraints && pl.constraints.length > 0) ||
+        (pl.unrefuted && pl.unrefuted.length > 0);
+
+      if(hasEvidence && typeof pl.planAccusationWithBeliefs === 'function'){
+        const plan = pl.planAccusationWithBeliefs();
+        if(plan && plan.acc && plan.confidence >= AI_CFG.sherlock.earlyAccuseMinConfidence){
+          return plan.acc;
+        }
+      }
+    }
+    return null;
+  }
+
+  coachStartRecommendation(pl){
+    // Decide: roll / stay / accuse (stay only if arrived by opponent suggestion)
+    const acc = this.coachAccusationPlan(pl);
+    if(acc) return { action:'accuse', acc };
+
+    const canStay = !!pl.arrivedByOpponentSuggestion;
+    if(canStay){
+      const roomCleared = pl.isCleared('Room', pl.location);
+      // If room is not cleared, recommend staying to get a suggestion now
+      if(!roomCleared) return { action:'stay' };
+    }
+    return { action:'roll' };
+  }
+
+  coachRecommendMove(pl){
+    // Uses the same "pickBest" logic pattern from aiTurn, but without moving yet
+    const reach = [...this.reachable];
+    if(!reach.length) return pl.location;
+
+    const possibleRooms = new Set(pl.possibleSet('Room'));
+    const candidates = reach.filter(r => possibleRooms.has(r));
+
+    const nextTurnPotential = (fromRoom) => {
+      const seen = new Set();
+      for(let d=1; d<=6; d++){
+        const arr = (ROOM_DICE[fromRoom] && ROOM_DICE[fromRoom][d]) ? ROOM_DICE[fromRoom][d] : [];
+        for(const r of arr) if(possibleRooms.has(r)) seen.add(r);
+      }
+      return seen.size;
+    };
+
+    const pickBest = (arr) => {
+      if(!arr.length) return null;
+      let best = [], bestScore = -1;
+      for(const r of arr){
+        const s = nextTurnPotential(r);
+        if(s > bestScore){ best = [r]; bestScore = s; }
+        else if(s === bestScore){ best.push(r); }
+      }
+      return choice(best);
+    };
+
+    let dest = candidates.length ? pickBest(candidates) : pickBest(reach);
+    if(!dest) dest = pl.location;
+    return dest;
+  }
+
   async makeSuggestion(pl,suspect,weapon,room){
     const triple=[{type:'Suspect',name:suspect},{type:'Weapon',name:weapon},{type:'Room',name:room}];
 
@@ -1185,13 +1259,23 @@ class Game{
           if(!pl.isHuman && shown){ pl.noteCardShown(shown, other.id); }
         }
 
-        if(pl.isHuman){
-          await showInfoPrompt('Card Shown to You',
-            `<div><b>${other.name}</b> shows you:</div>
-             <div style="margin-top:10px;font-size:18px;"><b>${shown.type}: ${displayCardName(shown.type,shown.name)}</b></div>`);
-        }else{
+        // Coach mode: show the same prompt even though the focus player is not "human"
+        if (pl.isHuman || this.isCoachFocus(pl)) {
+          await showInfoPrompt(
+            'Card Shown',
+            `<div><b>${other.name}</b> shows <b>${pl.name}</b>:</div>
+             <div style="margin-top:10px;font-size:18px;">
+               <b>${shown.type}: ${displayCardName(shown.type, shown.name)}</b>
+             </div>`
+          );
+
+          // In Coach mode the focus player is still an AI, so we MUST record the knowledge
+          if (!pl.isHuman) {
+            pl.markSeen(shown, other.id);
+          }
+        } else {
           // Legacy knowledge record (still fine)
-          pl.markSeen(shown,other.id);
+          pl.markSeen(shown, other.id);
         }
 
         // Constraint reasoning for Smart/Sherlock observers
@@ -1371,13 +1455,17 @@ class Game{
     this.updateTurnUI();
 
     if(pl.eliminated){ await this.endTurn(); return; }
-    if(pl.isHuman){ this.humanTurnsStarted++; await this.showRollPromptForHuman(); }
-    else { await this.aiTurn(pl); }
+    if(pl.isHuman || this.isCoachFocus(pl)){
+      this.humanTurnsStarted++;
+      await this.showRollPromptForHuman();
+    }else {
+      await this.aiTurn(pl);
+    }
   }
 
   async showRollPromptForHuman(){
     const pl=this.currentPlayer();
-    if(!pl.isHuman||this.gameOver||pl.eliminated) return;
+    if(!(pl.isHuman || this.isCoachFocus(pl)) || this.gameOver || pl.eliminated) return;
     const firstEver=(this.humanTurnsStarted===1);
     const movedHere=this.awaitingDecision;
     let actions=[];
@@ -1388,10 +1476,49 @@ class Game{
     }else{
       actions=[{label:'Roll Dice',value:'roll'},{label:'Make Accusation',value:'accuse',className:'danger'}];
     }
-    const body=movedHere?`<div>You were moved to <b>${pl.location}</b> by an opponent's suggestion.</div><div style="margin-top:8px;color:var(--muted);font-size:12px;">Choose what to do this turn.</div>`
+    let body=movedHere?`<div>You were moved to <b>${pl.location}</b> by an opponent's suggestion.</div><div style="margin-top:8px;color:var(--muted);font-size:12px;">Choose what to do this turn.</div>`
                         :`<div>It's your turn in <b>${pl.location}</b>.</div><div style="margin-top:8px;color:var(--muted);font-size:12px;">Roll the dice to move.</div>`;
+    // Coach mode: compute & log recommendation, and add a Coach's choice button
+    let coachRec = null;
+    if(this.isCoachFocus(pl)){
+      coachRec = this.coachStartRecommendation(pl);
+
+      const label =
+        coachRec.action === 'accuse' ? 'ACCUSE' :
+        coachRec.action === 'stay'   ? 'STAY'   : 'ROLL';
+
+      // Log what Coach's choice will do
+      this.obs(`🎯 Coach's choice: ${label}`, { byPlayerId: pl.id });
+
+      // Also show it in the prompt body so the user can see it before clicking
+      body += `<div style="margin-top:10px;color:var(--accent);font-size:12px;">
+                <b>Coach recommends:</b> ${label}
+              </div>`;
+
+      // Put Coach's choice first
+      actions = [{ label:"Coach's choice", value:'coach' }, ...actions];
+    }
+
     const pick=await renderPrompt({title:'Your Turn',bodyHTML:body,actions});
     clearGameplayPrompt();
+    if(pick==='coach' && this.isCoachFocus(pl)){
+      const rec = this.coachStartRecommendation(pl);
+
+      if(rec.action === 'accuse'){
+        await this.humanAccuse({
+          prefill: rec.acc,
+          onCancel: () => this.showRollPromptForHuman()
+        });
+        return;
+      }
+      if(rec.action === 'stay'){
+        await this.humanStayAndSuggest();
+        return;
+      }
+      // default: roll
+      await this.humanRollAndMove();
+      return;
+    }
     if(pick==='accuse'){ await this.humanAccuse({onCancel:()=>this.showRollPromptForHuman()}); return; }
     if(pick==='stay'){ await this.humanStayAndSuggest(); return; }
     if(pick==='roll'){ await this.humanRollAndMove(); return; }
@@ -1399,7 +1526,7 @@ class Game{
 
   async humanRollAndMove(){
     const pl=this.currentPlayer();
-    if(!pl.isHuman||this.gameOver||pl.eliminated) return;
+    if(!(pl.isHuman || this.isCoachFocus(pl)) || this.gameOver || pl.eliminated) return;
     if(this.stayedInsteadOfRoll) return;
     if(this.awaitingDecision){ this.awaitingDecision=false; pl.arrivedByOpponentSuggestion=false; }
     this.dice=randInt(1,6);
@@ -1408,10 +1535,34 @@ class Game{
     log(`You rolled a ${this.dice}. Choose a reachable room to move.`);
     this.updateTurnUI();
     setPromptMessage('Dice Result',`<div>You rolled a <b>${this.dice}</b>.</div><div style="margin-top:8px;">Now click <b>Move</b> on a highlighted room.</div>`);
+    // Coach mode: recommend a room and provide a Coach's choice button to auto-move
+    if(this.isCoachFocus(pl)){
+      const dest = this.coachRecommendMove(pl);
+      this.obs(`🧭 Coach's choice: MOVE to ${dest}`, { byPlayerId: pl.id });
+
+      // Add a button into the currently button-less move prompt
+      const box = el('gameplayPromptBox');
+      const actionsDiv = box ? box.querySelector('.promptActions') : null;
+      if(actionsDiv){
+        actionsDiv.innerHTML = '';
+        const btn = document.createElement('button');
+        btn.textContent = "Coach's choice";
+        btn.onclick = () => this.humanMoveTo(dest);
+        actionsDiv.appendChild(btn);
+      }
+
+      // Also show the recommendation in the prompt body
+      const bodyDiv = box ? box.querySelector('.promptBody') : null;
+      if(bodyDiv){
+        bodyDiv.innerHTML += `<div style="margin-top:10px;color:var(--accent);font-size:12px;">
+                                <b>Coach recommends:</b> Move to <b>${dest}</b>
+                              </div>`;
+      }
+    }
   }
 
   async humanStayAndSuggest(){
-    const pl=this.currentPlayer(); if(!pl.isHuman||this.gameOver||pl.eliminated) return;
+    const pl=this.currentPlayer(); if(!(pl.isHuman || this.isCoachFocus(pl)) || this.gameOver || pl.eliminated) return;
     if(!this.awaitingDecision) return;
     this.awaitingDecision=false; this.stayedInsteadOfRoll=true; pl.arrivedByOpponentSuggestion=false;
     log(`You chose to stay in ${pl.location} (no roll).`);
@@ -1421,7 +1572,7 @@ class Game{
 
   async humanMoveTo(room){
     const pl=this.currentPlayer();
-    if(!pl.isHuman||!this.awaitingMove) return;
+    if(!(pl.isHuman || this.isCoachFocus(pl)) || !this.awaitingMove) return;
     if(!this.reachable.has(room)) return;
     pl.location=room; if(pl.suspect) this.suspectLoc.set(pl.suspect,room);
     this.awaitingMove=false; pl.arrivedByOpponentSuggestion=false;
@@ -1431,11 +1582,59 @@ class Game{
   }
 
   async openSuggestionPromptAuto(){
-    const pl=this.currentPlayer(); if(!pl.isHuman||pl.eliminated||this.gameOver) return;
+    const pl=this.currentPlayer(); if(!(pl.isHuman || this.isCoachFocus(pl)) || pl.eliminated || this.gameOver) return;
     if(this.awaitingMove) return;
-    const room=pl.location;
-    const sus=SUSPECTS.map(s=>`<option value="${s}">${displaySuspect(s)}</option>`).join("");
-    const wep=WEAPONS.map(w=>`<option value="${w}">${w}</option>`).join("");
+    const room = pl.location;
+
+    // Coach mode: compute recommendation and log it
+    let coachPick = null;
+    if(this.isCoachFocus(pl)){
+      if(isSherlock(this.aiDifficulty)){
+        // Mirror the same "thinking" text aiTurn uses (so the log stays the same style)
+        const rankEntropy = (type, list) => {
+          const arr = list.map(n => ({ n, e: pl.entropyForCardKey(pl.cardKey(type, n)) }));
+          arr.sort((a,b)=>b.e-a.e);
+          return arr.slice(0,3);
+        };
+        const susPool = pl.possibleSet('Suspect');
+        const wepPool = pl.possibleSet('Weapon');
+        const susCands = susPool.length ? susPool : SUSPECTS;
+        const wepCands = wepPool.length ? wepPool : WEAPONS;
+        const topSus = rankEntropy('Suspect', susCands);
+        const topWep = rankEntropy('Weapon', wepCands);
+
+        const pick = pl.pickSmartSuggestionParts();
+        coachPick = { suspect: pick.suspect, weapon: pick.weapon };
+
+        this.obs(
+          `🔎 Let's see... top suspects are ${topSus.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')} and top weapons are ${topWep.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')}. I'll check out ${coachPick.suspect} and ${coachPick.weapon} in the ${room}.`,
+          { byPlayerId: pl.id }
+        );
+      } else {
+        // Smart/basic style recommendation (same message format as aiTurn uses for smart)
+        const sC = pl.possibleSet('Suspect');
+        const wC = pl.possibleSet('Weapon');
+        const susCands = sC.length ? sC : SUSPECTS;
+        const wepCands = wC.length ? wC : WEAPONS;
+
+        coachPick = { suspect: choice(susCands), weapon: choice(wepCands) };
+
+        if(this.aiDifficulty==='smart'){
+          this.obs(
+            `🔎 Let's see... suspects remaining are ${susCands.length} and weapons remaining are ${wepCands.length}. I'll check out ${coachPick.suspect} and ${coachPick.weapon} in the ${room}.`,
+            { byPlayerId: pl.id }
+          );
+        }
+      }
+    }
+
+    const sus = SUSPECTS.map(s =>
+      `<option value="${s}" ${(coachPick && coachPick.suspect===s) ? 'selected' : ''}>${displaySuspect(s)}</option>`
+    ).join("");
+
+    const wep = WEAPONS.map(w =>
+      `<option value="${w}" ${(coachPick && coachPick.weapon===w) ? 'selected' : ''}>${w}</option>`
+    ).join("");
     const html=`<div><b>Room:</b> ${room}</div>
       <div style="margin-top:10px;" class="row">
         <label>Suspect: <select id="selSuspect">${sus}</select></label>
@@ -1447,7 +1646,24 @@ class Game{
     const weapon=document.getElementById('selWeapon')?.value;
     clearGameplayPrompt();
     if(go&&suspect&&weapon){
-      const result=await this.makeSuggestion(pl,suspect,weapon,room);
+      const result = await this.makeSuggestion(pl,suspect,weapon,room);
+
+      // Coach mode: after suggestion resolves (refuted or not), if threshold met then auto-open accusation prompt
+      if(this.isCoachFocus(pl)){
+        const acc = this.coachAccusationPlan(pl);
+        if(acc){
+          this.obs(`🛑 Coach's choice: ACCUSE ${acc.suspect} / ${acc.weapon} / ${acc.room}`, { byPlayerId: pl.id });
+
+          await this.humanAccuse({
+            prefill: acc,
+            onCancel: () => this.showPostSuggestionPrompt(result,{suspect,weapon,room})
+          });
+
+          // If the accusation ended the game, stop here
+          if(this.gameOver) return;
+        }
+      }
+
       await this.showPostSuggestionPrompt(result,{suspect,weapon,room});
     }else{
       await this.endTurn();
@@ -1455,7 +1671,7 @@ class Game{
   }
 
   async showPostSuggestionPrompt(result,triple){
-    const pl=this.currentPlayer(); if(!pl.isHuman||this.gameOver) return;
+    const pl=this.currentPlayer(); if(!(pl.isHuman || this.isCoachFocus(pl)) || this.gameOver) return;
     const title=result.refuted?'Suggestion Result':'No One Could Refute!';
     const body=result.refuted
       ?`<div>Your suggestion has been <b>refuted</b>.</div><div style="margin-top:8px;color:var(--muted);font-size:12px;">What would you like to do next?</div>`
@@ -1471,12 +1687,20 @@ class Game{
     else await this.endTurn();
   }
 
-  async humanAccuse({onCancel}={}){
-    const pl=this.currentPlayer(); if(!pl.isHuman||pl.eliminated||this.gameOver) return;
+  async humanAccuse({onCancel, prefill=null}={}){
+    const pl=this.currentPlayer(); if(!(pl.isHuman || this.isCoachFocus(pl)) || pl.eliminated || this.gameOver) return;
     if(this.awaitingMove) return;
-    const sus=SUSPECTS.map(s=>`<option value="${s}">${displaySuspect(s)}</option>`).join("");
-    const wep=WEAPONS.map(w=>`<option value="${w}">${w}</option>`).join("");
-    const rms=this.roomsOptionsHTML();
+    const sus = SUSPECTS.map(s =>
+      `<option value="${s}" ${(prefill && prefill.suspect===s) ? 'selected' : ''}>${displaySuspect(s)}</option>`
+    ).join("");
+
+    const wep = WEAPONS.map(w =>
+      `<option value="${w}" ${(prefill && prefill.weapon===w) ? 'selected' : ''}>${w}</option>`
+    ).join("");
+
+    const rms = ROOMS.map(r =>
+      `<option value="${r}" ${(prefill && prefill.room===r) ? 'selected' : ''}>${r}</option>`
+    ).join("");
     const html=`<div style="color:var(--warn)"><b>Warning:</b> If you are wrong, you will be eliminated from taking turns.</div>
       <div style="margin-top:10px;" class="row">
         <label>Suspect: <select id="accSus">${sus}</select></label>
@@ -1767,7 +1991,7 @@ function renderPlayers(game){
     div.style.borderBottom='1px solid rgba(255,255,255,.06)';
     const left=document.createElement('div');
     let label;
-    if(game.observerMode && p.id===game.observerFocusId) label = `Observer Focus (${p.name})`;
+    if(game.observerMode && p.id===game.observerFocusId) label = `Coach Focus (${p.name})`;
     else label = p.isHuman ? `You (${p.name})` : p.name;
     left.innerHTML=`<b>${label}</b> <span style="color:var(--muted);font-size:12px;">@ ${p.location}</span> ${p.eliminated?`<span class="pill bad" style="margin-left:6px;">eliminated</span>`:''}`;
     const right=document.createElement('div');
@@ -1843,7 +2067,7 @@ function renderObserverCasebook(game){
 
   // Replace panel headers dynamically (optional)
   const rightPanel = document.querySelector('.rightPanel h2');
-  if(rightPanel) rightPanel.textContent = 'Observer Casebook';
+  if(rightPanel) rightPanel.textContent = 'Coach Casebook';
 
   // Ensure containers exist
   if(!boxSus || !boxWep || !boxRoom) return;
@@ -2153,6 +2377,7 @@ const game=new Game();
     const setup = await promptGameSetup();
     game.aiDifficulty = normDiff(setup.diff);
     game.observerMode = !!setup.observer;
+    game.coachMode = !!setup.observer; // Coach mode uses observer plumbing
     game.observerFocusId = 0;
 
     game.resetPlayers(setup.opp);
@@ -2224,6 +2449,7 @@ async function startNewGame(game,{skipConfirm=false}={}){
   const setup = await promptGameSetup();
   game.aiDifficulty = normDiff(setup.diff);
   game.observerMode = !!setup.observer;
+  game.coachMode = !!setup.observer; // Coach mode uses observer plumbing
   game.observerFocusId = 0;
 
   game.resetPlayers(setup.opp);
