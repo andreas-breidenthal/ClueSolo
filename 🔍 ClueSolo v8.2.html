@@ -1420,7 +1420,7 @@ class Game{
 
           const pick = await showChoicePrompt(
             'Choose a card to show',
-            `<div>${other.name} must refute <b>${pl.name}</b> by showing ONE matching card.</div>
+            `<div>You must refute <b>${pl.name}</b> by showing ONE matching card.</div>
              ${rec ? `<div style="margin-top:8px;color:var(--muted);font-size:12px;">
                Coach's choice is the least-informative option.
              </div>` : ``}`,
@@ -1457,10 +1457,15 @@ class Game{
         if (pl.isHuman || this.isCoachFocus(pl)) {
           await showInfoPrompt(
             'Card Shown',
-            `<div><b>${other.name}</b> shows <b>${pl.name}</b>:</div>
-             <div style="margin-top:10px;font-size:18px;">
-               <b>${shown.type}: ${displayCardName(shown.type, shown.name)}</b>
-             </div>`
+            this.isCoachFocus(pl)
+              ? `<div><b>${other.name}</b> shows <b>you</b>:</div>
+                <div style="margin-top:10px;font-size:18px;">
+                  <b>${shown.type}: ${displayCardName(shown.type, shown.name)}</b>
+                </div>`
+              : `<div><b>${other.name}</b> shows <b>${pl.name}</b>:</div>
+                <div style="margin-top:10px;font-size:18px;">
+                  <b>${shown.type}: ${displayCardName(shown.type, shown.name)}</b>
+                </div>`
           );
 
           // In Coach mode the focus player is still an AI, so we MUST record the knowledge
