@@ -954,6 +954,14 @@ class Game{
     const t = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
     this.obsLog.push(`[${t}] ${msg}`);
     if(this.obsLog.length > this.obsLogMax) this.obsLog.shift();
+    // 🔄 Immediately repaint the deductions log so it appears BEFORE the next action/render
+    const logBox = document.getElementById('observerDeduceLog');
+    if (logBox) {
+      logBox.textContent = (this.obsLog && this.obsLog.length)
+        ? this.obsLog.slice(-200).join('\n')
+        : '(deductions log will appear here)';
+      logBox.scrollTop = logBox.scrollHeight;
+    }
   }
 
   newSession(){this.sessionId++;return this.sessionId;}
