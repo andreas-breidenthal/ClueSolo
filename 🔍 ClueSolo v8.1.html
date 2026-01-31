@@ -196,7 +196,7 @@
 <body>
 <header>
   <h1>🔍 ClueSolo</h1>
-  <div class="sub">Just like the classic detective game ... but you're alone! (v8.0)</div>
+  <div class="sub">Just like the classic detective game ... but you're alone! (v8.1)</div>
 </header>
 <div class="layout">
   <div class="panel leftPanel">
@@ -2090,13 +2090,33 @@ function renderBoard(game){
   }
 
   // Tokens currently held in centre (suspect + weapon moved via HOLDING_CELL_ID)
-  const holdingSus=SUSPECTS
-    .filter(s=>game.suspectLoc.get(s)===HOLDING_CELL_ID)
-    .map(s=>`<span class="token suspect ${slug(s)}" data-color="1" title="${displaySuspect(s)}"><span class="dot"></span>${displaySuspect(s)}</span>`);
+  // Render using the SAME icon style as room tiles (no dots)
 
-  const holdingWep=WEAPONS
-    .filter(w=>game.weaponLoc.get(w)===HOLDING_CELL_ID)
-    .map(w=>`<span class="token weapon ${slug(w)}" data-color="1" title="${w}"><span class="dot"></span>${w}</span>`);
+  const SUSPECT_ICON = {
+    "Green":"🎩","Mustard":"🎖️","Scarlet":"💋",
+    "Peacock":"💎","Plum":"💼","White":"👜"
+  };
+
+  const WEAPON_ICON = {
+    "Candlestick":"🕯️","Dagger":"🗡️","Lead Pipe":"🦯",
+    "Revolver":"🔫","Rope":"🪢","Wrench":"🔧"
+  };
+
+  const holdingSus = SUSPECTS
+    .filter(s => game.suspectLoc.get(s) === HOLDING_CELL_ID)
+    .map(s => `
+      <span class="token suspect ${slug(s)}" data-color="1" title="${displaySuspect(s)}">
+        <span class="ico" aria-hidden="true">${SUSPECT_ICON[s] || ""}</span>${displaySuspect(s)}
+      </span>
+    `);
+
+  const holdingWep = WEAPONS
+    .filter(w => game.weaponLoc.get(w) === HOLDING_CELL_ID)
+    .map(w => `
+      <span class="token weapon ${slug(w)}" data-color="1" title="${w}">
+        <span class="ico" aria-hidden="true">${WEAPON_ICON[w] || ""}</span>${w}
+      </span>
+    `);
 
   // Room token for trial or convicted state
   let roomToken = '';
