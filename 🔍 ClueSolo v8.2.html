@@ -289,6 +289,119 @@ const randInt=(min,max)=>Math.floor(Math.random()*(max-min+1))+min;
 const choice=arr=>arr[Math.floor(Math.random()*arr.length)];
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+// --- Sherlock helper: pick least-informative refute card (adversarial refuter) ---
+function pickLeastInformativeRefuteCard(refuter, matches, suggester){
+  // Lower score = less NEW information revealed to the suggester
+  if(!matches || !matches.length) return null;
+  if(!suggester) return choice(matches);
+
+  const scoreCard = (c) => {
+    const key = suggester.cardKey(c.type, c.name);
+
+    // If suggester already owns it, showing it is extremely uninformative
+    if(suggester.own && suggester.own.has(key)) return -100;
+
+    // If suggester already knows refuter owns it, also extremely uninformative
+    if(suggester.knownOwners && suggester.knownOwners.get(key) === refuter.id) return -90;
+
+    // If suggester has it "seen/eliminated", showing owner is usually less useful
+    if(suggester.seen && suggester.seen.has(key)) return -50;
+
+    // If suggester has Sherlock beliefs, use them to pick the least informative card
+    if(suggester.ownerWeights && typeof suggester._pOwner === 'function'){
+      const pOwn  = suggester._pOwner(c, refuter.id); // how likely suggester already thinks refuter owns it
+      const pCase = (typeof suggester._pCaseNorm === 'function') ? suggester._pCaseNorm(c) : 0; // how "hot" it is as solution
+
+      // Less informative if:
+      // - suggester already expects refuter to own it (high pOwn)
+      // - it's unlikely to be in the case file (low pCase)
+      return (1 - pOwn) + (pCase * 0.5);
+    }
+
+    // Fallback
+    return 10;
+  };
+
+  let best = [], bestScore = Infinity;
+  for(const c of matches){
+    const s = scoreCard(c);
+    if(s < bestScore){ best = [c]; bestScore = s; }
+    else if(s === bestScore){ best.push(c); }
+  }
+  return choice(best.length ? best : matches);
+}
+
+// --- Sherlock helper: hand-size constraints (capacity) ---
+function applyHandSizeConstraints(observer, players){
+  // Only useful for AIs that track owners
+  if(!observer || observer.isHuman) return;
+  if(!observer.knownOwners || !observer.markNotOwner) return;
+
+  // Build a quick key->card map once
+  if(!applyHandSizeConstraints._keyToCard){
+    applyHandSizeConstraints._keyToCard = new Map(ALL_CARDS.map(c => [`${c.type}:${c.name}`, c]));
+  }
+  const keyToCard = applyHandSizeConstraints._keyToCard;
+
+  // For each player, if we already "know" they own as many cards as their hand size,
+  // then they cannot own any other unknown cards.
+  for(const p of players){
+    if(!p) continue;
+    const pid = p.id;
+    const capacity = (p.hand && p.hand.length) ? p.hand.length : 0;
+    if(capacity <= 0) continue;
+
+    // All card keys observer believes are owned by pid
+    const ownedKeys = [];
+    for(const [k, ownerId] of observer.knownOwners.entries()){
+      if(ownerId === pid) ownedKeys.push(k);
+    }
+
+    // If at capacity, mark NOT owner for every other card not already assigned to them
+    if(ownedKeys.length >= capacity){
+      const ownedSet = new Set(ownedKeys);
+      let newlyExcluded = 0;
+
+      for(const c of ALL_CARDS){
+        const key = `${c.type}:${c.name}`;
+        if(ownedSet.has(key)) continue;
+
+        // If already known owned by someone else, ignore
+        const knownOwner = observer.knownOwners.get(key);
+        if(knownOwner !== undefined && knownOwner !== null && knownOwner !== pid) continue;
+
+        // Mark "cannot own"
+        // Only count/log if this is a NEW "not owner" fact
+        const ckey = observer.cardKey(c.type, c.name);
+        const existing = observer.notOwners.get(ckey);
+        if(!existing || !existing.has(pid)){
+          observer.markNotOwner(c, pid);
+          newlyExcluded++;
+        }
+
+        // If Sherlock beliefs exist, also downweight pid for this card
+        const w = observer.ownerWeights && observer.ownerWeights.get(key);
+        if(w){
+          w.set(pid, AI_CFG.sherlock.weightFloor);
+          if(typeof observer.clampAndNormalizeWeights === 'function'){
+            observer.clampAndNormalizeWeights(key);
+          }
+        }
+      }
+
+      // Log only when this capacity inference affected OTHER players (not self), and only if it created new exclusions
+      if(newlyExcluded > 0 &&
+         pid !== observer.id &&
+         observer.gameRef &&
+         observer.gameRef.observerMode &&
+         observer.gameRef.aiDifficulty === 'sherlock' &&
+         observer.id === observer.gameRef.observerFocusId){
+        const who = players[pid]?.name ?? `P${pid}`;
+        observer.gameRef.obs(`📚 Capacity inference: ${who}'s hand is full → ruled out ${newlyExcluded} other cards for them.`, { byPlayerId: observer.id });
+      }
+    }
+  }
+}
 const clampInt=(n,min,max,def)=>{const x=Number.parseInt(n,10); if(Number.isNaN(x)) return def; return Math.max(min,Math.min(max,x));};
 const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 
@@ -1120,14 +1233,19 @@ class Game{
 
   applyInference(pl){
     if(pl.isHuman) return;
-
     // BASIC: no inference pipeline at all.
-    // Basic only uses literal seen cards and the immediate "no one could refute MY suggestion" rule.
     if(this.aiDifficulty === 'basic') return;
 
     // SMART / SHERLOCK: normal inference
     pl.propagateConstraints();
     this.applyMildInference(pl);
+
+    // SHERLOCK: add capacity (hand-size) constraints
+    if(this.aiDifficulty === 'sherlock'){
+      applyHandSizeConstraints(pl, this.players);
+      // Re-run propagation because hand-size constraints can unlock deductions
+      pl.propagateConstraints();
+    }
   }
 
   coachAccusationPlan(pl){
@@ -1240,12 +1358,88 @@ class Game{
 
       if(matches.length>0){
         let shown;
+
+        // 1) If the refuter is the real human player, give "Coach recommends" when there are multiple matches
         if(other.isHuman){
-          const opts=matches.map(c=>({label:`${c.type}: ${displayCardName(c.type,c.name)}`,value:c,className:'secondary'}));
-          const pick=await showChoicePrompt('Choose a card to show',`<div>You must refute <b>${pl.name}</b> by showing ONE matching card.</div>`,opts,{allowCancel:false});
-          shown=pick;log(`You show a card to ${pl.name}.`);
-        }else{
-          shown=choice(matches);log(`${other.name} refutes the suggestion.`);
+          let rec = null;
+
+          // Only Sherlock uses adversarial "least informative" logic
+          if(this.aiDifficulty === 'sherlock' && matches.length > 1){
+            rec = pickLeastInformativeRefuteCard(other, matches, pl);
+          }
+
+          const opts = [
+            ...(rec ? [{
+              label: `Coach recommends: ${rec.type}: ${displayCardName(rec.type, rec.name)}`,
+              value: rec,
+              className: ''
+            }] : []),
+            ...matches.map(c => ({
+              label: `${c.type}: ${displayCardName(c.type,c.name)}`,
+              value: c,
+              className: 'secondary'
+            }))
+          ];
+
+          const pick = await showChoicePrompt(
+            'Choose a card to show',
+            `<div>You must refute <b>${pl.name}</b> by showing ONE matching card.</div>
+             ${rec ? `<div style="margin-top:8px;color:var(--muted);font-size:12px;">
+               Coach recommends the least-informative choice.
+             </div>` : ``}`,
+            opts,
+            { allowCancel:false }
+          );
+
+          shown = pick;
+          log(`You show a card to ${pl.name}.`);
+        }
+
+        // 2) If the refuter is the COACH FOCUS player, YOU choose which card they show (with coach advice)
+        else if(this.isCoachFocus(other)){
+          let rec = null;
+          if(this.aiDifficulty === 'sherlock' && matches.length > 1){
+            rec = pickLeastInformativeRefuteCard(other, matches, pl);
+            if(rec){
+              this.obs(`🂠 Coach recommends showing: ${rec.type}: ${displayCardName(rec.type, rec.name)}`, { byPlayerId: other.id });
+            }
+          }
+
+          const opts = [
+            ...(rec ? [{
+              label: `Coach's choice: ${rec.type}: ${displayCardName(rec.type, rec.name)}`,
+              value: rec,
+              className: ''
+            }] : []),
+            ...matches.map(c => ({
+              label: `${c.type}: ${displayCardName(c.type,c.name)}`,
+              value: c,
+              className: 'secondary'
+            }))
+          ];
+
+          const pick = await showChoicePrompt(
+            'Choose a card to show',
+            `<div>${other.name} must refute <b>${pl.name}</b> by showing ONE matching card.</div>
+             ${rec ? `<div style="margin-top:8px;color:var(--muted);font-size:12px;">
+               Coach's choice is the least-informative option.
+             </div>` : ``}`,
+            opts,
+            { allowCancel:false }
+          );
+
+          shown = pick;
+          log(`${other.name} refutes the suggestion.`);
+        }
+
+        // 3) All other AI refuters: in Sherlock, be adversarial; otherwise keep random behaviour
+        else{
+          if(this.aiDifficulty === 'sherlock'){
+            shown = pickLeastInformativeRefuteCard(other, matches, pl) || choice(matches);
+          }else{
+            shown = choice(matches);
+          }
+          log(`${other.name} refutes the suggestion.`);
         }
 
         // Sherlock++: learning signals
