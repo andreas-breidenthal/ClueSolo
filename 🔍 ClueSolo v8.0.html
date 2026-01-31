@@ -294,7 +294,7 @@ const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^
 
 /* Data */
 const SUSPECTS=["Green","Mustard","Peacock","Plum","Scarlet","White"];
-const SUSPECT_TITLES={Green:"Rev. Green",Mustard:"Col. Mustard",Peacock:"Mrs Peacock",Plum:"Prof. Plum",Scarlet:"Miss Scarlet",White:"Mrs White"};
+const SUSPECT_TITLES={Green:"🎩 Rev. Green",Mustard:"🎄🎖️ Col. Mustard",Peacock:"💎 Mrs Peacock",Plum:"💼 Prof. Plum",Scarlet:"💋 Miss Scarlet",White:"👜 Mrs White"};
 const WEAPONS=["Candlestick","Dagger","Lead Pipe","Revolver","Rope","Wrench"];
 const ROOMS=["Study","Hall","Lounge","Library","Billiard Room","Dining Room","Conservatory","Ballroom","Kitchen"];
 const START_ROOMS=["Study","Lounge","Kitchen","Conservatory","Billiard Room","Hall"];
@@ -411,9 +411,9 @@ async function promptGameSetup(){
     <div class="row" style="margin-bottom:10px;">
       <label><b>Difficulty:</b>
         <select id="diffSel">
-          <option value="basic" selected>Basic</option>
-          <option value="smart">Smart</option>
-          <option value="sherlock">Sherlock</option>
+          <option value="basic" selected>🌞 Basic</option>
+          <option value="smart">🧠 Smart</option>
+          <option value="sherlock">🔍 Sherlock</option>
         </select>
       </label>
     </div>
@@ -629,12 +629,12 @@ class Player{
     const keys=new Set(cards.map(c=>this.cardKey(c.type,c.name)));
     this.constraints.push({refuterId,keys});
 
-    // ✅ Smart-level reasoning log (observer mode): "X has one of these"
+    // 🧠 Smart-level reasoning log (observer mode): "X has one of these"
     if(this.gameRef?.observerMode && (this.gameRef.aiDifficulty==='smart' || this.gameRef.aiDifficulty==='sherlock')){
       const me = this.gameRef.players?.[this.id]?.name ?? `P${this.id}`;
       const who = this.gameRef.players?.[refuterId]?.name ?? `P${refuterId}`;
       const list = [...keys].join(', ');
-      this.gameRef.obs(`🤔 Hmm! ${who} has one of ${list}`, { byPlayerId: this.id });
+      this.gameRef.obs(`💭 Hmm! ${who} has one of ${list}`, { byPlayerId: this.id });
     }
 
     this.propagateConstraints();
@@ -682,7 +682,7 @@ class Player{
           if(this.gameRef?.observerMode && (this.gameRef.aiDifficulty==='smart' || this.gameRef.aiDifficulty==='sherlock')){
             const me = this.gameRef.players?.[this.id]?.name ?? `P${this.id}`;
             const ownerName = this.gameRef.players?.[c.refuterId]?.name ?? `P${c.refuterId}`;
-            this.gameRef.obs(`😏 Aha! ${ownerName} has ${onlyKey}`, { byPlayerId: this.id });
+            this.gameRef.obs(`💡 Aha! ${ownerName} has ${onlyKey}`, { byPlayerId: this.id });
           }
 
           this.constraints.splice(i,1);
@@ -1627,7 +1627,7 @@ class Game{
       weapon  = pick.weapon;
 
       if(this.observerMode){
-        this.obs(`💭 Thinking... Top suspects are ${topSus.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')} and top weapons are ${topWep.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')}. I'll check out ${suspect} and ${weapon} in the ${room}.`, { byPlayerId: pl.id });
+        this.obs(`🔎 Let's see... top suspects are ${topSus.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')} and top weapons are ${topWep.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')}. I'll check out ${suspect} and ${weapon} in the ${room}.`, { byPlayerId: pl.id });
       }
 
     } else {
@@ -1642,7 +1642,7 @@ class Game{
       weapon  = choice(wepCands);
 
       if(this.observerMode && this.aiDifficulty==='smart'){
-        this.obs(`💭 Thinking... suspects remaining are ${susCands.length} and weapons remaining are ${wepCands.length}. I'll check out ${suspect} and ${weapon} in the ${room}.`, { byPlayerId: pl.id });
+        this.obs(`🔎 Let's see... suspects remaining are ${susCands.length} and weapons remaining are ${wepCands.length}. I'll check out ${suspect} and ${weapon} in the ${room}.`, { byPlayerId: pl.id });
       }
     }
 
@@ -1665,7 +1665,7 @@ class Game{
       const acc=pl.inferredAccusation();
 
       if(this.observerMode){
-        this.obs(`🕵️‍♂️ The net closes on ${acc.suspect} with the ${acc.weapon} in the ${acc.room}.`, { byPlayerId: pl.id });
+        this.obs(`🛑 Time to act! Accusing ${acc.suspect} with the ${acc.weapon} in the ${acc.room}.`, { byPlayerId: pl.id });
       }
 
       summary.push(`Accused (certain): ${displaySuspect(acc.suspect)} in the ${acc.room} with the ${acc.weapon}.`);
