@@ -2187,7 +2187,13 @@ function renderPlayers(game){
     let label;
     if(game.observerMode && p.id===game.observerFocusId) label = `Coach Focus (${p.name})`;
     else label = p.isHuman ? `You (${p.name})` : p.name;
-    left.innerHTML=`<b>${label}</b> <span style="color:var(--muted);font-size:12px;">@ ${p.location}</span> ${p.eliminated?`<span class="pill bad" style="margin-left:6px;">eliminated</span>`:''}`;
+    left.innerHTML =
+      '<b>' + label + '</b> ' +
+      '<span style="color:var(--muted);font-size:12px;">@ ' + p.location + '</span>' +
+      (game.aiDifficulty === 'sherlock'
+        ? ' <span style="color:var(--muted);font-size:12px;margin-left:8px;">Cards: ' + (p.hand ? p.hand.length : 0) + '</span>'
+        : '') +
+      (p.eliminated ? '<span class="pill bad" style="margin-left:6px;">eliminated</span>' : '');
     const right=document.createElement('div');
     const isTurn=idx===game.turnIndex && !game.gameOver;
     right.innerHTML=isTurn?`<span class="pill good">active</span>`:`<span class="pill">—</span>`;
