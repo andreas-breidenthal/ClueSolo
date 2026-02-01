@@ -4,7 +4,7 @@
 
 Play the detective mystery game solo! ClueSolo brings the beloved board game experience to your browser, allowing you to practice deduction skills against AI opponents of varying difficulty levels.
 
-[![Play Now](https://img.shields.io/badge/Play-Now-brightgreen?style=for-the-badge)](https://andreas-breidenthal.github.io/ClueSolo/ClueSolo.html)
+[![Play Now](https://img.shields.io/badge/Play-Now-brightgreen?style=for-the-badge)](https://andreas-breidenthal.github.io/ClueSolo/)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 
 ## 🎮 Features
@@ -35,10 +35,10 @@ Play the detective mystery game solo! ClueSolo brings the beloved board game exp
 ## 🚀 Quick Start
 
 ### Play Online
-Visit: [https://andreas-breidenthal.github.io/ClueSolo/ClueSolo.html](https://andreas-breidenthal.github.io/ClueSolo/ClueSolo.html)
+Visit: [https://andreas-breidenthal.github.io/ClueSolo/](https://andreas-breidenthal.github.io/ClueSolo/)
 
 ### Play Offline
-1. Download `ClueSolo.html`
+1. Download `index.html`
 2. Double-click to open in any modern web browser
 3. Start playing!
 
@@ -146,7 +146,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- **Live Demo**: [Play ClueSolo](https://andreas-breidenthal.github.io/ClueSolo/ClueSolo.html)
+- **Live Demo**: [Play ClueSolo](https://andreas-breidenthal.github.io/ClueSolo/)
 - **Report Bug**: [GitHub Issues](https://github.com/andreas-breidenthal/ClueSolo/issues)
 - **Request Feature**: [GitHub Issues](https://github.com/andreas-breidenthal/ClueSolo/issues)
 
