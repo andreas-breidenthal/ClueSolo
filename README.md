@@ -131,16 +131,6 @@ Contributions are welcome! Please:
 
 - None currently! Please [report issues](https://github.com/andreas-breidenthal/ClueSolo/issues) if you find any.
 
-## 📝 Changelog
-
-### v9.0 (Current)
-- ✨ Added classic Clue-style deduction grid with player columns
-- ✨ Implemented note-taking system for all cards
-- ✨ Auto-populated hints in Coach Mode based on difficulty
-- ✨ Separate game mode selection (Normal/Coach)
-- 🐛 Fixed deduction log visibility (Smart/Sherlock only)
-- 📚 Added comprehensive code organization and comments
-
 ## 🙏 Acknowledgments
 
 - Inspired by the classic **Clue/Cluedo** board game by Hasbro
