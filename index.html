@@ -2,7 +2,7 @@
 <html lang="en">
 <!--
 ╔════════════════════════════════════════════════════════════════════════════╗
-║                        🔍 CLUE SOLO - v2.0.0                              ║
+║                        🔍 CLUE SOLO - v1.1.0                              ║
 ║                     Human + AI Detective Board Game                        ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
@@ -519,6 +519,75 @@
     width: 100%;              /* big easy tap target */
   }
 }
+
+/* ========================================================================
+ * MODAL OVERLAY for critical confirmations
+ * ======================================================================== */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(3px);
+}
+
+.modalDialog {
+  background: var(--panel);
+  border: 4px solid var(--cluedo-red);
+  border-radius: 8px;
+  padding: 0;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modalHeader {
+  background: linear-gradient(180deg, var(--cluedo-red), #6b1f1c);
+  color: #fff;
+  padding: 16px 20px;
+  border-bottom: 3px solid var(--cluedo-charcoal);
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 0.05em;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.modalBody {
+  padding: 24px 20px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.modalActions {
+  padding: 12px 20px 20px 20px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.modalActions button {
+  min-width: 100px;
+}
+
 @media (max-width: 540px){
   /* Turn the board into a simple stacked layout */
   .board{
@@ -928,6 +997,86 @@ function renderPrompt({title="",bodyHTML="",actions=[]}){
       a.appendChild(btn);
     });
     box.appendChild(a);
+  });
+}
+
+/* ========================================================================
+ * MODAL CONFIRMATION (for critical actions like New Game)
+ * ======================================================================== */
+function showModalConfirm({title="Confirm", bodyHTML="", confirmLabel="Confirm", cancelLabel="Cancel"}){
+  return new Promise(resolve=>{
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'modalOverlay';
+    
+    // Create dialog
+    const dialog = document.createElement('div');
+    dialog.className = 'modalDialog';
+    
+    // Header
+    const header = document.createElement('div');
+    header.className = 'modalHeader';
+    header.textContent = title;
+    
+    // Body
+    const body = document.createElement('div');
+    body.className = 'modalBody';
+    body.innerHTML = bodyHTML;
+    
+    // Actions
+    const actions = document.createElement('div');
+    actions.className = 'modalActions';
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'secondary';
+    cancelBtn.textContent = cancelLabel;
+    cancelBtn.onclick = () => {
+      document.body.removeChild(overlay);
+      resolve(false);
+    };
+    
+    const confirmBtn = document.createElement('button');
+    confirmBtn.className = 'danger';
+    confirmBtn.textContent = confirmLabel;
+    confirmBtn.onclick = () => {
+      document.body.removeChild(overlay);
+      resolve(true);
+    };
+    
+    actions.appendChild(cancelBtn);
+    actions.appendChild(confirmBtn);
+    
+    // Assemble
+    dialog.appendChild(header);
+    dialog.appendChild(body);
+    dialog.appendChild(actions);
+    overlay.appendChild(dialog);
+    
+    // Add to page
+    document.body.appendChild(overlay);
+    
+    // ESC key to cancel
+    const escHandler = (e) => {
+      if(e.key === 'Escape'){
+        document.body.removeChild(overlay);
+        document.removeEventListener('keydown', escHandler);
+        resolve(false);
+      }
+    };
+    document.addEventListener('keydown', escHandler);
+    
+    // Click overlay background to cancel (optional - comment out if too sensitive)
+    overlay.onclick = (e) => {
+      if(e.target === overlay){
+        document.body.removeChild(overlay);
+        resolve(false);
+      }
+    };
+    
+    // Prevent clicks inside dialog from closing
+    dialog.onclick = (e) => {
+      e.stopPropagation();
+    };
   });
 }
 function setPromptMessage(title, bodyHTML){
@@ -3497,20 +3646,19 @@ function resetUIForSetup() {
 async function startNewGame(game,{skipConfirm=false}={}){
   let ok=true;
   if(!skipConfirm){
-    ok=await renderPrompt({
-      title:'Start a New Game?',
-      bodyHTML:`<div>This will restart the game and redeal all cards.</div>
-      <div style="margin-top:10px;color:var(--muted);font-size:12px;">
-      Any current turn progress will be lost.
+    ok = await showModalConfirm({
+      title: 'Start a New Game?',
+      bodyHTML: `<div style="font-size:16px;margin-bottom:12px;">This will restart the game and redeal all cards.</div>
+      <div style="color:var(--muted);font-size:13px;">
+      Any current turn progress will be lost, but your casebook notes will be preserved.
       </div>`,
-      actions:[
-        {label:'Cancel',value:false,className:'secondary'},
-        {label:'New Game',value:true,className:'danger'}
-      ]
+      confirmLabel: 'New Game',
+      cancelLabel: 'Cancel'
     });
-    clearGameplayPrompt();
+    // CRITICAL: Only clear gameplay prompt if user confirmed
+    if(ok) clearGameplayPrompt();
   }
-  if(!ok) return;
+  if(!ok) return; // User cancelled - previous state remains intact!
 
   resetUIForSetup();
   const setup = await promptGameSetup();
