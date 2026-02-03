@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="en">
 <!--
-╔════════════════════════════════════════════════════════════════╗
-║                        🔍 CLUE SOLO - v1.0                                ║
-║                     Human + AI Detective Board Game                       ║
-╚════════════════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════════════════════╗
+║                        🔍 CLUE SOLO - v2.0.0                              ║
+║                     Human + AI Detective Board Game                        ║
+╚════════════════════════════════════════════════════════════════════════════╝
 
 📖 QUICK START GUIDE FOR NON-CODERS:
 
@@ -56,77 +56,177 @@
   /* ========================================================================
    * COLOR CUSTOMIZATION
    * ========================================================================
-   * To change colors, modify the hex values below.
-   * Use a color picker tool: https://htmlcolorcodes.com/color-picker/
-   * Example: --bg:#0f172a means background is dark blue
+   * Authentic Vintage Cluedo Board Theme
+   * Based on classic 1949-era Cluedo box design
    * ======================================================================== */
   :root{
+    /* Authentic Cluedo Box Colors */
+    --cluedo-red:#8B2E2B;      /* Main logo red */
+    --cluedo-cream:#E2D5B6;    /* Banner background cream */
+    --cluedo-charcoal:#262624; /* Banner text charcoal */
+    --cluedo-green:#3F5E4A;    /* Green border accent */
+    
     /* Main interface colors */
-    --bg:#0f172a;          /* Background color (dark blue-grey) */
-    --panel:#111c33;       /* Panel backgrounds (slightly lighter) */
-    --text:#e5e7eb;        /* Main text color (light grey) */
-    --muted:#9ca3af;       /* Dimmed text (grey) */
-    --accent:#60a5fa;      /* Accent/highlight color (blue) */
-    --bad:#fb7185;         /* Error/negative color (red) */
-    --good:#34d399;        /* Success/positive color (green) */
-    --warn:#fbbf24;        /* Warning color (yellow) */
-    --border:rgba(255,255,255,0.12);  /* Border color (semi-transparent white) */
+    --bg:#E2D5B6;          /* Cluedo banner cream as main background */
+    --panel:#faf6ed;       /* Lighter cream for panels */
+    --text:var(--cluedo-charcoal);  /* Dark charcoal for text */
+    --muted:#5a5a58;       /* Grey for dimmed text */
+    --accent:var(--cluedo-red);     /* Cluedo red accent */
+    --bad:#6b1f1c;         /* Deep red for errors */
+    --good:var(--cluedo-green);     /* Cluedo green for success */
+    --warn:#d4a127;        /* Golden yellow for warnings */
+    --border:var(--cluedo-red);     /* Red borders like box */
+    --timber:var(--cluedo-charcoal); /* Dark charcoal for strong accents */
+    --gold:#d4a127;        /* Gold highlight */
+    --cream:var(--cluedo-cream);    /* Cluedo cream */
 
     /* Suspect colors - each suspect has their own color */
-    --sus-green:#2D9542;--sus-mustard:#D6AA28;--sus-peacock:#0085B7;--sus-plum:#9C51B6;--sus-scarlet:#ff2400;--sus-white:#f8fafc;
+    --sus-green:#55AA33;--sus-mustard:#CCAA44;--sus-peacock:#66BBEE;--sus-plum:#AA66AA;--sus-scarlet:#FF0000;--sus-white:#ffffff;
     /* Weapon colors - each weapon has its own color */
-    --wep-candle:#FFD700;--wep-dagger:#BB0A1E;--wep-lead:#B7C9E2;--wep-revolver:#D8D8D8;--wep-rope:#BAA38C;--wep-wrench:#879EBF;
+    --wep-candle:#eebb11;--wep-dagger:#DD2E2E;--wep-lead:#ccccee;--wep-revolver:#e0e0e0;--wep-rope:#BBAA88;--wep-wrench:#9999aa;
   }
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 700px at 30% 0%, #1f2a4a, var(--bg));color:var(--text)}
-  header{padding:14px 18px;display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.15)}
-  header h1{margin:0;font-size:18px}
-  header .sub{color:var(--muted);font-size:13px}
-  .layout{display:grid;grid-template-columns:360px 1fr 420px;gap:12px;padding:12px;align-items:start}
-  .panel{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-  .panel h2{margin:0;padding:10px 12px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border);color:#cbd5e1}
-  .panel .content{padding:12px}
-  .leftStack{display:grid;gap:12px;grid-template-rows:auto auto 1fr}
-  .rightStack{display:grid;gap:12px;grid-template-rows:auto auto 1fr}
+  body{
+    margin:0;
+    font-family:'Palatino Linotype',Palatino,Georgia,serif;
+    background: 
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(139,46,43,0.02) 10px,
+        rgba(139,46,43,0.02) 20px
+      ),
+      linear-gradient(135deg, #E2D5B6 0%, #d4c5a0 100%);
+    color:var(--text);
+  }
+  header{
+    padding:14px 18px;
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+    border-bottom:3px solid var(--cluedo-green);
+    background:var(--cluedo-red);
+    color:#fff;
+    box-shadow:0 4px 8px rgba(0,0,0,0.3);
+  }
+  /* Remove curved banner */
+  header::after {
+    display:none;
+  }
+  header h1{
+    margin:0;
+    font-size:20px;
+    font-weight:700;
+    font-family:Broadway,'Impact','Arial Black',sans-serif;
+    letter-spacing:0.1em;
+    text-shadow:2px 2px 4px rgba(0,0,0,0.5);
+    color:#fff;
+  }
+  header .sub{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    color:var(--cluedo-cream);
+    font-size:11px;
+  }
+  .layout{display:grid;grid-template-columns:360px 1fr 420px;gap:8px;padding:8px;align-items:start}
+  .panel{
+    background:var(--panel);
+    border:3px solid var(--cluedo-red);
+    border-radius:8px;
+    overflow:hidden;
+    box-shadow:0 6px 20px rgba(139,46,43,0.3);
+    position: relative;
+  }
+  /* Remove decorative corner accents */
+  .panel::before {
+    display: none;
+  }
+  .panel h2{
+    margin:0;
+    padding:8px 10px;
+    font-size:12px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    background:var(--cluedo-cream);
+    border-bottom:2px solid var(--cluedo-red);
+    color:var(--cluedo-text);
+    font-weight:900;
+    text-shadow:none;
+    font-family:'Algerian','Copperplate','Arial Black',sans-serif;
+    position: relative;
+  }
+  /* Remove decorative underline */
+  .panel h2::after {
+    display: none;
+  }
+  .panel .content{padding:8px}
+  .leftStack{display:grid;gap:8px;grid-template-rows:auto auto 1fr}
+  .rightStack{display:grid;gap:8px;grid-template-rows:auto auto 1fr}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .row.between{justify-content:space-between}
-  .pill{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--muted)}
-  .pill.good{color:var(--good);border-color:rgba(52,211,153,.4)}
-  .pill.bad{color:var(--bad);border-color:rgba(251,113,133,.4)}
-  .pill.warn{color:var(--warn);border-color:rgba(251,191,36,.4)}
-  button{cursor:pointer;border:1px solid var(--border);background:rgba(96,165,250,.18);color:var(--text);padding:8px 10px;border-radius:10px;font-weight:700;transition:transform .05s ease, background .2s ease}
-  button:hover{background:rgba(96,165,250,.25)}button:active{transform:translateY(1px)}button.secondary{background:rgba(255,255,255,.06)}button.danger{background:rgba(251,113,133,.18)}button:disabled{opacity:.55;cursor:not-allowed}
-  select{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,.2);color:var(--text)}
-  .board{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-rows:56px;gap:12px;padding:12px}
-  .room.center{background:rgba(255,255,255,0.07);border-style:dashed}
-  .room.center.convicted{border-style:solid;background:linear-gradient(180deg, rgba(52,211,153,.15), rgba(255,255,255,.04))}
+  .pill{font-size:12px;padding:4px 8px;border-radius:4px;border:1px solid var(--timber);background:#fff8e7;color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.2)}
+  .pill.good{color:var(--good);border-color:var(--good);background:#e8f5e9}
+  .pill.bad{color:var(--bad);border-color:var(--bad);background:#ffebee}
+  .pill.warn{color:var(--warn);border-color:var(--warn);background:#fff8e1}
+  button{cursor:pointer;border:2px solid var(--cluedo-green);background:linear-gradient(180deg, var(--cluedo-red), #6b1f1c);color:#fff;padding:8px 12px;border-radius:6px;font-weight:700;font-family:inherit;box-shadow:0 2px 4px rgba(0,0,0,0.3);transition:transform .05s ease, box-shadow .2s ease;text-shadow:1px 1px 2px rgba(0,0,0,0.3)}
+  button:hover{background:linear-gradient(180deg, #a03835, #8B2E2B);box-shadow:0 4px 8px rgba(0,0,0,0.4)}button:active{transform:translateY(1px);box-shadow:0 1px 2px rgba(0,0,0,0.4)}button.secondary{background:linear-gradient(180deg, var(--cluedo-cream), #d4c5a0);color:var(--cluedo-text);border-color:var(--cluedo-text)}button.danger{background:linear-gradient(180deg, #6b1f1c, #4a1512);color:#fff}button:disabled{opacity:.55;cursor:not-allowed}
+  select{padding:8px 10px;border-radius:6px;border:2px solid var(--timber);background:#fff;color:var(--text);font-family:inherit}
+  .board{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-rows:56px;gap:8px;padding:8px}
+  .room.center{
+    background:#d9c8a8;
+    border:2px solid var(--cluedo-text);
+    border-style:solid;
+  }
+  .room.center.convicted{border-style:solid;background:linear-gradient(180deg, rgba(45,110,63,.2), rgba(212,161,39,.1));border-color:var(--good)}
   /* Accusation tension states for centre tile */
   .room.center.accused{
     border-style:solid;
-    background:linear-gradient(180deg, rgba(251,191,36,.22), rgba(255,255,255,.04)); /* pale orange */
+    background:linear-gradient(180deg, rgba(212,161,39,.3), rgba(255,248,231,.2));
+    border-color:var(--warn);
   }
   .room.center.notguilty{
     border-style:solid;
-    background:linear-gradient(180deg, rgba(253,230,138,.22), rgba(255,255,255,.04)); /* pale yellow */
+    background:linear-gradient(180deg, rgba(139,26,26,.2), rgba(255,235,238,.2));
+    border-color:var(--bad);
   }
-  .room{border:1px solid var(--border);border-radius:12px;padding:10px;background:rgba(0,0,0,.15);min-height:96px;position:relative}
-  .room .title{font-weight:900}.room .tokens{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+  .room{
+    border:2px solid var(--timber);
+    border-radius:8px;
+    padding:10px;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,0.8) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(255,248,231,0.6) 0%, transparent 50%),
+      linear-gradient(135deg, rgba(255,255,255,0.6), rgba(250,245,232,0.4));
+    min-height:96px;
+    position:relative;
+    box-shadow:
+      0 2px 4px rgba(61,40,23,0.2),
+      inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  .room .title{
+    font-weight:900;
+    color:var(--timber);
+    font-family:'Copperplate','Palatino Linotype',serif;
+    letter-spacing:0.05em;
+  }.room .tokens{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
   .room .tokens{align-items:flex-start;align-content:flex-start;}
   .room .tokens .token{align-self:flex-start;}
-  .room.reachable{outline:2px solid rgba(96,165,250,.55)}.room.here{outline:2px solid rgba(52,211,153,.55)}
-  .room button{position:absolute;right:10px;top:10px;padding:6px 8px;border-radius:10px;font-size:12px}
-  .log{height:200px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.35;background:rgba(0,0,0,.18);border:1px solid var(--border);border-radius:12px;padding:10px;white-space:pre-wrap}
+  .room.reachable{outline:3px solid var(--accent);outline-offset:-3px;box-shadow:0 0 0 3px rgba(184,37,44,0.2)}.room.here{outline:3px solid var(--good);outline-offset:-3px;box-shadow:0 0 0 3px rgba(45,110,63,0.2)}
+  .room button{position:absolute;right:10px;top:10px;padding:6px 8px;border-radius:6px;font-size:12px}
+  .log{height:200px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.35;background:#fff8e7;border:2px solid var(--timber);border-radius:8px;padding:10px;white-space:pre-wrap;color:var(--text);box-shadow:inset 0 2px 4px rgba(61,40,23,0.1)}
 
   .probWrap{
     position:relative;
     height:10px;
-    border-radius:999px;
-    border:1px solid var(--border);
-    background:rgba(0,0,0,.18);
+    border-radius:4px;
+    border:1px solid var(--timber);
+    background:#fff8e7;
     overflow:hidden;
   }
   .probBar{
     height:100%;
-    background:linear-gradient(90deg, rgba(96,165,250,.65), rgba(52,211,153,.55));
+    background:linear-gradient(90deg, var(--accent), var(--gold));
   }
   .probPct{
     position:absolute;
@@ -134,6 +234,7 @@
     right:0;
     font-size:10px;
     color:var(--muted);
+    font-weight:600;
   }
   
 /* Ensure centre room-token doesn't inflate compared to other tokens */
@@ -148,7 +249,7 @@
   align-items:center;         /* single-line alignment */
   padding:2px 0;
   color:var(--muted);
-  font-size:12px;
+  font-size:11px;
 }
 .noteitem input[type="checkbox"]{
   grid-column:1;
@@ -175,7 +276,7 @@
   border:1px solid var(--border);
   background:rgba(0,0,0,.18);
   color:var(--text);
-  font-size:12px;
+  font-size:11px;
   min-width:160px;            /* comfortable min size next to short labels */
 }
 
@@ -211,54 +312,67 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 11px;
-  margin-top: 8px;
+  margin-top: 0px;
+  background: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(184,151,111,0.02) 2px,
+      rgba(184,151,111,0.02) 4px
+    ),
+    #fffef8;
+  box-shadow: inset 0 1px 3px rgba(61,40,23,0.1);
 }
 
 .clueGrid th {
-  background: rgba(0,0,0,0.3);
-  padding: 6px 4px;
-  border: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--timber), #2c1810);
+  padding: 0px 0px;
+  border: 1px solid var(--timber);
   font-weight: 700;
   text-align: center;
-  color: var(--text);
+  color: #f4e4c1;
   font-size: 10px;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
 }
 
 .clueGrid td {
   border: 1px solid var(--border);
   padding: 0;
   text-align: center;
-  background: rgba(0,0,0,0.15);
-  height: 28px;
+  background: #fff;
+  height: 20px;  /* Reduced from 24px */
 }
 
 .clueGrid td.cardName {
   text-align: left;
-  padding: 4px 8px;
+  padding: 0px 0px;  /* Reduced padding */
   font-weight: 600;
   white-space: nowrap;
+  background: linear-gradient(90deg, #faf5e8, #fff);
+  font-size: 11px;
 }
 
 .clueGrid td.notesRow {
-  padding: 2px 4px;
-  background: rgba(0,0,0,0.25);
+  padding: 0px 0px;  /* Minimal padding */
+  background: #fff8e7;
   height: auto;
 }
 
 .clueGrid .noteInput {
-  width: 100%;
-  background: rgba(0,0,0,0.2);
-  border: 1px solid var(--border);
+  width: 97%;
+  background: #fff;
+  border: 0px solid var(--border);
   border-radius: 4px;
-  color: var(--muted);
+  color: var(--text);
   font-size: 10px;
-  padding: 3px 5px;
+  padding: 0px 0px;
   font-style: italic;
 }
 
 .clueGrid .noteInput:focus {
-  outline: 1px solid var(--accent);
-  background: rgba(0,0,0,0.3);
+  outline: 0px solid var(--accent);
+  background: #fff8e7;
   color: var(--text);
 }
 
@@ -266,7 +380,7 @@
   font-size: 10px;
   color: var(--muted);
   font-style: italic;
-  padding: 3px 5px;
+  padding: 1px 1px;
   text-align: left;
 }
 
@@ -277,26 +391,28 @@
   background: transparent;
   color: var(--text);
   text-align: center;
-  font-size: 16px;
-  padding: 2px;
+  font-size: 11px;
+  padding: 1px;
   cursor: pointer;
   appearance: none;
 }
 
 .clueGrid select:focus {
-  outline: 2px solid var(--accent);
-  background: rgba(96,165,250,0.1);
+  outline: 1px solid var(--accent);
+  background: rgba(184,37,44,0.1);
 }
 
 .clueGrid .sectionHeader {
-  background: rgba(96,165,250,0.15);
+  background: linear-gradient(90deg, rgba(184,37,44,0.15), rgba(212,161,39,0.1));
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 8px;
+  padding: 1px;
   text-align: left;
   color: var(--accent);
   font-size: 11px;
+  border-top: 1px solid var(--timber);
+  border-bottom: 1px solid var(--border);
 }
 
 /* Compact view for small screens */
@@ -319,8 +435,20 @@
   }
 }
 
-  .promptBox{border:1px solid var(--border);border-radius:12px;background:rgba(0,0,0,.12);padding:10px}
-  .promptTitle{font-weight:800;margin-bottom:6px;color:#e2e8f0}
+  .promptBox{
+    border:3px solid var(--timber);
+    border-radius:8px;
+    background: linear-gradient(180deg, #fefdfb 0%, #faf5ed 100%);
+    padding:14px;
+    box-shadow: 0 8px 20px rgba(45,24,16,0.3);
+  }
+  .promptTitle{
+    font-weight:700;
+    margin-bottom:8px;
+    color:var(--timber);
+    font-size:16px;
+    letter-spacing:0.5px;
+  }
   .promptBody{margin:6px 0 10px 0}
   .promptActions{display:flex;flex-wrap:wrap;gap:8px}
   .placeholder{color:var(--muted);font-size:12px}
@@ -328,17 +456,69 @@
   .rightPanel,.leftPanel{position:sticky;top:12px;height:calc(100vh - 96px);overflow:auto}
   @media (max-width:1200px){.layout{grid-template-columns:1fr}.leftPanel,.rightPanel{position:static;height:auto;overflow:visible}}
 
-  .token{font-size:11px;padding:3px 7px;border-radius:999px;border:2px solid rgba(255,255,255,.18);background:#000;line-height:1.1;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 0 0 1px rgba(0,0,0,.35) inset}
-  .token[data-color]{border-color: color-mix(in srgb, var(--token-color) 92%, transparent);color:color-mix(in srgb, var(--token-color) 92%, transparent);box-shadow:0 0 0 1px rgba(0,0,0,.35) inset,0 0 10px color-mix(in srgb, var(--token-color) 28%, transparent);text-shadow:0 1px 1px rgba(0,0,0,.85)}
-  .token .dot{width:8px;height:8px;border-radius:999px;background: var(--token-color);box-shadow:0 0 0 1px rgba(0,0,0,.55), 0 0 10px color-mix(in srgb, var(--token-color) 35%, transparent)}
-  .token.inactive{border-style:dashed}
+  .token{
+    font-size:11px;
+    padding:4px 9px;
+    border-radius:6px;
+    border:2px solid var(--timber);
+    background: linear-gradient(180deg, #fff 0%, #f5f5f5 100%);
+    line-height:1.1;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    white-space:nowrap;
+    box-shadow:
+      0 2px 4px rgba(45,24,16,0.2),
+      inset 0 1px 0 rgba(255,255,255,0.8);
+    color:var(--timber);
+    font-weight:600;
+    font-family:'Copperplate','Palatino Linotype',serif;
+    letter-spacing:0.03em;
+  }
+  .token[data-color]{
+    border-color: color-mix(in srgb, var(--token-color) 75%, var(--timber));
+    background: linear-gradient(180deg, var(--token-color) 0%, color-mix(in srgb, var(--token-color) 85%, #000) 100%);
+    color:var(--timber);
+    text-shadow:none;
+  }
+  .token .dot{
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background: #fff;
+    box-shadow:0 0 0 2px var(--token-color), 0 0 8px rgba(255,255,255,0.5);
+  }
+  .token.inactive{
+    border-style:dashed;
+    opacity:0.6;
+  }
 .token .ico {
-  margin-right: 6px;
+  margin-right: 4px;
 }
   .token.suspect.green{--token-color:var(--sus-green)}.token.suspect.mustard{--token-color:var(--sus-mustard)}.token.suspect.peacock{--token-color:var(--sus-peacock)}.token.suspect.plum{--token-color:var(--sus-plum)}.token.suspect.scarlet{--token-color:var(--sus-scarlet)}.token.suspect.white{--token-color:var(--sus-white)}
   .token.weapon.candlestick{--token-color:var(--wep-candle)}.token.weapon.dagger{--token-color:var(--wep-dagger)}.token.weapon.lead-pipe{--token-color:var(--wep-lead)}.token.weapon.revolver{--token-color:var(--wep-revolver)}.token.weapon.rope{--token-color:var(--wep-rope)}.token.weapon.wrench{--token-color:var(--wep-wrench)}
 .ico{ display:inline-block; margin-right:6px; line-height:1; }
 /* --- Mobile stacked layout for Rooms --- */
+/* Mobile-only New Game button row in the right panel */
+.mobileNewGameRow {
+  display: none;              /* hidden by default (desktop/tablet) */
+  padding: 8px 10px 0 10px;   /* a little breathing room under the Casebook header */
+}
+
+/* On small screens, move New Game from left panel to right panel */
+@media (max-width: 540px) {
+  #btnNewGame {               /* hide the original always-visible button */
+    display: none !important;
+  }
+
+  .mobileNewGameRow {         /* show the right-panel version */
+    display: block;
+  }
+
+  #btnNewGameMobile {
+    width: 100%;              /* big easy tap target */
+  }
+}
 @media (max-width: 540px){
   /* Turn the board into a simple stacked layout */
   .board{
@@ -355,7 +535,7 @@
     min-height: 120px;
   }
 
-  /* Center “Classified Files / Convicted” tile should also stack */
+  /* Center “Case File / Convicted” tile should also stack */
   .board .room.center{
     grid-column: auto !important;
     grid-row: auto !important;
@@ -366,7 +546,7 @@
 <body>
 <header>
   <h1>🔍 ClueSolo</h1>
-  <div class="sub">Just like the classic detective game ... but you're alone!</div>
+  <div class="sub">The Classic Detective Game ... alone!</div>
 </header>
 <div class="layout">
   <div class="panel leftPanel">
@@ -410,11 +590,15 @@
 
   <div class="panel rightPanel">
     <h2>Casebook</h2>
+
+    <!-- Mobile-only New Game button (appears on small screens only) -->
+    <div class="mobileNewGameRow">
+      <button id="btnNewGameMobile" class="secondary">New Game</button>
+    </div>
+
     <div class="content rightStack">
           <div class="checklistStack">
-            <div class="notebox"><h4>Suspects</h4><div id="noteSuspects"></div></div>
-            <div class="notebox"><h4>Weapons</h4><div id="noteWeapons"></div></div>
-            <div class="notebox"><h4>Rooms</h4><div id="noteRooms"></div></div>
+            <div class="notebox"><div id="noteUnified"></div></div>
           </div>
     </div>
   </div>
@@ -446,7 +630,7 @@
  * 
  * [SECTION 3] PLAYER CLASS ......................... Line ~500
  *   • Player state management
- *   • Card tracking (own, seen, eliminated)
+ *   • Card tracking (own, seen, innocent)
  *   • Sherlock probability calculations
  * 
  * [SECTION 4] MAIN GAME CLASS ...................... Line ~800
@@ -568,7 +752,7 @@ function pickLeastInformativeRefuteCard(refuter, matches, suggester){
     // If suggester already knows refuter owns it, also extremely uninformative
     if(suggester.knownOwners && suggester.knownOwners.get(key) === refuter.id) return -90;
 
-    // If suggester has it "seen/eliminated", showing owner is usually less useful
+    // If suggester has it "seen/innocent", showing owner is usually less useful
     if(suggester.seen && suggester.seen.has(key)) return -50;
 
     // If suggester has Sherlock beliefs, use them to pick the least informative card
@@ -694,7 +878,7 @@ const ROOM_ICON = {
   "Conservatory": "🪴",
   "Ballroom": "💃",
   "Kitchen": "🥩",
-  "Classified Files": "🕵️‍♂️"
+  "Case File": "🕵️‍♂️"
 };
 
 /* Movement (kept as in your current build, including passages on any dice) */
@@ -909,7 +1093,7 @@ class Player{
     this.hand=[];this.location='Hall';this.eliminated=false;
     this.seen=new Set();this.own=new Set();
     this.knownOwners=new Map(); // cardKey -> playerId
-    this.knowledgeMeta = new Map(); // cardKey -> { status:'own'|'seen'|'deduced'|'eliminated', ownerId?:number }
+    this.knowledgeMeta = new Map(); // cardKey -> { status:'own'|'seen'|'deduced'|'innocent', ownerId?:number }
     this.gameRef = null; // set by Game.resetPlayers so Player can log in Sherlock
     this.constraints=[];this.unrefuted=[];
     this.arrivedByOpponentSuggestion=false;
@@ -925,12 +1109,24 @@ class Player{
   cardKey(type,name){return `${type}:${name}`;}
 
   initKnowledge(){
+  // Mark own cards
   for(const c of this.hand){
     const k=this.cardKey(c.type,c.name);
     this.own.add(k);
     this.seen.add(k);
     this.knownOwners.set(k,this.id);
     this.knowledgeMeta.set(k, { status:'own', ownerId:this.id });
+  }
+  
+  // For Smart/Sherlock: Mark notOwners for cards NOT in hand
+  if(this.gameRef && (this.gameRef.aiDifficulty === 'smart' || this.gameRef.aiDifficulty === 'sherlock')) {
+    // Mark self as notOwner for cards not in hand
+    for(const c of ALL_CARDS){
+      const k=this.cardKey(c.type,c.name);
+      if(!this.own.has(k)){
+        this.markNotOwner(c, this.id);
+      }
+    }
   }
 }
 
@@ -990,9 +1186,20 @@ class Player{
       this.knowledgeMeta.set(k,{status:'own',ownerId:this.id});
     }else if(ownerId!==null && ownerId!==undefined){
       this.knowledgeMeta.set(k,{status:'seen',ownerId});
+      
+      // Smart/Sherlock: Mark all other players as notOwners
+      if(this.gameRef && (this.gameRef.aiDifficulty === 'smart' || this.gameRef.aiDifficulty === 'sherlock')) {
+        for(const player of this.gameRef.players){
+          if(player.id !== ownerId){
+            this.markNotOwner(card, player.id);
+          }
+        }
+        // Also mark CF as not owning it
+        this.markNotOwner(card, CASE_FILE_ID);
+      }
     }else{
-      // seen but unknown owner => treat as eliminated (not in case file)
-      this.knowledgeMeta.set(k,{status:'eliminated'});
+      // seen but unknown owner => treat as innocent (not in case file)
+      this.knowledgeMeta.set(k,{status:'innocent'});
     }  
   }
 
@@ -1004,15 +1211,82 @@ class Player{
     set.add(playerId);
   }
 
-  markEliminated(type,name){
-    const key=this.cardKey(type,name);
-    if(this.own.has(key)) return; // never eliminate own card
-    this.seen.add(key);
-    if(!this.knownOwners.has(key)){
-      this.knowledgeMeta.set(key,{status:'eliminated'});
+  markGuilty(type, name) {
+    const key = this.cardKey(type, name);
+    if (this.own.has(key)) return; // can't be guilty if I own it
+
+    // Mark the chosen card as the case-file card for this category
+    this.knowledgeMeta.set(key, { status: 'guilty' });
+
+    // Keep Sherlock belief in sync
+    const w = this.ownerWeights?.get(key);
+    if (w) {
+      for (const [pid] of w) w.set(pid, AI_CFG.sherlock.weightFloor);
+      w.set(CASE_FILE_ID, AI_CFG.sherlock.weightCeil);
+      this.clampAndNormalizeWeights(key);
     }
 
-    // Sherlock: eliminated means "not in case file"
+    // 🔒 LOCK THE CATEGORY:
+    // Everything else in this category is NOT in the case file => innocent (as solution)
+    const list = (type === 'Suspect') ? SUSPECTS : (type === 'Weapon') ? WEAPONS : ROOMS;
+
+    for (const otherName of list) {
+      if (otherName === name) continue;
+
+      const otherKey = this.cardKey(type, otherName);
+      const meta = this.knowledgeMeta.get(otherKey);
+
+      // If we already know something stronger, don't overwrite it
+      const protectedStatus = meta && (
+        meta.status === 'own' ||
+        meta.status === 'seen' ||
+        meta.status === 'deduced' ||
+        meta.status === 'guilty'
+      );
+
+      // Mark as innocent (as solution) if it wasn't already "cleared" some other way
+      if (!protectedStatus) {
+        this.seen.add(otherKey);
+        this.knowledgeMeta.set(otherKey, { status: 'innocent' });
+      }
+
+      // Ensure belief reflects "not in case file"
+      const ow = this.ownerWeights?.get(otherKey);
+      if (ow) {
+        ow.set(CASE_FILE_ID, AI_CFG.sherlock.weightFloor);
+        this.clampAndNormalizeWeights(otherKey);
+      }
+    }
+  }
+
+  markInnocent(type,name){
+    const key=this.cardKey(type,name);
+    if(this.own.has(key)) return; // never "innocent" own card
+    this.seen.add(key);
+    if(!this.knownOwners.has(key)){
+      this.knowledgeMeta.set(key,{status:'innocent'});
+      
+      // When a card is confirmed in CF (guilty), all other cards in that category 
+      // are marked innocent from CF (but may be owned by players)
+      if(this.gameRef && (this.gameRef.aiDifficulty === 'smart' || this.gameRef.aiDifficulty === 'sherlock')) {
+        const categoryList = type === 'Suspect' ? SUSPECTS : (type === 'Weapon' ? WEAPONS : ROOMS);
+        categoryList.forEach(otherName => {
+          if(otherName !== name) {
+            const otherKey = this.cardKey(type, otherName);
+            // Mark as not in CF (but don't mark as innocent - they're owned by someone)
+            if(this.ownerWeights) {
+              const w = this.ownerWeights.get(otherKey);
+              if(w) {
+                w.set(CASE_FILE_ID, AI_CFG.sherlock.weightFloor);
+                this.clampAndNormalizeWeights(otherKey);
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // Sherlock: innocent means "not in case file"
     const w = this.ownerWeights?.get(key);
     if(w){
       w.set(CASE_FILE_ID, AI_CFG.sherlock.weightFloor);
@@ -1023,7 +1297,27 @@ class Player{
   isCleared(type,name){return this.seen.has(this.cardKey(type,name));}
   possibleSet(type){
     const list=type==='Suspect'?SUSPECTS:type==='Weapon'?WEAPONS:ROOMS;
-    return list.filter(n=>!this.isCleared(type,n));
+    
+    // Filter out cleared cards
+    const notCleared = list.filter(n=>!this.isCleared(type,n));
+    
+    // In Smart/Sherlock modes: if one card in category is guilty, 
+    // the others are not possible solutions (but may be owned by players)
+    // We want to avoid suggesting them for deduction purposes
+    if(this.gameRef && (this.gameRef.aiDifficulty === 'smart' || this.gameRef.aiDifficulty === 'sherlock')) {
+      const hasGuilty = list.some(cardName => {
+        const key = this.cardKey(type, cardName);
+        const meta = this.knowledgeMeta.get(key);
+        return meta?.status === 'guilty';
+      });
+      
+      if(hasGuilty) {
+        const guiltyName = list.find(n => this.knowledgeMeta.get(this.cardKey(type,n))?.status === 'guilty');
+        return guiltyName ? [guiltyName] : [];
+      }
+    }
+    
+    return notCleared;
   }
   hasAnyOf(triple){
     return triple.filter(t=>this.hand.some(c=>c.type===t.type&&c.name===t.name));
@@ -1081,6 +1375,21 @@ class Player{
           if(!this.own.has(onlyKey)){
             this.knowledgeMeta.set(onlyKey,{status:'deduced',ownerId:c.refuterId});
           }
+          
+          // Smart/Sherlock: Mark all other players as notOwners for this deduced card
+          if(this.gameRef && (this.gameRef.aiDifficulty === 'smart' || this.gameRef.aiDifficulty === 'sherlock')) {
+            // Find the card object
+            const deducedCard = ALL_CARDS.find(card => this.cardKey(card.type, card.name) === onlyKey);
+            if(deducedCard){
+              for(const player of this.gameRef.players){
+                if(player.id !== c.refuterId){
+                  this.markNotOwner(deducedCard, player.id);
+                }
+              }
+              // Also mark CF as not owning it
+              this.markNotOwner(deducedCard, CASE_FILE_ID);
+            }
+          }
 
           // ✅ Smart + Sherlock deduction log (observer mode): collapse -> must own
           if(this.gameRef?.observerMode){
@@ -1102,7 +1411,7 @@ class Player{
   }
 
   // Mild inference (unchanged)
-  // If two of a triple are cleared, the third must be solution (eliminate all others in that category)
+  // If two of a triple are cleared, the third must be solution (mark innocent all others in that category)
   // Implemented in Game.applyMildInference()
 
   // --- Sherlock++ learning hooks ---
@@ -1200,7 +1509,7 @@ class Player{
   // Ensures probabilities within each category (Suspect/Weapon/Room) sum to 1
   // across remaining (not cleared) candidates.
   caseFileProbNormalized(type, name){
-    // If already cleared/eliminated/owned/seen, it cannot be in the case file
+    // If already cleared/marked innocent/owned/seen, it cannot be in the case file
     if(this.isCleared(type, name)) return 0;
 
     const list = (type==='Suspect'?SUSPECTS : type==='Weapon'?WEAPONS : ROOMS);
@@ -1474,35 +1783,37 @@ class Game{
 
   // NO-REFUTE deduction (ALL difficulties):
   // If no one refutes an AI's suggestion, then for each suggested card that the AI does NOT hold,
-  // that card must be in the case file. Therefore eliminate all OTHER cards in that category.
+  // that card must be in the case file. Therefore mark innocent all OTHER cards in that category.
   noRefuteDeduction(pl, { suspect, weapon, room }){
     const owns = (type, name) => pl.hand.some(c => c.type === type && c.name === name);
   
-    const eliminateAllOthers = (type, keepName, list) => {
+    const innocentAllOthers = (type, keepName, list) => {
       for (const n of list) {
-        if (n !== keepName) pl.markEliminated(type, n);
+        if (n !== keepName) pl.markInnocent(type, n);
       }
     };
   
     // Only deduce a category if the suggester does NOT personally hold that suggested card.
     if (!owns('Suspect', suspect)) {
-      eliminateAllOthers('Suspect', suspect, SUSPECTS);
-      // Sherlock belief: this suspect is in the case file
-      if(pl.ownerWeights && pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Suspect',name:suspect});
+      innocentAllOthers('Suspect', suspect, SUSPECTS);
+      if (pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Suspect', name:suspect});
+      if (pl.markGuilty) pl.markGuilty('Suspect', suspect); // ✅ lock category + stick to guilty
     }
 
     if (!owns('Weapon', weapon)) {
-      eliminateAllOthers('Weapon', weapon, WEAPONS);
-      if(pl.ownerWeights && pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Weapon',name:weapon});
+      innocentAllOthers('Weapon', weapon, WEAPONS);
+      if (pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Weapon', name:weapon});
+      if (pl.markGuilty) pl.markGuilty('Weapon', weapon);
     }
 
     if (!owns('Room', room)) {
-      eliminateAllOthers('Room', room, ROOMS);
-      if(pl.ownerWeights && pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Room',name:room});
+      innocentAllOthers('Room', room, ROOMS);
+      if (pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Room', name:room});
+      if (pl.markGuilty) pl.markGuilty('Room', room);
     }
   
     if (this.observerMode){
-      this.obs(`🧾 NO-REFUTE deduction applied for ${pl.name}: eliminated non-matching cards in any category where ${pl.name} does not hold the suggested card.`);
+      this.obs(`🧾 NO-REFUTE deduction applied for ${pl.name}: marked innocent non-matching cards in any category where ${pl.name} does not hold the suggested card.`);
     }
   }
 
@@ -1513,16 +1824,19 @@ class Game{
             r=pl.isCleared('Room',t.room);
       if((s?1:0)+(w?1:0)+(r?1:0)===2){
         if(!s){
-          SUSPECTS.forEach(x=>{ if(x!==t.suspect) pl.markEliminated('Suspect',x); });
-          if(pl.ownerWeights && pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Suspect',name:t.suspect});
+          SUSPECTS.forEach(x=>{ if(x!==t.suspect) pl.markInnocent('Suspect',x); });
+          if (pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Suspect', name:t.suspect});
+          if (pl.markGuilty) pl.markGuilty('Suspect', t.suspect); // ✅ lock category
         }
         if(!w){
-          WEAPONS.forEach(x=>{ if(x!==t.weapon) pl.markEliminated('Weapon',x); });
-          if(pl.ownerWeights && pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Weapon',name:t.weapon});
+          WEAPONS.forEach(x=>{ if(x!==t.weapon) pl.markInnocent('Weapon',x); });
+          if (pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Weapon', name:t.weapon});
+          if (pl.markGuilty) pl.markGuilty('Weapon', t.weapon); // ✅ lock category
         }
         if(!r){
-          ROOMS.forEach(x=>{ if(x!==t.room) pl.markEliminated('Room',x); });
-          if(pl.ownerWeights && pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Room',name:t.room});
+          ROOMS.forEach(x=>{ if(x!==t.room) pl.markInnocent('Room',x); });
+          if (pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Room', name:t.room});
+          if (pl.markGuilty) pl.markGuilty('Room', t.room); // ✅ lock category
         }
       }
     }
@@ -1838,7 +2152,7 @@ class Game{
       prev: { sus: prevSus, wep: prevWep }
     };
 
-    // Move accused suspect + weapon to the centre (Classified Files tile)
+    // Move accused suspect + weapon to the centre (Case File tile)
     this.suspectLoc.set(acc.suspect, HOLDING_CELL_ID);
     this.weaponLoc.set(acc.weapon, HOLDING_CELL_ID);
   }
@@ -2553,12 +2867,12 @@ function renderNotebook(game){
 
   // Icons
   const SUS_ICON = {
-    "Green": "🎩","Mustard": "🎖️","Scarlet": "💋","Peacock": "💎","Plum": "💼","White": "👜"
+    "Green": "🎩","Mustard": "🎖️","Scarlet": "👒","Peacock": "💎","Plum": "💼","White": "👜"
   };
   const WEP_ICON = {
     "Candlestick":"🕯️","Dagger":"🗡️","Lead Pipe":"🦯","Revolver":"🔫","Rope":"🪢","Wrench":"🔧"
   };
-  const ROOM_ICON = {
+  const ROOM_ICON_LOCAL = {
     "Study": "📝","Hall":"🧥","Lounge":"🛋️","Library":"📖","Billiard Room":"🎱",
     "Dining Room":"🍽️","Conservatory":"🪴","Ballroom":"💃","Kitchen":"🥩"
   };
@@ -2567,98 +2881,99 @@ function renderNotebook(game){
   const gridState = loadClueGrid();
   const gridNotes = loadClueGridNotes();
 
-  const renderGrid = (containerId, sectionTitle, cardList, cardType, iconMap) => {
-    const container = el(containerId);
-    if(!container) return;
+  // Render unified grid with all categories (with repeated dark header per category)
+  const container = el('noteUnified');
+  if(!container) return;
 
-    let html = `<table class="clueGrid"><thead><tr>`;
-    html += `<th style="text-align:left; min-width:100px;">Card</th>`;
-    
-    // Player columns
+  const colCount = playerInitials.length + 2; // left label + players + CF
+  let html = `<table class="clueGrid"><tbody>`;
+
+  const categories = [
+    { title: 'SUSPECTS', cards: SUSPECTS, type: 'Suspect', icons: SUS_ICON },
+    { title: 'WEAPONS',  cards: WEAPONS,  type: 'Weapon',  icons: WEP_ICON },
+    { title: 'ROOMS',    cards: ROOMS,    type: 'Room',    icons: ROOM_ICON_LOCAL }
+  ];
+
+  categories.forEach(category => {
+    // --- Repeated dark header row for this category ---
+    html += `<tr class="catHead">`;
+    html += `<th style="text-align:left; min-width:100px;">${category.title}</th>`;
     playerInitials.forEach((initial, idx) => {
       html += `<th title="${game.players[idx].name}">${initial}</th>`;
     });
-    
-    // Classified Files column
-    html += `<th title="Classified Files (Solution)">CF</th>`;
-    html += `</tr></thead><tbody>`;
+    html += `<th title="Case File (Solution)">CF</th>`;
+    html += `</tr>`;
 
-    // Section header row
-    html += `<tr><td colspan="${playerInitials.length + 2}" class="sectionHeader">${sectionTitle}</td></tr>`;
+    // --- Card rows for this category ---
+    category.cards.forEach(cardName => {
+      const key = `${category.type}:${cardName}`;
+      const icon = category.icons[cardName] || '';
+      const displayName = displayCardName(category.type, cardName);
 
-    // Card rows
-    cardList.forEach(cardName => {
-      const key = `${cardType}:${cardName}`;
-      const icon = iconMap[cardName] || '';
-      const displayName = displayCardName(cardType, cardName);
-      
-      // Main row with checkboxes
+      // Main row with selects
       html += `<tr>`;
       html += `<td class="cardName"><span class="ico">${icon}</span>${displayName}</td>`;
-      
+
       // Player columns
       playerInitials.forEach((initial, pIdx) => {
-        const cellKey = `${key}|P${pIdx}`;
+        const cellKey = `${key}\nP${pIdx}`;
         const value = gridState[cellKey] || '';
         html += `<td><select data-key="${cellKey}" data-type="player">
           <option value="">${value === '' ? '　' : ''}</option>
-          <option value="✓" ${value === '✓' ? 'selected' : ''}>✓</option>
+          <option value="✅" ${value === '✅' ? 'selected' : ''}>✅</option>
           <option value="✗" ${value === '✗' ? 'selected' : ''}>✗</option>
           <option value="?" ${value === '?' ? 'selected' : ''}>?</option>
         </select></td>`;
       });
-      
-      // CF column - different options
-      const cfKey = `${key}|CF`;
+
+      // CF column
+      const cfKey = `${key}\nCF`;
       const cfValue = gridState[cfKey] || '';
       html += `<td><select data-key="${cfKey}" data-type="cf">
         <option value="">${cfValue === '' ? '　' : ''}</option>
+        <option value="🚩" ${cfValue === '🚩' ? 'selected' : ''}>🚩</option>
+        <option value="✗" ${cfValue === '✗' ? 'selected' : ''}>✗</option>
         <option value="?" ${cfValue === '?' ? 'selected' : ''}>?</option>
-        <option value="!" ${cfValue === '!' ? 'selected' : ''}>!</option>
       </select></td>`;
-      
+
       html += `</tr>`;
 
-      // Notes row (spans all columns)
-      const noteKey = `${key}|note`;
+      // Notes row (single input spanning all columns)
+      const noteKey = `${key}\nnote`;
       const noteValue = gridNotes[noteKey] || '';
-      html += `<tr><td colspan="${playerInitials.length + 2}" class="notesRow">`;
-      html += `<input type="text" class="noteInput" data-notekey="${noteKey}" 
-               value="${noteValue}" placeholder="Notes...">`;
+      html += `<tr><td colspan="${colCount}" class="notesRow">`;
+      html += `<input type="text" class="noteInput" data-notekey="${noteKey}"
+        value="${noteValue}" placeholder="Notes...">`;
       html += `</td></tr>`;
     });
+  });
 
-    html += `</tbody></table>`;
-    container.innerHTML = html;
+  html += `</tbody></table>`;
+  container.innerHTML = html;
 
-    // Add change listeners for checkboxes
-    container.querySelectorAll('select').forEach(select => {
-      select.addEventListener('change', (e) => {
-        const key = e.target.dataset.key;
-        const value = e.target.value;
-        const state = loadClueGrid();
-        if(value === '') delete state[key];
-        else state[key] = value;
-        saveClueGrid(state);
-      });
+  // Add change listeners for selects
+  container.querySelectorAll('select').forEach(select => {
+    select.addEventListener('change', (e) => {
+      const key = e.target.dataset.key;
+      const value = e.target.value;
+      const state = loadClueGrid();
+      if(value === '') delete state[key];
+      else state[key] = value;
+      saveClueGrid(state);
     });
+  });
 
-    // Add change listeners for notes
-    container.querySelectorAll('.noteInput').forEach(input => {
-      input.addEventListener('input', (e) => {
-        const noteKey = e.target.dataset.notekey;
-        const value = e.target.value;
-        const notes = loadClueGridNotes();
-        if(value === '') delete notes[noteKey];
-        else notes[noteKey] = value;
-        saveClueGridNotes(notes);
-      });
+  // Add change listeners for notes
+  container.querySelectorAll('.noteInput').forEach(input => {
+    input.addEventListener('input', (e) => {
+      const noteKey = e.target.dataset.notekey;
+      const value = e.target.value;
+      const notes = loadClueGridNotes();
+      if(value === '') delete notes[noteKey];
+      else notes[noteKey] = value;
+      saveClueGridNotes(notes);
     });
-  };
-
-  renderGrid('noteSuspects', 'SUSPECTS', SUSPECTS, 'Suspect', SUS_ICON);
-  renderGrid('noteWeapons', 'WEAPONS', WEAPONS, 'Weapon', WEP_ICON);
-  renderGrid('noteRooms', 'ROOMS', ROOMS, 'Room', ROOM_ICON);
+  });
 }
 
 // Grid state persistence
@@ -2705,80 +3020,153 @@ function clearClueGrid(){
 
 function renderObserverCasebook(game){
   const focus = game.players[game.observerFocusId];
-  
+
   // Replace panel header
   const rightPanel = document.querySelector('.rightPanel h2');
-  if(rightPanel) rightPanel.textContent = 'Coach Casebook';
+  if(rightPanel) rightPanel.textContent = 'Casebook';
 
-  // Get player initials for column headers
+  // Column headers: focus player shows as "Own"
   const playerInitials = game.players.map((p, idx) => {
-    if(idx === game.observerFocusId) return 'Own'; // Focus player is "Own"
+    if(idx === game.observerFocusId) return 'Own';
     const suspect = p.suspect || p.name;
-    const words = suspect.split(' ');
+    const words = String(suspect).split(' ');
     if(words.length > 1) return words.map(w => w[0]).join('');
-    return suspect.substring(0, 2).toUpperCase();
+    return String(suspect).substring(0, 2).toUpperCase();
   });
 
   // Icons
   const SUS_ICON = {
-    "Green": "🎩","Mustard": "🎖️","Scarlet": "💋","Peacock": "💎","Plum": "💼","White": "👜"
+    "Green": "🎩","Mustard": "🎖️","Scarlet": "👒","Peacock": "💎","Plum": "💼","White": "👜"
   };
   const WEP_ICON = {
     "Candlestick":"🕯️","Dagger":"🗡️","Lead Pipe":"🦯","Revolver":"🔫","Rope":"🪢","Wrench":"🔧"
   };
-  const ROOM_ICON = {
+  const ROOM_ICON_LOCAL = {
     "Study": "📝","Hall":"🧥","Lounge":"🛋️","Library":"📖","Billiard Room":"🎱",
     "Dining Room":"🍽️","Conservatory":"🪴","Ballroom":"💃","Kitchen":"🥩"
   };
 
-  const playersById = new Map(game.players.map(p=>[p.id,p.name]));
+  // Sherlock probability helper
+  const getSolutionProb = (type, name) => {
+    const key = focus.cardKey(type, name);
+    if(focus.seen.has(key)) return 0;
 
-  // Helper to get card info for each player column and CF column
+    if(typeof focus.caseFileProbNormalized === 'function'){
+      return focus.caseFileProbNormalized(type, name);
+    }
+
+    const w = focus.ownerWeights?.get(key);
+    if(!w) return 0.0;
+    const pCase = w.get(CASE_FILE_ID) ?? 0;
+    return Math.max(0, Math.min(1, pCase));
+  };
+
+  // Coach-mode card info (read-only marks + CF + note/prob)
   const getCardInfo = (type, name) => {
-    const key = focus.cardKey(type,name);
+    const key = focus.cardKey(type, name);
     const playerMarks = new Array(game.players.length).fill('');
     let cfMark = '';
     let noteText = '';
     let hasProb = false;
     let prob = 0;
 
-    // Get metadata once for this card
     const ownerId = focus.knownOwners.get(key);
     const meta = focus.knowledgeMeta.get(key);
 
-    // Check each player to see if they own this card
-    game.players.forEach((player, pIdx) => {
-      if(player.id === focus.id && focus.own.has(key)) {
-        // Focus player owns it
-        playerMarks[pIdx] = '✓';
-        if(noteText === '') noteText = 'own';
-      } else if(ownerId === player.id) {
-        // Focus knows this player owns it
-        playerMarks[pIdx] = '✓';
-        if(meta?.status === 'seen') {
-          if(noteText === '') noteText = 'seen';
-        } else if(meta?.status === 'deduced' && game.aiDifficulty !== 'basic') {
-          // Only show "deduced" in Smart/Sherlock modes
-          if(noteText === '') noteText = 'deduced';
-        } else {
-          if(noteText === '') noteText = 'seen';
-        }
-      }
+    // If another card in this category is already guilty, this one is automatically NOT CF
+    const categoryList =
+      (type === 'Suspect') ? SUSPECTS :
+      (type === 'Weapon')  ? WEAPONS  :
+                             ROOMS;
+
+    const anotherIsGuilty = categoryList.some(cardName => {
+      if(cardName === name) return false;
+      const otherKey = focus.cardKey(type, cardName);
+      const otherMeta = focus.knowledgeMeta.get(otherKey);
+      return otherMeta?.status === 'guilty';
     });
 
-    // Check if card is in classified files (guaranteed guilty)
-    if(meta?.status === 'eliminated') {
-      cfMark = '!';
-      noteText = 'guaranteed guilty';
-    } else if(focus.seen.has(key) && !focus.knownOwners.has(key)) {
-      // Ruled out but not assigned to anyone = must be in CF
-      cfMark = '!';
-      noteText = 'guaranteed guilty';
+    if(anotherIsGuilty){
+      // ruled out of CF, show as eliminated everywhere
+      playerMarks.fill('✗');
+      cfMark = '✗';
+      noteText = 'innocent';
+      return { playerMarks, cfMark, noteText, hasProb: false, prob: 0 };
     }
 
-    // Sherlock mode: show probability for unsolved cards
-    if(game.aiDifficulty === 'sherlock' && noteText === '') {
-      // No status yet - show probability
+    // BASIC: only show ✅ for owned/seen and 🚩 for guilty
+    if(game.aiDifficulty === 'basic'){
+      game.players.forEach((player, pIdx) => {
+        if(player.id === focus.id && focus.own.has(key)){
+          playerMarks[pIdx] = '✅';
+          if(noteText === '') noteText = 'own';
+        } else if(ownerId === player.id && meta?.status === 'seen'){
+          playerMarks[pIdx] = '✅';
+          if(noteText === '') noteText = 'seen';
+        }
+      });
+
+      if(meta?.status === 'guilty'){
+        cfMark = '🚩';
+        noteText = 'guilty';
+      }
+
+      return { playerMarks, cfMark, noteText, hasProb: false, prob: 0 };
+    }
+
+    // SMART/SHERLOCK: full elimination logic
+    // 1) If focus owns it
+    if(focus.own.has(key)){
+      game.players.forEach((player, pIdx) => {
+        playerMarks[pIdx] = (player.id === focus.id) ? '✅' : '✗';
+      });
+      cfMark = '✗';
+      noteText = 'own';
+      return { playerMarks, cfMark, noteText, hasProb: false, prob: 0 };
+    }
+
+    // 2) If focus knows someone owns it (seen or deduced)
+    if(ownerId !== undefined && ownerId !== null){
+      game.players.forEach((player, pIdx) => {
+        playerMarks[pIdx] = (player.id === ownerId) ? '✅' : '✗';
+      });
+      cfMark = '✗';
+      noteText = (meta?.status === 'deduced') ? 'deduced' : 'seen';
+      return { playerMarks, cfMark, noteText, hasProb: false, prob: 0 };
+    }
+
+    // 3) Mark focus as ✗ in own column if not owned
+    const focusIdx = game.players.findIndex(p => p.id === focus.id);
+    if(focusIdx >= 0) playerMarks[focusIdx] = '✗';
+
+    // 4) Apply notOwner eliminations (from non-refutes/capacity/etc.)
+    if(focus.notOwners){
+      const notOwnerSet = focus.notOwners.get(key);
+      if(notOwnerSet){
+        game.players.forEach((player, pIdx) => {
+          if(notOwnerSet.has(player.id)) playerMarks[pIdx] = '✗';
+        });
+      }
+    }
+
+    // 5) If confirmed guilty
+    if(meta?.status === 'guilty'){
+      cfMark = '🚩';
+      noteText = 'guilty';
+      playerMarks.fill('✗');
+      return { playerMarks, cfMark, noteText, hasProb: false, prob: 0 };
+    }
+
+    // 6) If all players ruled out, must be CF
+    const allPlayersRuledOut = playerMarks.every(mark => mark === '✗');
+    if(allPlayersRuledOut){
+      cfMark = '🚩';
+      noteText = 'guilty';
+      return { playerMarks, cfMark, noteText, hasProb: false, prob: 0 };
+    }
+
+    // 7) Sherlock probability for unsolved items
+    if(game.aiDifficulty === 'sherlock' && noteText === ''){
       hasProb = true;
       prob = getSolutionProb(type, name);
     }
@@ -2786,98 +3174,72 @@ function renderObserverCasebook(game){
     return { playerMarks, cfMark, noteText, hasProb, prob };
   };
 
-  // Get Sherlock probability
-  const getSolutionProb = (type, name) => {
-    const key = focus.cardKey(type,name);
-    if(focus.seen.has(key)) return 0;
-    
-    if(typeof focus.caseFileProbNormalized === 'function'){
-      return focus.caseFileProbNormalized(type, name);
-    }
-    
-    const w = focus.ownerWeights?.get(key);
-    if(!w) return 0.0;
-    const pCase = w.get(CASE_FILE_ID) ?? 0;
-    return Math.max(0, Math.min(1, pCase));
-  };
+  // Render unified grid with all categories (with repeated dark header per category)
+  const container = el('noteUnified');
+  if(!container) return;
 
-  const renderGrid = (containerId, sectionTitle, cardList, cardType, iconMap) => {
-    const container = el(containerId);
-    if(!container) return;
+  const colCount = playerInitials.length + 2; // left label + players + CF
+  let html = `<table class="clueGrid"><tbody>`;
 
-    let html = `<table class="clueGrid"><thead><tr>`;
-    html += `<th style="text-align:left; min-width:100px;">Card</th>`;
-    
-    // Player columns
+  const categories = [
+    { title: 'SUSPECTS', cards: SUSPECTS, type: 'Suspect', icons: SUS_ICON },
+    { title: 'WEAPONS',  cards: WEAPONS,  type: 'Weapon',  icons: WEP_ICON },
+    { title: 'ROOMS',    cards: ROOMS,    type: 'Room',    icons: ROOM_ICON_LOCAL }
+  ];
+
+  categories.forEach(category => {
+    // --- Repeated dark header row for this category ---
+    html += `<tr class="catHead">`;
+    html += `<th style="text-align:left; min-width:100px;">${category.title}</th>`;
     playerInitials.forEach((initial, idx) => {
       html += `<th title="${game.players[idx].name}">${initial}</th>`;
     });
-    
-    // Classified Files column
-    html += `<th title="Classified Files (Solution)">CF</th>`;
-    html += `</tr></thead><tbody>`;
+    html += `<th title="Case File (Solution)">CF</th>`;
+    html += `</tr>`;
 
-    // Section header row
-    html += `<tr><td colspan="${playerInitials.length + 2}" class="sectionHeader">${sectionTitle}</td></tr>`;
+    // --- Cards ---
+    category.cards.forEach(cardName => {
+      const icon = category.icons[cardName] || '';
+      const displayName = displayCardName(category.type, cardName);
+      const cardInfo = getCardInfo(category.type, cardName);
 
-    // Card rows
-    cardList.forEach(cardName => {
-      const key = `${cardType}:${cardName}`;
-      const icon = iconMap[cardName] || '';
-      const displayName = displayCardName(cardType, cardName);
-      const cardInfo = getCardInfo(cardType, cardName);
-      
-      // Main row with checkmarks (read-only in coach mode)
+      // Main row (read-only)
       html += `<tr>`;
       html += `<td class="cardName"><span class="ico">${icon}</span>${displayName}</td>`;
-      
-      // Player columns - show marks where applicable
-      cardInfo.playerMarks.forEach((mark) => {
-        html += `<td style="font-size:16px;">${mark || '　'}</td>`;
+
+      cardInfo.playerMarks.forEach(mark => {
+        html += `<td style="font-size:11px;">${mark || '　'}</td>`;
       });
-      
-      // CF column
-      html += `<td style="font-size:16px;">${cardInfo.cfMark || '　'}</td>`;
-      
+
+      html += `<td style="font-size:11px;">${cardInfo.cfMark || '　'}</td>`;
       html += `</tr>`;
 
-      // Notes row - auto-populated based on difficulty
-      html += `<tr><td colspan="${playerInitials.length + 2}" class="notesRow">`;
-      
-      if(cardInfo.hasProb && cardInfo.prob !== undefined) {
-        // Sherlock mode: show probability bar for unsolved cards
+      // Notes / probability row
+      html += `<tr><td colspan="${colCount}" class="notesRow">`;
+      if(cardInfo.hasProb && cardInfo.prob !== undefined){
         const pct = Math.round(cardInfo.prob * 100);
         html += `<div class="probWrap" style="position:relative; margin:2px 0;">
           <div class="probBar" style="width:${pct}%;"></div>
           <span class="probPct" style="position:absolute; right:4px; top:-18px;">${pct}%</span>
         </div>`;
       } else {
-        // Show status text
         html += `<div class="noteDisplay">${cardInfo.noteText || '　'}</div>`;
       }
-      
       html += `</td></tr>`;
     });
+  });
 
-    html += `</tbody></table>`;
-    container.innerHTML = html;
-  };
+  html += `</tbody></table>`;
+  container.innerHTML = html;
 
-  renderGrid('noteSuspects', 'SUSPECTS', SUSPECTS, 'Suspect', SUS_ICON);
-  renderGrid('noteWeapons', 'WEAPONS', WEAPONS, 'Weapon', WEP_ICON);
-  renderGrid('noteRooms', 'ROOMS', ROOMS, 'Room', ROOM_ICON);
-
-  // Manage deduction log visibility
+  // Deductions log visibility (Smart/Sherlock only)
   const logId = 'observerDeduceLog';
   let logBox = document.getElementById(logId);
-  
-  // Show deduction log for Smart and Sherlock, hide for Basic
+
   const showLog = (game.aiDifficulty === 'smart' || game.aiDifficulty === 'sherlock');
-  
   if(showLog){
-    // Create log if it doesn't exist
     if(!logBox){
-      const parent = document.getElementById('noteRooms')?.parentElement;
+      const parent = document.getElementById('noteUnified')?.parentElement;
       if(parent){
         logBox = document.createElement('div');
         logBox.id = logId;
@@ -2887,22 +3249,27 @@ function renderObserverCasebook(game){
         parent.appendChild(logBox);
       }
     }
-    // Populate it
     if(logBox && game.obsLog){
       logBox.textContent = game.obsLog.join('\n');
       logBox.scrollTop = logBox.scrollHeight;
     }
   } else {
-    // Hide/remove log for basic mode
     if(logBox) logBox.remove();
   }
 }
+
+/* ================================================================================
+ * [SECTION 10] UI RENDERING - BOARD
+ * ================================================================================
+ * Room rendering, token placement, and movement indicators
+ * ================================================================================ */
 
 function renderBoard(game){
   const board=el('board');board.innerHTML='';
   const placeBox=(div,pos)=>{div.style.gridColumn=`${pos.col[0]} / ${pos.col[1]}`;div.style.gridRow=`${pos.row[0]} / ${pos.row[1]}`;};
   const activeSuspects=new Set(game.players.map(p=>p.suspect).filter(Boolean));
   const current=game.currentPlayer();
+  const uiControlled = current.isHuman || game.isCoachFocus(current); // ✅ allow human UI in Coach Mode
   const roomNames=['Study','Library','Billiard Room','Conservatory','Hall','Ballroom','Lounge','Dining Room','Kitchen'];
 
   roomNames.forEach(roomName=>{
@@ -2910,12 +3277,12 @@ function renderBoard(game){
     div.className='room';
     const pos=BOARD_LAYOUT[roomName];
     if(pos) placeBox(div,pos);
-    const here=current.isHuman && current.location===roomName;
-    const reachable=current.isHuman && game.awaitingMove && game.reachable.has(roomName);
+    const here=uiControlled && current.location===roomName;
+    const reachable=uiControlled && game.awaitingMove && game.reachable.has(roomName);
     if(here) div.classList.add('here');
     if(reachable) div.classList.add('reachable');
 
-    const SUSPECT_ICON = {"Green":"🎩","Mustard":"🎖️","Scarlet":"💋","Peacock":"💎","Plum":"💼","White":"👜"};
+    const SUSPECT_ICON = {"Green":"🎩","Mustard":"🎖️","Scarlet":"👒","Peacock":"💎","Plum":"💼","White":"👜"};
     const suspectTokens = SUSPECTS
       .filter(s => (game.suspectLoc.get(s) || 'Hall') === roomName)
       .map(s => {
@@ -2943,11 +3310,13 @@ function renderBoard(game){
     const roomIcon = ROOM_ICON[roomName] || "";
     div.innerHTML = `<div class="title"><span class="ico" aria-hidden="true">${roomIcon}</span>${roomName}</div>
                      <div class="tokens">${tokensHTML}</div>`;
-    if(current.isHuman && game.awaitingMove && reachable){
-      const btn=document.createElement('button');btn.textContent='Move';
-      btn.setAttribute('aria-label',`Move to ${roomName}`);btn.tabIndex=0;
-      btn.onclick=()=>game.humanMoveTo(roomName);
-      btn.onkeydown=(e)=>{if(e.key==='Enter'||e.key===' ') btn.click();};
+    if (uiControlled && game.awaitingMove && reachable) {
+      const btn = document.createElement('button');
+      btn.textContent = 'Move';
+      btn.setAttribute('aria-label', `Move to ${roomName}`);
+      btn.tabIndex = 0;
+      btn.onclick = () => game.humanMoveTo(roomName);
+      btn.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') btn.click(); };
       div.appendChild(btn);
     }
     board.appendChild(div);
@@ -2965,9 +3334,9 @@ function renderBoard(game){
             </span>`;
   };
 
-  // Default centre tile
-  let centerTitle = `<span class="ico" aria-hidden="true">${ROOM_ICON["Classified Files"] || "🕵️‍♂️"}</span>CLASSIFIED FILES`;
-  let centerBody  = `<span class="token" style="opacity:.6;">(sealed)</span>`;
+  // Default centre tile - Manila envelope style
+  let centerTitle = `<span class="ico" aria-hidden="true">${ROOM_ICON["Case File"] || "🕵️‍♂️"}</span>CASE FILE`;
+  let centerBody  = `<div style="font-size:14px;font-weight:900;letter-spacing:0.1em;color:var(--cluedo-red);margin-top:8px;">CONFIDENTIAL</div>`;
 
   // Determine centre state:
   // 1) Trial states (ACCUSED / NOT GUILTY)
@@ -3012,7 +3381,7 @@ function renderBoard(game){
   // Render using the SAME icon style as room tiles (no dots)
 
   const SUSPECT_ICON = {
-    "Green":"🎩","Mustard":"🎖️","Scarlet":"💋",
+    "Green":"🎩","Mustard":"🎖️","Scarlet":"👒",
     "Peacock":"💎","Plum":"💼","White":"👜"
   };
 
@@ -3092,7 +3461,11 @@ const game=new Game();
     }
 
     game.setup();
-    el('btnNewGame').onclick=()=>startNewGame(game);
+    const ng = el('btnNewGame');
+    if (ng) ng.onclick = () => startNewGame(game);
+
+    const ngm = el('btnNewGameMobile');
+    if (ngm) ngm.onclick = () => startNewGame(game);
     await game.beginTurn();
   }catch(e){
     console.error(e);
@@ -3108,13 +3481,14 @@ function resetUIForSetup() {
   // Clear observer deductions log (DOM + memory) at the same time as game log
   const deduceBox = document.getElementById('observerDeduceLog');
   if (deduceBox) deduceBox.textContent = '';
+  if (deduceBox) deduceBox.remove();
   game.obsLog = [];
   const playersBox = el('playersBox'); if (playersBox) playersBox.innerHTML = '';
   const handBox = el('handBox'); if (handBox) handBox.innerHTML = '';
   const board = el('board'); if (board) board.innerHTML = '';
-  ['noteSuspects','noteWeapons','noteRooms'].forEach(id => {
-    const box = el(id); if (box) box.innerHTML = '';
-  });
+  // Clear unified casebook (new single-grid notebook)
+  const noteUnified = el('noteUnified');
+  if (noteUnified) noteUnified.innerHTML = '';
   try { clearChecklist(); clearCheckNotes(); clearClueGrid(); } catch (e) { console.warn('Checklist clear error (safe to ignore):', e); }
   const turnPill = el('turnPill'); if (turnPill) turnPill.textContent = 'Turn: —';
   const locPill  = el('locPill');  if (locPill)  locPill.textContent  = 'Location: —';
@@ -3164,7 +3538,11 @@ async function startNewGame(game,{skipConfirm=false}={}){
   }
 
   game.setup();
-  el('btnNewGame').onclick=()=>startNewGame(game);
+  const ng = el('btnNewGame');
+  if (ng) ng.onclick = () => startNewGame(game);
+
+  const ngm = el('btnNewGameMobile');
+  if (ngm) ngm.onclick = () => startNewGame(game);
   await game.beginTurn();
 }
 
