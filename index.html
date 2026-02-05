@@ -182,8 +182,16 @@
     display: none;
   }
   .panel .content{padding:8px}
-  .leftStack{display:grid;gap:8px;grid-template-rows:auto auto 1fr}
+  .leftStack{display:grid;gap:8px;grid-template-rows:auto auto 1fr auto}
   .rightStack{display:grid;gap:8px;grid-template-rows:auto auto 1fr}
+  .version-footer{
+    text-align:center;
+    font-size:11px;
+    color:#a67474;
+    opacity:0.6;
+    padding:8px 0;
+    letter-spacing:0.05em;
+  }
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .row.between{justify-content:space-between}
   .pill{font-size:12px;padding:4px 8px;border-radius:4px;border:1px solid var(--timber);background:#fff8e7;color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.2)}
@@ -662,6 +670,7 @@
         <h2>Game Log</h2>
         <div class="content"><div class="log" id="log"></div></div>
       </div>
+      <div class="version-footer">v2.0.2</div>
     </div>
   </div>
 
