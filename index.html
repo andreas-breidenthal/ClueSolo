@@ -2,8 +2,8 @@
 <html lang="en">
 <!--
 ╔════════════════════════════════════════════════════════════════════════════╗
-║                        🔍 CLUE SOLO - v2.0.1                              ║
-║                     Human + AI Detective Board Game                        ║
+║                                   CLUE SOLO - v2.0.2                                    ║
+║                             Human + AI Detective Board Game                             ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
 📖 QUICK START GUIDE FOR NON-CODERS:
@@ -128,6 +128,27 @@
     align-items:center;
     color:var(--cluedo-cream);
     font-size:11px;
+  }
+  header .fullscreen-btn{
+    margin-left:auto;
+    padding:6px 10px;
+    background:rgba(255,255,255,0.15);
+    border:1px solid rgba(255,255,255,0.3);
+    border-radius:4px;
+    color:#fff;
+    font-size:18px;
+    cursor:pointer;
+    transition:background 0.2s ease;
+    line-height:1;
+  }
+  header .fullscreen-btn:hover{
+    background:rgba(255,255,255,0.25);
+  }
+  /* Hide fullscreen button on small screens (below 1200px) */
+  @media (max-width: 1199px) {
+    header .fullscreen-btn{
+      display:none;
+    }
   }
   .layout{display:grid;grid-template-columns:360px 1fr 420px;gap:8px;padding:8px;align-items:start}
   .panel{
@@ -616,6 +637,7 @@
 <header>
   <h1>🔍 ClueSolo</h1>
   <div class="sub">The Classic Detective Game ... alone!</div>
+  <button class="fullscreen-btn" id="fullscreenBtn" title="Toggle Fullscreen (F11)" aria-label="Toggle Fullscreen">⛶</button>
 </header>
 <div class="layout">
   <div class="panel leftPanel">
@@ -1362,8 +1384,12 @@ class Player{
 
   markGuilty(type, name) {
     const key = this.cardKey(type, name);
-    if (this.own.has(key)) return; // can't be guilty if I own it
+    if (this.own.has(key)) {
+      console.log(`[DEBUG markGuilty] Cannot mark ${type}:${name} as guilty - I own it`);
+      return; // can't be guilty if I own it
+    }
 
+    console.log(`[DEBUG markGuilty] Marking ${type}:${name} as GUILTY (case file card)`);
     // Mark the chosen card as the case-file card for this category
     this.knowledgeMeta.set(key, { status: 'guilty' });
 
@@ -1462,10 +1488,12 @@ class Player{
       
       if(hasGuilty) {
         const guiltyName = list.find(n => this.knowledgeMeta.get(this.cardKey(type,n))?.status === 'guilty');
+        console.log(`[DEBUG possibleSet] Found guilty ${type}: ${guiltyName}, returning only this card`);
         return guiltyName ? [guiltyName] : [];
       }
     }
     
+    console.log(`[DEBUG possibleSet] No guilty ${type} found, returning ${notCleared.length} candidates:`, notCleared);
     return notCleared;
   }
   hasAnyOf(triple){
@@ -1718,7 +1746,17 @@ class Player{
   pickSmartSuggestionParts(){
     const pickFrom=(type)=>{
       const pool=this.possibleSet(type);
+      
+      // CRITICAL: If pool has exactly 1 card (guilty card), use it immediately
+      if(pool.length === 1) {
+        console.log(`[DEBUG pickSmartSuggestionParts] Only one ${type} in pool (likely guilty): ${pool[0]}`);
+        return pool[0];
+      }
+      
+      // If pool is empty (shouldn't happen), fall back to full list
       const candidates=pool.length ? pool : (type==='Suspect'?SUSPECTS : type==='Weapon'?WEAPONS : ROOMS);
+      console.log(`[DEBUG pickSmartSuggestionParts] ${type} candidates:`, candidates);
+      
       let best=[],bestScore=-Infinity;
       for(const name of candidates){
         if(this.isCleared(type,name)) continue;
@@ -1729,8 +1767,8 @@ class Player{
         else if(score===bestScore){best.push(name);}
       }
       const pick = best.length ? choice(best) : choice(candidates);
-      // sometimes pick second-best to look human
-      if(Math.random()<AI_CFG.sherlock.pickSecondBestChance){
+      // sometimes pick second-best to look human (but not if we only have one option)
+      if(candidates.length > 1 && Math.random()<AI_CFG.sherlock.pickSecondBestChance){
         const alt = candidates.filter(n => n!==pick);
         if(alt.length) return choice(alt);
       }
@@ -2310,11 +2348,11 @@ class Game{
     if(!this.trial) return;
     const { acc, prev } = this.trial;
 
-    // Put pieces back where they were
-    if(prev && prev.sus) this.suspectLoc.set(acc.suspect, prev.sus);
-    if(prev && prev.wep) this.weaponLoc.set(acc.weapon,  prev.wep);
+    // Always restore if we saved anything at all (use != null to allow empty strings, 0, false, etc.)
+    if(prev && prev.sus != null) this.suspectLoc.set(acc.suspect, prev.sus);
+    if(prev && prev.wep != null) this.weaponLoc.set(acc.weapon,  prev.wep);
 
-    // Clear centre trial state
+    // Clear centre trial state (this removes room token + restores CASE FILE)
     this.trial = null;
   }
 
@@ -2384,8 +2422,8 @@ class Game{
       this.obs(`🕊 NOT GUILTY: ${pl.name} eliminated from taking turns.`);
     }
 
-    if(pl.isHuman){
-      // Human: use the existing Wrong Accusation prompt (plus the revert behaviour after OK)
+    if(pl.isHuman || this.isCoachFocus(pl)){
+      // Human (or coach focus): use the existing Wrong Accusation prompt (plus the revert behaviour after OK)
       await showInfoPrompt('Wrong Accusation',
         `<div>That accusation was <b>incorrect</b>.</div>
          <div style="margin-top:10px;">Verdict: <b>🕊 NOT GUILTY</b>.</div>
@@ -3622,6 +3660,53 @@ const game=new Game();
       `<div style="color:#fca5a5"><b>${(e&&e.message)||'Unknown error'}</b></div>
        <div style="margin-top:8px;color:var(--muted);font-size:12px;">Check the browser console for details.</div>`);
   }
+})();
+
+/* ================================================================================
+ * FULLSCREEN TOGGLE
+ * ================================================================================ */
+(function initFullscreenButton(){
+  const btn = el('fullscreenBtn');
+  if(!btn) return;
+
+  function updateIcon(){
+    const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    // ⛶ = expand (4 arrows out), ⮹ = compress (4 arrows in)
+    // Using Unicode: ⛶ for expand, ⤧ or ◰ for exit
+    btn.textContent = isFullscreen ? '◱' : '⛶';
+    btn.title = isFullscreen ? 'Exit Fullscreen (F11)' : 'Enter Fullscreen (F11)';
+    btn.setAttribute('aria-label', isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen');
+  }
+
+  function toggleFullscreen(){
+    const doc = document.documentElement;
+    const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+
+    if(isFullscreen){
+      // Exit fullscreen
+      if(document.exitFullscreen) document.exitFullscreen();
+      else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if(document.mozCancelFullScreen) document.mozCancelFullScreen();
+      else if(document.msExitFullscreen) document.msExitFullscreen();
+    }else{
+      // Enter fullscreen
+      if(doc.requestFullscreen) doc.requestFullscreen();
+      else if(doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
+      else if(doc.mozRequestFullScreen) doc.mozRequestFullScreen();
+      else if(doc.msRequestFullscreen) doc.msRequestFullscreen();
+    }
+  }
+
+  btn.onclick = toggleFullscreen;
+
+  // Update icon when fullscreen state changes
+  document.addEventListener('fullscreenchange', updateIcon);
+  document.addEventListener('webkitfullscreenchange', updateIcon);
+  document.addEventListener('mozfullscreenchange', updateIcon);
+  document.addEventListener('msfullscreenchange', updateIcon);
+
+  // Initial icon state
+  updateIcon();
 })();
 
 function resetUIForSetup() {
