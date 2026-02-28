@@ -2,7 +2,7 @@
 <html lang="en">
 <!--
 ╔════════════════════════════════════════════════════════════════════════════╗
-║                        🔍 CLUE SOLO - v2.0.4                              ║
+║                        🔍 CLUE SOLO - v4.0.0                              ║
 ║                     Human + AI Detective Board Game                        ║
 ║                   Refactored Logic - Consistent Terminology                ║
 ╚════════════════════════════════════════════════════════════════════════════╝
@@ -46,12 +46,14 @@
 -->
 <head>
 <meta charset="utf-8" />
-<meta property="og:title" content="ClueSolo - Play Clue Solo with AI">
-<meta property="og:description" content="Single-player Clue/Cluedo game with AI opponents. Perfect for learning deduction skills!">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+<meta property="og:title" content="ClueSolo - Hapless Hall">
+<meta property="og:description" content="A solo mystery of deduction at Hapless Hall.">
 <meta property="og:url" content="https://andreas-breidenthal.github.io/ClueSolo/">
 <meta property="og:type" content="website">
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>🔍 ClueSolo — Human + AI</title>
+<title>ClueSolo — Hapless Hall</title>
 
 <style>
   /* ========================================================================
@@ -65,7 +67,7 @@
     --cluedo-red:#8B2E2B;      /* Main logo red */
     --cluedo-cream:#E2D5B6;    /* Banner background cream */
     --cluedo-charcoal:#262624; /* Banner text charcoal */
-    --cluedo-green:#3F5E4A;    /* Green border accent */
+    --cluedo-forest:#3F5E4A;    /* Forest border accent */
     
     /* Main interface colors */
     --bg:#E2D5B6;          /* Cluedo banner cream as main background */
@@ -74,76 +76,73 @@
     --muted:#5a5a58;       /* Grey for dimmed text */
     --accent:var(--cluedo-red);     /* Cluedo red accent */
     --bad:#6b1f1c;         /* Deep red for errors */
-    --good:var(--cluedo-green);     /* Cluedo green for success */
+    --good:var(--cluedo-forest);     /* Cluedo forest for success */
     --warn:#d4a127;        /* Golden yellow for warnings */
     --border:var(--cluedo-red);     /* Red borders like box */
     --timber:var(--cluedo-charcoal); /* Dark charcoal for strong accents */
     --gold:#d4a127;        /* Gold highlight */
     --cream:var(--cluedo-cream);    /* Cluedo cream */
 
-    /* Suspect colors - each suspect has their own color */
-    --sus-green:#55AA33;--sus-mustard:#CCAA44;--sus-peacock:#66BBEE;--sus-plum:#AA66AA;--sus-scarlet:#FF0000;--sus-white:#ffffff;
-    /* Weapon colors - each weapon has its own color */
-    --wep-candle:#eebb11;--wep-dagger:#DD2E2E;--wep-lead:#ccccee;--wep-revolver:#e0e0e0;--wep-rope:#BBAA88;--wep-wrench:#9999aa;
+    /* Guest colors - each guest has their own color */
+    --gst-forest:#2D6A2D;--gst-saffron:#C8A000;--gst-sapphire:#1A7FD4;--gst-lavender:#9966CC;--gst-rouge:#EE0000;--gst-weisse:#f0f0f0;
+    /* Treasure colors - each treasure has its own color */
+    --tsr-portrait:#90C878;--tsr-ornaments:#E87820;--tsr-documents:#E8D9B0;--tsr-coins:#FFD700;--tsr-necklace:#F0EDE8;--tsr-watch:#A8A8B0;
   }
   body{
     margin:0;
-    font-family:'Palatino Linotype',Palatino,Georgia,serif;
-    background: 
-      repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 10px,
-        rgba(139,46,43,0.02) 10px,
-        rgba(139,46,43,0.02) 20px
-      ),
-      linear-gradient(135deg, #E2D5B6 0%, #d4c5a0 100%);
+    font-family:'EB Garamond',Georgia,serif;
+    background: linear-gradient(135deg, #ede3ca 0%, #e0d2b0 100%);
     color:var(--text);
   }
   header{
-    padding:14px 18px;
+    padding:14px 24px;
     display:flex;
-    align-items:baseline;
-    gap:12px;
-    border-bottom:3px solid var(--cluedo-green);
-    background:var(--cluedo-red);
-    color:#fff;
-    box-shadow:0 4px 8px rgba(0,0,0,0.3);
+    align-items:center;
+    gap:16px;
+    border-bottom:2px solid #c9973a;
+    background:#0d0a07;
+    color:#f5edd6;
+    box-shadow:0 4px 16px rgba(0,0,0,0.5);
   }
-  /* Remove curved banner */
-  header::after {
-    display:none;
-  }
+  header::after { display:none; }
   header h1{
     margin:0;
-    font-size:20px;
+    font-size:22px;
     font-weight:700;
-    font-family:Broadway,'Impact','Arial Black',sans-serif;
-    letter-spacing:0.1em;
-    text-shadow:2px 2px 4px rgba(0,0,0,0.5);
-    color:#fff;
+    font-family:'Cinzel Decorative','Cinzel',serif;
+    letter-spacing:0.08em;
+    color:#c9973a;
+    text-shadow:0 0 20px rgba(201,151,58,0.4);
   }
   header .sub{
     display:flex;
     gap:8px;
     align-items:center;
-    color:var(--cluedo-cream);
+    color:#9a8a6a;
     font-size:11px;
+    font-family:'Cinzel',serif;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
   }
   header .fullscreen-btn{
     margin-left:auto;
     padding:6px 10px;
-    background:rgba(255,255,255,0.15);
-    border:1px solid rgba(255,255,255,0.3);
-    border-radius:4px;
-    color:#fff;
+    background:transparent;
+    border:1px solid rgba(201,151,58,0.4);
+    border-radius:2px;
+    color:#c9973a;
     font-size:18px;
     cursor:pointer;
-    transition:background 0.2s ease;
+    transition:background 0.2s ease, border-color 0.2s ease;
     line-height:1;
+    font-family:inherit;
+    text-transform:none;
+    letter-spacing:0;
+    font-weight:normal;
   }
   header .fullscreen-btn:hover{
-    background:rgba(255,255,255,0.25);
+    background:rgba(201,151,58,0.1);
+    border-color:rgba(201,151,58,0.7);
   }
   /* Hide fullscreen button on small screens (below 1200px) */
   @media (max-width: 1199px) {
@@ -154,50 +153,49 @@
   .layout{display:grid;grid-template-columns:360px 1fr 420px;gap:8px;padding:8px;align-items:start}
   .panel{
     background:var(--panel);
-    border:3px solid var(--cluedo-red);
-    border-radius:8px;
+    border:1px solid rgba(201,151,58,0.35);
+    border-radius:4px;
     overflow:hidden;
-    box-shadow:0 6px 20px rgba(139,46,43,0.3);
+    box-shadow:0 4px 16px rgba(13,10,7,0.12);
     position: relative;
   }
-  /* Remove decorative corner accents */
-  .panel::before {
-    display: none;
-  }
+  .panel::before { display: none; }
   .panel h2{
     margin:0;
-    padding:8px 10px;
-    font-size:12px;
-    letter-spacing:.12em;
+    padding:8px 12px;
+    font-size:10px;
+    letter-spacing:.28em;
     text-transform:uppercase;
-    background:var(--cluedo-cream);
-    border-bottom:2px solid var(--cluedo-red);
-    color:var(--cluedo-text);
-    font-weight:900;
-    text-shadow:none;
-    font-family:'Algerian','Copperplate','Arial Black',sans-serif;
+    background:#0d0a07;
+    border-bottom:1px solid rgba(201,151,58,0.35);
+    color:#c9973a;
+    font-weight:600;
+    font-family:'Cinzel',serif;
     position: relative;
   }
-  /* Remove decorative underline */
-  .panel h2::after {
-    display: none;
-  }
+  .panel h2::after { display: none; }
   .panel .content{padding:8px}
   .leftStack{display:grid;gap:8px;grid-template-rows:auto auto 1fr}
   .rightStack{display:grid;gap:8px;grid-template-rows:auto auto 1fr}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .row.between{justify-content:space-between}
-  .pill{font-size:12px;padding:4px 8px;border-radius:4px;border:1px solid var(--timber);background:#fff8e7;color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.2)}
+  .pill{font-size:12px;padding:4px 8px;border-radius:2px;border:1px solid rgba(201,151,58,0.4);background:#faf6ec;color:var(--text);box-shadow:none}
   .pill.good{color:var(--good);border-color:var(--good);background:#e8f5e9}
   .pill.bad{color:var(--bad);border-color:var(--bad);background:#ffebee}
   .pill.warn{color:var(--warn);border-color:var(--warn);background:#fff8e1}
-  button{cursor:pointer;border:2px solid var(--cluedo-green);background:linear-gradient(180deg, var(--cluedo-red), #6b1f1c);color:#fff;padding:8px 12px;border-radius:6px;font-weight:700;font-family:inherit;box-shadow:0 2px 4px rgba(0,0,0,0.3);transition:transform .05s ease, box-shadow .2s ease;text-shadow:1px 1px 2px rgba(0,0,0,0.3)}
-  button:hover{background:linear-gradient(180deg, #a03835, #8B2E2B);box-shadow:0 4px 8px rgba(0,0,0,0.4)}button:active{transform:translateY(1px);box-shadow:0 1px 2px rgba(0,0,0,0.4)}button.secondary{background:linear-gradient(180deg, var(--cluedo-cream), #d4c5a0);color:var(--cluedo-text);border-color:var(--cluedo-text)}button.danger{background:linear-gradient(180deg, #6b1f1c, #4a1512);color:#fff}button:disabled{opacity:.55;cursor:not-allowed}
-  select{padding:8px 10px;border-radius:6px;border:2px solid var(--timber);background:#fff;color:var(--text);font-family:inherit}
+  button{cursor:pointer;border:1px solid #8B2E2B;background:#8B2E2B;color:#f5edd6;padding:8px 16px;border-radius:2px;font-weight:600;font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;box-shadow:none;transition:background 0.15s ease,border-color 0.15s ease;text-shadow:none}
+  button:hover{background:#a03835;border-color:#a03835}
+  button:active{background:#6b1f1c;border-color:#6b1f1c}
+  button.secondary{background:transparent;color:#5a4a2a;border-color:rgba(201,151,58,0.5)}
+  button.secondary:hover{background:rgba(201,151,58,0.1);border-color:rgba(201,151,58,0.8)}
+  button.danger{background:#6b1f1c;border-color:#6b1f1c;color:#f5edd6}
+  button.danger:hover{background:#8B2E2B;border-color:#8B2E2B}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  select{padding:8px 10px;border-radius:2px;border:1px solid rgba(201,151,58,0.5);background:#fff;color:var(--text);font-family:inherit}
   .board{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-rows:56px;gap:8px;padding:8px}
   .room.center{
-    background:#d9c8a8;
-    border:2px solid var(--cluedo-text);
+    background:#e8dfc8;
+    border:1px solid rgba(201,151,58,0.6);
     border-style:solid;
   }
   .room.center.convicted{border-style:solid;background:linear-gradient(180deg, rgba(45,110,63,.2), rgba(212,161,39,.1));border-color:var(--good)}
@@ -213,8 +211,8 @@
     border-color:var(--bad);
   }
   .room{
-    border:2px solid var(--timber);
-    border-radius:8px;
+    border:1px solid rgba(201,151,58,0.45);
+    border-radius:2px;
     padding:10px;
     background:
       radial-gradient(circle at 20% 30%, rgba(255,255,255,0.8) 0%, transparent 50%),
@@ -235,15 +233,15 @@
   .room .tokens{align-items:flex-start;align-content:flex-start;}
   .room .tokens .token{align-self:flex-start;}
   .room.reachable{outline:3px solid var(--accent);outline-offset:-3px;box-shadow:0 0 0 3px rgba(184,37,44,0.2)}.room.here{outline:3px solid var(--good);outline-offset:-3px;box-shadow:0 0 0 3px rgba(45,110,63,0.2)}
-  .room button{position:absolute;right:10px;top:10px;padding:6px 8px;border-radius:6px;font-size:12px}
-  .log{height:200px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.35;background:#fff8e7;border:2px solid var(--timber);border-radius:8px;padding:10px;white-space:pre-wrap;color:var(--text);box-shadow:inset 0 2px 4px rgba(61,40,23,0.1)}
+  .room button{position:absolute;right:10px;top:10px;padding:6px 8px;border-radius:2px;font-size:10px}
+  .log{height:200px;overflow:auto;font-family:'EB Garamond',Georgia,serif;font-size:12px;line-height:1.5;background:#faf6ec;border:1px solid rgba(201,151,58,0.3);border-radius:2px;padding:10px;white-space:pre-wrap;color:var(--text);box-shadow:inset 0 1px 3px rgba(13,10,7,0.06)}
 
   .probWrap{
     position:relative;
     height:10px;
-    border-radius:4px;
-    border:1px solid var(--timber);
-    background:#fff8e7;
+    border-radius:2px;
+    border:1px solid rgba(201,151,58,0.3);
+    background:#faf6ec;
     overflow:hidden;
   }
   .probBar{
@@ -458,18 +456,21 @@
 }
 
   .promptBox{
-    border:3px solid var(--timber);
-    border-radius:8px;
-    background: linear-gradient(180deg, #fefdfb 0%, #faf5ed 100%);
-    padding:14px;
-    box-shadow: 0 8px 20px rgba(45,24,16,0.3);
+    border:1px solid rgba(201,151,58,0.35);
+    border-left:3px solid #c9973a;
+    border-radius:2px;
+    background: linear-gradient(135deg, #fefdfb 0%, #faf5ed 100%);
+    padding:16px;
+    box-shadow: 0 4px 16px rgba(13,10,7,0.1);
   }
   .promptTitle{
-    font-weight:700;
-    margin-bottom:8px;
-    color:var(--timber);
-    font-size:16px;
-    letter-spacing:0.5px;
+    font-weight:600;
+    margin-bottom:10px;
+    color:#2a1f0e;
+    font-size:14px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    font-family:'Cinzel',serif;
   }
   .promptBody{margin:6px 0 10px 0}
   .promptActions{display:flex;flex-wrap:wrap;gap:8px}
@@ -481,8 +482,8 @@
   .token{
     font-size:11px;
     padding:4px 9px;
-    border-radius:6px;
-    border:2px solid var(--timber);
+    border-radius:2px;
+    border:1px solid rgba(90,60,20,0.4);
     background: linear-gradient(180deg, #fff 0%, #f5f5f5 100%);
     line-height:1.1;
     display:inline-flex;
@@ -517,8 +518,8 @@
 .token .ico {
   margin-right: 4px;
 }
-  .token.suspect.green{--token-color:var(--sus-green)}.token.suspect.mustard{--token-color:var(--sus-mustard)}.token.suspect.peacock{--token-color:var(--sus-peacock)}.token.suspect.plum{--token-color:var(--sus-plum)}.token.suspect.scarlet{--token-color:var(--sus-scarlet)}.token.suspect.white{--token-color:var(--sus-white)}
-  .token.weapon.candlestick{--token-color:var(--wep-candle)}.token.weapon.dagger{--token-color:var(--wep-dagger)}.token.weapon.lead-pipe{--token-color:var(--wep-lead)}.token.weapon.revolver{--token-color:var(--wep-revolver)}.token.weapon.rope{--token-color:var(--wep-rope)}.token.weapon.wrench{--token-color:var(--wep-wrench)}
+  .token.guest.forest{--token-color:var(--gst-forest)}.token.guest.saffron{--token-color:var(--gst-saffron)}.token.guest.sapphire{--token-color:var(--gst-sapphire)}.token.guest.lavender{--token-color:var(--gst-lavender)}.token.guest.rouge{--token-color:var(--gst-rouge)}.token.guest.weisse{--token-color:var(--gst-weisse)}
+  .token.treasure.portrait{--token-color:var(--tsr-portrait)}.token.treasure.ornaments{--token-color:var(--tsr-ornaments)}.token.treasure.documents{--token-color:var(--tsr-documents)}.token.treasure.coins{--token-color:var(--tsr-coins)}.token.treasure.necklace{--token-color:var(--tsr-necklace)}.token.treasure.watch{--token-color:var(--tsr-watch)}
 .ico{ display:inline-block; margin-right:6px; line-height:1; }
 /* --- Mobile stacked layout for Rooms --- */
 /* Mobile-only New Game button row in the right panel */
@@ -632,9 +633,440 @@
     grid-row: auto !important;
   }
 }
+
+/* ============================================================
+   GAME UI VISIBILITY
+   ============================================================ */
+#gameUI { display: none; }
+#gameUI.active { display: block; }
+
+/* ============================================================
+   TITLE PAGE STYLES
+   ============================================================ */
+:root {
+  --tp-ink:#0d0a07; --tp-gold:#c9973a; --tp-gold-dim:#8a6220; --tp-gold-glow:#e8b84b;
+  --tp-candle:#fff4c2; --tp-muted:#9a8a6a;
+}
+#titlePages { min-height:100vh; background-color:var(--tp-ink); color:#f5edd6; font-family:'EB Garamond',Georgia,serif; font-size:17px; line-height:1.8; overflow-x:hidden; position:relative; }
+#titlePages.hidden { display:none; }
+#titlePages::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; z-index:999; opacity:0.4; }
+#titlePages::after { content:''; position:fixed; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(201,151,58,0.08) 0%,transparent 60%),radial-gradient(ellipse at 50% 100%,rgba(13,10,7,0.6) 0%,transparent 70%); pointer-events:none; z-index:998; }
+.tp-page { display:none; max-width:820px; margin:0 auto; padding:60px 32px 80px; position:relative; z-index:1; }
+.tp-page.active { display:block; animation:tp-fadeIn 0.7s ease both; }
+@keyframes tp-fadeIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.tp-masthead { text-align:center; margin-bottom:56px; }
+.tp-eyebrow { font-family:'Cinzel',serif; font-size:11px; letter-spacing:0.35em; text-transform:uppercase; color:var(--tp-gold-dim); margin-bottom:16px; }
+.tp-masthead h1 { font-family:'Cinzel Decorative',serif; font-size:clamp(2.4rem,6vw,4rem); font-weight:700; color:var(--tp-gold); text-shadow:0 0 40px rgba(201,151,58,0.4),0 2px 4px rgba(0,0,0,0.8); letter-spacing:0.05em; line-height:1.1; margin-bottom:10px; }
+.tp-sub { font-family:'Cinzel',serif; font-size:13px; letter-spacing:0.2em; color:var(--tp-muted); text-transform:uppercase; }
+.tp-rule { display:flex; align-items:center; gap:16px; margin:40px 0; }
+.tp-rule::before,.tp-rule::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,transparent,var(--tp-gold-dim),transparent); }
+.tp-diamond { width:8px; height:8px; background:var(--tp-gold); transform:rotate(45deg); flex-shrink:0; box-shadow:0 0 8px rgba(201,151,58,0.6); }
+.tp-act { margin-bottom:48px; }
+.tp-act-label { font-family:'Cinzel',serif; font-size:10px; letter-spacing:0.4em; text-transform:uppercase; color:var(--tp-gold-dim); margin-bottom:6px; }
+.tp-act h2 { font-family:'Cinzel',serif; font-size:1.25rem; font-weight:600; color:var(--tp-gold); margin-bottom:18px; letter-spacing:0.05em; }
+.tp-act p { color:#d4c4a0; margin-bottom:14px; font-size:1rem; }
+.tp-act p em { color:var(--tp-candle); font-style:italic; }
+.tp-guests-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px; margin-top:20px; }
+.tp-guest-card { background:linear-gradient(160deg,#1a1408,#120e06); border:1px solid rgba(201,151,58,0.3); border-radius:6px; padding:18px 16px; position:relative; overflow:hidden; transition:border-color 0.3s,transform 0.2s; }
+.tp-guest-card::before { content:''; position:absolute; top:0;left:0;right:0; height:2px; background:linear-gradient(90deg,transparent,var(--tp-gold-dim),transparent); opacity:0; transition:opacity 0.3s; }
+.tp-guest-card:hover { border-color:rgba(201,151,58,0.5); transform:translateY(-2px); }
+.tp-guest-card:hover::before { opacity:1; }
+.tp-guest-icon { font-size:1.6rem; margin-bottom:8px; display:block; }
+.tp-guest-name { font-family:'Cinzel',serif; font-size:0.85rem; font-weight:600; color:var(--tp-gold); margin-bottom:6px; letter-spacing:0.05em; }
+.tp-guest-desc { font-size:0.85rem; color:var(--tp-muted); line-height:1.6; font-style:italic; }
+.tp-items-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; margin-top:20px; }
+.tp-item-card { background:#120e06; border:1px solid rgba(201,151,58,0.3); border-radius:6px; padding:14px; transition:border-color 0.3s; }
+.tp-item-card:hover { border-color:rgba(201,151,58,0.4); }
+.tp-item-icon { font-size:1.4rem; margin-bottom:6px; display:block; }
+.tp-item-name { font-family:'Cinzel',serif; font-size:0.8rem; color:var(--tp-gold); margin-bottom:5px; }
+.tp-item-desc { font-size:0.82rem; color:var(--tp-muted); font-style:italic; line-height:1.55; }
+.tp-rooms-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; margin-top:20px; }
+.tp-room-card { background:#120e06; border:1px solid rgba(201,151,58,0.3); border-left:2px solid var(--tp-gold-dim); border-radius:4px; padding:14px; transition:border-left-color 0.3s; }
+.tp-room-card:hover { border-left-color:var(--tp-gold); }
+.tp-room-icon { font-size:1.2rem; margin-bottom:5px; display:block; }
+.tp-room-name { font-family:'Cinzel',serif; font-size:0.8rem; color:var(--tp-gold); margin-bottom:5px; }
+.tp-room-desc { font-size:0.82rem; color:var(--tp-muted); font-style:italic; line-height:1.55; }
+.tp-butler { border:1px solid rgba(201,151,58,0.3); border-left:3px solid var(--tp-gold); background:linear-gradient(135deg,#1a1408,#0f0c07); border-radius:4px; padding:24px 28px; margin:40px 0 0; position:relative; }
+.tp-butler-text { color:#d4c4a0; font-size:1rem; font-style:italic; padding-left:12px; line-height:1.8; }
+.tp-butler-attr { margin-top:10px; padding-left:12px; font-family:'Cinzel',serif; font-size:0.75rem; color:var(--tp-gold-dim); letter-spacing:0.1em; }
+.tp-char-section { margin-top:48px; }
+.tp-char-label { font-family:'Cinzel',serif; font-size:0.85rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--tp-gold); margin-bottom:20px; display:block; }
+.tp-char-buttons { display:flex; flex-wrap:wrap; gap:12px; }
+.tp-char-btn { font-family:'Cinzel',serif; font-size:0.82rem; letter-spacing:0.06em; color:#c8b88a; background:#120e06; border:1px solid rgba(201,151,58,0.3); border-radius:5px; padding:12px 18px; cursor:pointer; transition:all 0.2s ease; display:flex; align-items:center; gap:8px; white-space:nowrap; }
+.tp-char-btn:hover { border-color:var(--tp-gold); color:var(--tp-candle); background:#1a1408; box-shadow:0 0 16px rgba(201,151,58,0.15); transform:translateY(-2px); }
+.tp-char-btn:active { transform:translateY(0); }
+.tp-p2-head { text-align:center; margin-bottom:48px; }
+.tp-p2-char { font-family:'Cinzel',serif; font-size:1rem; color:var(--tp-gold); margin-bottom:6px; letter-spacing:0.1em; }
+.tp-p2-head h2 { font-family:'Cinzel Decorative',serif; font-size:clamp(1.6rem,4vw,2.4rem); color:var(--tp-gold); text-shadow:0 0 30px rgba(201,151,58,0.3); margin-bottom:8px; }
+.tp-p2-head p { color:var(--tp-muted); font-style:italic; font-size:0.95rem; }
+.tp-options-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:28px; margin-top:32px; }
+@media(max-width:640px){ .tp-options-grid{grid-template-columns:1fr;} }
+.tp-opt-col { background:#120e06; border:1px solid rgba(201,151,58,0.3); border-radius:6px; padding:22px 20px; }
+.tp-opt-title { font-family:'Cinzel',serif; font-size:0.78rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--tp-gold); padding-bottom:10px; border-bottom:1px solid rgba(201,151,58,0.3); margin-bottom:6px; }
+.tp-opt-intro { font-size:0.82rem; color:var(--tp-muted); font-style:italic; line-height:1.6; margin-bottom:16px; margin-top:10px; }
+.tp-opt-list { list-style:none; display:flex; flex-direction:column; gap:10px; }
+.tp-opt-list li label { display:flex; align-items:flex-start; gap:10px; cursor:pointer; width:100%; }
+.tp-opt-list input[type="radio"] { position:absolute; opacity:0; width:0; height:0; }
+.tp-radio { width:14px; height:14px; border-radius:50%; border:1px solid var(--tp-gold-dim); background:transparent; flex-shrink:0; margin-top:3px; position:relative; transition:border-color 0.2s; }
+.tp-radio::after { content:''; position:absolute; inset:3px; border-radius:50%; background:var(--tp-gold); opacity:0; transition:opacity 0.2s; }
+.tp-opt-list input[type="radio"]:checked + .tp-radio { border-color:var(--tp-gold); }
+.tp-opt-list input[type="radio"]:checked + .tp-radio::after { opacity:1; }
+.tp-opt-wrap { display:flex; flex-direction:column; }
+.tp-opt-name { font-family:'Cinzel',serif; font-size:0.82rem; color:#c8b88a; transition:color 0.2s; letter-spacing:0.04em; }
+.tp-opt-desc { font-size:0.78rem; color:var(--tp-muted); font-style:italic; line-height:1.5; margin-top:2px; }
+.tp-opt-list li:hover .tp-opt-name { color:var(--tp-candle); }
+.tp-cta-wrap { text-align:center; margin-top:56px; }
+.tp-cta-btn { display:inline-block; font-family:'Cinzel',serif; font-size:1rem; letter-spacing:0.18em; text-transform:uppercase; color:#0d0a07; background:linear-gradient(160deg,#e8b84b 0%,#c9973a 50%,#8a6220 100%); border:none; padding:18px 52px; border-radius:3px; cursor:pointer; position:relative; overflow:hidden; box-shadow:0 0 30px rgba(201,151,58,0.25),0 4px 16px rgba(0,0,0,0.6); transition:box-shadow 0.3s,transform 0.15s; }
+.tp-cta-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(160deg,rgba(255,255,255,0.2) 0%,transparent 60%); pointer-events:none; }
+.tp-cta-btn:hover { box-shadow:0 0 50px rgba(201,151,58,0.45),0 6px 24px rgba(0,0,0,0.7); transform:translateY(-2px); }
+.tp-cta-btn:active { transform:translateY(0); }
+.tp-cta-note { margin-top:14px; font-size:0.8rem; color:var(--tp-muted); font-style:italic; }
+.tp-foot { text-align:center; margin-top:60px; font-size:0.75rem; color:#4a3e28; letter-spacing:0.1em; font-family:'Cinzel',serif; }
+
+/* ============================================================
+   ACCUSATION OVERLAY
+   ============================================================ */
+.acc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  transition: background 0.8s ease, opacity 0.4s ease;
+  /* Default: ACCUSED state — dark and tense */
+  background: radial-gradient(ellipse at 50% 30%, #1a1206 0%, #0d0a07 100%);
+}
+.acc-overlay.hidden { display: none; }
+.acc-overlay.state-notguilty {
+  background: radial-gradient(ellipse at 50% 30%, #0e1520 0%, #080c14 100%);
+}
+.acc-overlay.state-convicted {
+  background: radial-gradient(ellipse at 50% 20%, #1e1506 0%, #0d0a07 100%);
+}
+
+.acc-inner {
+  max-width: 620px;
+  width: 100%;
+  text-align: center;
+  color: #f5edd6;
+  font-family: 'EB Garamond', Georgia, serif;
+  animation: acc-rise 0.6s ease both;
+}
+@keyframes acc-rise {
+  from { opacity:0; transform:translateY(24px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.acc-eyebrow {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: #8a6220;
+  margin-bottom: 20px;
+  transition: color 0.8s ease;
+}
+.state-notguilty .acc-eyebrow { color: #4a6080; }
+.state-convicted .acc-eyebrow { color: #c9973a; }
+
+.acc-rule {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 auto 32px;
+  max-width: 320px;
+}
+.acc-rule::before,.acc-rule::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  transition: background 0.8s ease;
+  background: linear-gradient(90deg, transparent, #4a3010, transparent);
+}
+.state-notguilty .acc-rule::before,
+.state-notguilty .acc-rule::after {
+  background: linear-gradient(90deg, transparent, #2a3a50, transparent);
+}
+.state-convicted .acc-rule::before,
+.state-convicted .acc-rule::after {
+  background: linear-gradient(90deg, transparent, #c9973a, transparent);
+}
+.acc-diamond {
+  width: 8px;
+  height: 8px;
+  transform: rotate(45deg);
+  flex-shrink: 0;
+  transition: background 0.8s ease, box-shadow 0.8s ease;
+  background: #8a6220;
+  box-shadow: 0 0 6px rgba(138,98,32,0.5);
+}
+.state-notguilty .acc-diamond { background: #2a3a50; box-shadow: 0 0 6px rgba(42,58,80,0.5); }
+.state-convicted .acc-diamond { background: #c9973a; box-shadow: 0 0 12px rgba(201,151,58,0.8); }
+
+.acc-headline {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  font-weight: 700;
+  margin-bottom: 28px;
+  line-height: 1.1;
+  transition: color 0.8s ease, text-shadow 0.8s ease;
+  color: #c9973a;
+  text-shadow: 0 0 40px rgba(201,151,58,0.3);
+}
+.state-notguilty .acc-headline {
+  color: #7090b0;
+  text-shadow: 0 0 30px rgba(112,144,176,0.3);
+}
+.state-convicted .acc-headline {
+  color: #e8b84b;
+  text-shadow: 0 0 60px rgba(232,184,75,0.5), 0 2px 4px rgba(0,0,0,0.8);
+}
+
+/* The three accusation cards */
+.acc-cards {
+  margin: 0 auto 28px;
+  max-width: 480px;
+}
+.acc-declaration {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+  font-style: italic;
+  color: #d4c4a0;
+  line-height: 1.9;
+  border-left: 3px solid rgba(201,151,58,0.4);
+  padding: 16px 24px;
+  background: rgba(255,255,255,0.03);
+  text-align: left;
+}
+.state-convicted .acc-declaration {
+  border-left-color: #c9973a;
+  color: #e8dfc0;
+}
+.state-notguilty .acc-declaration {
+  border-left-color: #2a3a50;
+  color: #8090a8;
+}
+.acc-declaration em {
+  font-style: normal;
+  color: #f5edd6;
+  font-weight: 500;
+}
+.state-convicted .acc-declaration em { color: #e8b84b; }
+.state-notguilty .acc-declaration em { color: #7090b0; }
+
+/* Verdict banner */
+.acc-verdict {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1rem, 3vw, 1.5rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  min-height: 2rem;
+  transition: color 0.8s ease;
+}
+.state-notguilty .acc-verdict { color: #7090b0; }
+.state-convicted .acc-verdict { color: #e8b84b; }
+
+.acc-body {
+  font-size: 1rem;
+  color: #9a8a6a;
+  font-style: italic;
+  line-height: 1.8;
+  margin-bottom: 36px;
+  min-height: 1.8rem;
+  transition: color 0.8s ease;
+}
+.state-notguilty .acc-body { color: #4a6080; }
+.state-convicted .acc-body { color: #c8b88a; }
+
+.acc-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+/* Overlay buttons — override game button style */
+.acc-btn {
+  font-family: 'Cinzel', serif !important;
+  font-size: 11px !important;
+  letter-spacing: 0.2em !important;
+  text-transform: uppercase !important;
+  padding: 14px 36px !important;
+  border-radius: 2px !important;
+  cursor: pointer;
+  transition: all 0.2s ease !important;
+  border: 1px solid rgba(201,151,58,0.5) !important;
+  background: transparent !important;
+  color: #c9973a !important;
+}
+.acc-btn:hover {
+  background: rgba(201,151,58,0.1) !important;
+  border-color: #c9973a !important;
+  color: #e8b84b !important;
+}
+.acc-btn.acc-btn-primary {
+  background: linear-gradient(160deg, #e8b84b 0%, #c9973a 50%, #8a6220 100%) !important;
+  color: #0d0a07 !important;
+  border-color: transparent !important;
+  box-shadow: 0 0 30px rgba(201,151,58,0.25) !important;
+}
+.acc-btn.acc-btn-primary:hover {
+  box-shadow: 0 0 50px rgba(201,151,58,0.45) !important;
+  transform: translateY(-2px);
+}
 </style>
 </head>
 <body>
+<div id="titlePages">
+
+  <!-- PAGE 1: THE STORY -->
+  <div class="tp-page active" id="tpPage1">
+    <div class="tp-masthead">
+      <div class="tp-eyebrow">A Solo Mystery of Deduction</div>
+      <h1>ClueSolo</h1>
+      <div class="tp-sub">Hapless Hall &nbsp;&middot;&nbsp; An Evening Gone Terribly Wrong</div>
+    </div>
+
+    <div class="tp-rule"><div class="tp-diamond"></div></div>
+
+    <div class="tp-act">
+      <div class="tp-act-label">Act the First</div>
+      <h2>An Evening at Hapless Hall</h2>
+      <p>It was Sir Henry Hapless, 13th Duke of Misfortune, who had the singular idea of hosting a dinner party. His friends had advised strongly against it. The Hapless family name had not accumulated thirteen generations of ill fortune by accident. And yet Sir Henry persisted, as Hapless men always do: with magnificent optimism and catastrophic results.</p>
+      <p>The evening began promisingly enough. Cook had outdone herself. The silver gleamed. The six guests arrived in fine spirits and finer clothes. By the time the port was poured, however, something had gone <em>terribly, irreversibly wrong.</em></p>
+      <p>Somewhere between the fish course and the retiring to the drawing room, one of Sir Henry's most cherished possessions had vanished from the Hall entirely. Several other items were discovered displaced, found in rooms where they had no business being.</p>
+      <p>Sir Henry, to the surprise of no one, had not noticed until it was far too late. <em>It never does to be the 13th of anything.</em></p>
+    </div>
+
+    <div class="tp-rule"><div class="tp-diamond"></div></div>
+
+    <div class="tp-act">
+      <div class="tp-act-label">Act the Second</div>
+      <h2>The Guests of Hapless Hall</h2>
+      <p>Six guests sat at Sir Henry's table that evening. Each arrived with impeccable manners and, it would seem, rather more impeccable motives.</p>
+      <div class="tp-guests-grid">
+        <div class="tp-guest-card"><span class="tp-guest-icon">🎩</span><div class="tp-guest-name">Mr Forest</div><div class="tp-guest-desc">A gentleman of the old school. His finances are considerably less well maintained than his charm.</div></div>
+        <div class="tp-guest-card"><span class="tp-guest-icon">🎖️</span><div class="tp-guest-name">Maj. Saffron</div><div class="tp-guest-desc">Retired military, distinction largely self-assessed. He has always admired Sir Henry's collection rather too openly.</div></div>
+        <div class="tp-guest-card"><span class="tp-guest-icon">💼</span><div class="tp-guest-name">Dr Lavender</div><div class="tp-guest-desc">A scholar of antiquities, quiet and precise. His gaze catalogues everything in a room before he has even removed his coat.</div></div>
+        <div class="tp-guest-card"><span class="tp-guest-icon">💎</span><div class="tp-guest-name">Lady Sapphire</div><div class="tp-guest-desc">Aristocratic, immaculate, possessed of a smile that has never once reached her eyes.</div></div>
+        <div class="tp-guest-card"><span class="tp-guest-icon">👒</span><div class="tp-guest-name">Madame Rouge</div><div class="tp-guest-desc">Continental, dramatic, entirely impossible to read. Charming in four languages and evasive in all of them.</div></div>
+        <div class="tp-guest-card"><span class="tp-guest-icon">👜</span><div class="tp-guest-name">Mrs Weisse</div><div class="tp-guest-desc">The very picture of respectable widowhood. She sees considerably more than she lets on.</div></div>
+      </div>
+    </div>
+
+    <div class="tp-rule"><div class="tp-diamond"></div></div>
+
+    <div class="tp-act">
+      <div class="tp-act-label">Act the Third</div>
+      <h2>The Treasures of the Hall</h2>
+      <p>One treasure is now missing entirely. Five others were discovered displaced. <em>One cannot be found at all.</em></p>
+      <div class="tp-items-grid">
+        <div class="tp-item-card"><span class="tp-item-icon">🖼️</span><div class="tp-item-name">The Portrait</div><div class="tp-item-desc">A small oil painting of the 3rd Duchess. Last seen above the mantelpiece. It is not there now.</div></div>
+        <div class="tp-item-card"><span class="tp-item-icon">⚔️</span><div class="tp-item-name">The Ornamental Weapons</div><div class="tp-item-desc">A matched pair of ceremonial swords. One has been recovered. The other remains at large.</div></div>
+        <div class="tp-item-card"><span class="tp-item-icon">📜</span><div class="tp-item-name">The Ancient Documents</div><div class="tp-item-desc">Manuscripts in Latin and older tongues. The portfolio was found. The documents inside were not.</div></div>
+        <div class="tp-item-card"><span class="tp-item-icon">🪙</span><div class="tp-item-name">The Rare Coins</div><div class="tp-item-desc">A velvet-lined case of Roman aurei. The case was recovered. Its contents are another matter.</div></div>
+        <div class="tp-item-card"><span class="tp-item-icon">📿</span><div class="tp-item-name">The Necklace</div><div class="tp-item-desc">Three strands of matched pearls. Missing from its case in Sir Henry's study.</div></div>
+        <div class="tp-item-card"><span class="tp-item-icon">⏱️</span><div class="tp-item-name">The Pocket Watch</div><div class="tp-item-desc">A silver hunter-case timepiece engraved with the Hapless family crest. The chain was found. The watch was not.</div></div>
+      </div>
+    </div>
+
+    <div class="tp-rule"><div class="tp-diamond"></div></div>
+
+    <div class="tp-act">
+      <div class="tp-act-label">Act the Fourth</div>
+      <h2>The Rooms Under Suspicion</h2>
+      <p>Every room in Hapless Hall has something to answer for this evening.</p>
+      <div class="tp-rooms-grid">
+        <div class="tp-room-card"><span class="tp-room-icon">📝</span><div class="tp-room-name">The Study</div><div class="tp-room-desc">The desk drawers were found open.</div></div>
+        <div class="tp-room-card"><span class="tp-room-icon">🧥</span><div class="tp-room-name">The Hall</div><div class="tp-room-desc">The first room entered, the last room left.</div></div>
+        <div class="tp-room-card"><span class="tp-room-icon">🛋️</span><div class="tp-room-name">The Lounge</div><div class="tp-room-desc">A cushion displaced. A glass, overturned.</div></div>
+        <div class="tp-room-card"><span class="tp-room-icon">📖</span><div class="tp-room-name">The Library</div><div class="tp-room-desc">The hidden compartment behind Debrett's was found ajar.</div></div>
+        <div class="tp-room-card"><span class="tp-room-icon">🎱</span><div class="tp-room-name">The Billiard Room</div><div class="tp-room-desc">Chalk dust on a cuff. Footprints on the baize.</div></div>
+        <div class="tp-room-card"><span class="tp-room-icon">🍽️</span><div class="tp-room-name">The Dining Room</div><div class="tp-room-desc">Someone had returned here after dinner.</div></div>
+        <div class="tp-room-card"><span class="tp-room-icon">🪴</span><div class="tp-room-name">The Conservatory</div><div class="tp-room-desc">Ideal for a private conversation, or a private transaction.</div></div>
+        <div class="tp-room-card"><span class="tp-room-icon">💃</span><div class="tp-room-name">The Ballroom</div><div class="tp-room-desc">The dust cover on the piano had been disturbed.</div></div>
+        <div class="tp-room-card"><span class="tp-room-icon">🥩</span><div class="tp-room-name">The Kitchen</div><div class="tp-room-desc">The scullery door was found unlocked. Cook swears she saw nothing.</div></div>
+      </div>
+    </div>
+
+    <div class="tp-rule"><div class="tp-diamond"></div></div>
+
+    <div class="tp-act">
+      <div class="tp-butler">
+        <p class="tp-butler-text">Ladies and gentlemen, I have been instructed to inform you that the doors of Hapless Hall have been secured for the evening. Nobody is to leave the premises until this matter is resolved. Sir Henry asks only that you endeavour not to make things any worse than they already are.</p>
+        <div class="tp-butler-attr">&mdash; Grimshaw, Butler to Sir Henry Hapless, 13th Duke of Misfortune</div>
+      </div>
+    </div>
+
+    <div class="tp-char-section">
+      <span class="tp-char-label">Select your character to enter the Hall:</span>
+      <div class="tp-char-buttons">
+        <button class="tp-char-btn" onclick="tpSelectCharacter('Forest','Mr Forest','🎩')">🎩 Mr Forest</button>
+        <button class="tp-char-btn" onclick="tpSelectCharacter('Saffron','Maj. Saffron','🎖️')">🎖️ Maj. Saffron</button>
+        <button class="tp-char-btn" onclick="tpSelectCharacter('Lavender','Dr Lavender','💼')">💼 Dr Lavender</button>
+        <button class="tp-char-btn" onclick="tpSelectCharacter('Sapphire','Lady Sapphire','💎')">💎 Lady Sapphire</button>
+        <button class="tp-char-btn" onclick="tpSelectCharacter('Rouge','Madame Rouge','👒')">👒 Madame Rouge</button>
+        <button class="tp-char-btn" onclick="tpSelectCharacter('Weisse','Mrs Weisse','👜')">👜 Mrs Weisse</button>
+      </div>
+    </div>
+
+    <div class="tp-foot">ClueSolo &nbsp;&middot;&nbsp; Hapless Hall</div>
+  </div><!-- /#tpPage1 -->
+
+  <!-- PAGE 2: OPTIONS -->
+  <div class="tp-page" id="tpPage2">
+    <div class="tp-p2-head">
+      <div class="tp-p2-char" id="tpCharDisplay">&mdash;</div>
+      <h2>Terms of the Investigation</h2>
+      <p>Before you proceed, settle the conditions under which this matter will be investigated.</p>
+    </div>
+
+    <div class="tp-rule"><div class="tp-diamond"></div></div>
+
+    <div class="tp-options-grid">
+      <div class="tp-opt-col">
+        <div class="tp-opt-title">Difficulty</div>
+        <p class="tp-opt-intro">How shrewdly will your fellow guests pursue the truth?</p>
+        <ul class="tp-opt-list">
+          <li><label><input type="radio" name="tpDiff" value="basic" checked><span class="tp-radio"></span><span class="tp-opt-wrap"><span class="tp-opt-name">Beginner</span><span class="tp-opt-desc">Guests make naive deductions. Recommended for new investigators.</span></span></label></li>
+          <li><label><input type="radio" name="tpDiff" value="smart"><span class="tp-radio"></span><span class="tp-opt-wrap"><span class="tp-opt-name">Smart</span><span class="tp-opt-desc">Guests reason carefully and will press their advantage.</span></span></label></li>
+          <li><label><input type="radio" name="tpDiff" value="sherlock"><span class="tp-radio"></span><span class="tp-opt-wrap"><span class="tp-opt-name">Sherlock</span><span class="tp-opt-desc">Rigorous logical deduction. Only for the genuinely gifted.</span></span></label></li>
+        </ul>
+      </div>
+      <div class="tp-opt-col">
+        <div class="tp-opt-title">Opponents</div>
+        <p class="tp-opt-intro">How many fellow guests will be investigating alongside you?</p>
+        <ul class="tp-opt-list">
+          <li><label><input type="radio" name="tpOpp" value="2" checked><span class="tp-radio"></span><span class="tp-opt-wrap"><span class="tp-opt-name">2 opponents</span><span class="tp-opt-desc">Three investigators. More breathing room.</span></span></label></li>
+          <li><label><input type="radio" name="tpOpp" value="3"><span class="tp-radio"></span><span class="tp-opt-wrap"><span class="tp-opt-name">3 opponents</span><span class="tp-opt-desc">Four investigators. The pace quickens.</span></span></label></li>
+          <li><label><input type="radio" name="tpOpp" value="4"><span class="tp-radio"></span><span class="tp-opt-wrap"><span class="tp-opt-name">4 opponents</span><span class="tp-opt-desc">Five investigators. Deductions fly.</span></span></label></li>
+          <li><label><input type="radio" name="tpOpp" value="5"><span class="tp-radio"></span><span class="tp-opt-wrap"><span class="tp-opt-name">5 opponents</span><span class="tp-opt-desc">The full complement. Very little margin for error.</span></span></label></li>
+        </ul>
+      </div>
+      <div class="tp-opt-col">
+        <div class="tp-opt-title">Mode</div>
+        <p class="tp-opt-intro">Will you investigate alone, or with quiet counsel?</p>
+        <ul class="tp-opt-list">
+          <li><label><input type="radio" name="tpMode" value="normal" checked><span class="tp-radio"></span><span class="tp-opt-wrap"><span class="tp-opt-name">Normal</span><span class="tp-opt-desc">Every deduction and accusation is yours alone.</span></span></label></li>
+          <li><label><input type="radio" name="tpMode" value="coach"><span class="tp-radio"></span><span class="tp-opt-wrap"><span class="tp-opt-name">Coach</span><span class="tp-opt-desc">A silent adviser offers guidance without giving the game away.</span></span></label></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tp-cta-wrap">
+      <button class="tp-cta-btn" onclick="tpBeginInvestigation()">Begin the Investigation</button>
+      <div class="tp-cta-note">The truth is somewhere within these walls.</div>
+    </div>
+
+    <div class="tp-foot">ClueSolo &nbsp;&middot;&nbsp; Hapless Hall</div>
+  </div><!-- /#tpPage2 -->
+
+</div><!-- /#titlePages -->
+
+<!-- GAME UI -->
+<div id="gameUI">
 <header>
   <h1>🔍 ClueSolo</h1>
   <div class="sub">The Classic Detective Game ... alone!</div>
@@ -649,7 +1081,7 @@
           <span class="pill" id="turnPill">Turn: —</span>
           <span class="pill" id="locPill">Location: —</span>
         </div>
-        <button id="btnNewGame" class="secondary">New Game</button>
+        <button id="btnNewGame" class="secondary" style="font-size:10px;padding:6px 12px;">New Game</button>
       </div>
       <div class="panel">
         <h2>Your Cards</h2>
@@ -696,6 +1128,22 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════
+     ACCUSATION OVERLAY
+══════════════════════════════════════════════ -->
+<div id="accusationOverlay" class="acc-overlay hidden" aria-modal="true" role="dialog">
+  <div class="acc-inner">
+    <div class="acc-eyebrow" id="accEyebrow">An Accusation Has Been Made</div>
+    <div class="acc-rule"><div class="acc-diamond"></div></div>
+    <div class="acc-headline" id="accHeadline"></div>
+    <div class="acc-cards" id="accCards"></div>
+    <div class="acc-verdict" id="accVerdict"></div>
+    <div class="acc-body" id="accBody"></div>
+    <div class="acc-actions" id="accActions"></div>
+  </div>
+</div>
+</div><!-- /#gameUI -->
+
 <script>
 /* ================================================================================
  * 🔍 CLUE SOLO - HUMAN + AI BOARD GAME
@@ -716,7 +1164,7 @@
  *   • Sleep/delay functions
  * 
  * [SECTION 2] GAME CONSTANTS ....................... Line ~330
- *   • Suspects, Weapons, Rooms lists
+ *   • Guests, Treasures, Rooms lists
  *   • Board layout definitions
  *   • Room connections and positions
  * 
@@ -773,7 +1221,7 @@
  * QUICK TIPS FOR NON-CODERS:
  * ────────────────────────────────────────────────────────────────────────────────
  * 
- * 🔧 TO MODIFY GAME DIFFICULTY:
+ * ⏱️ TO MODIFY GAME DIFFICULTY:
  *    Search for "[SECTION 5]" → Find "AI LOGIC" section
  * 
  * 🎨 TO CHANGE COLORS:
@@ -945,19 +1393,103 @@ function applyHandSizeConstraints(observer, players){
 const clampInt=(n,min,max,def)=>{const x=Number.parseInt(n,10); if(Number.isNaN(x)) return def; return Math.max(min,Math.min(max,x));};
 const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 
+
+/* ============================================================
+   ACCUSATION OVERLAY CONTROLLER
+   ============================================================ */
+
+function accOverlay() { return document.getElementById('accusationOverlay'); }
+
+function showAccusationOverlay({ accuser, guest, treasure, room, onReveal }) {
+  const ov = accOverlay();
+  ov.className = 'acc-overlay state-accused';
+
+  document.getElementById('accEyebrow').textContent  = 'An Accusation Has Been Made';
+  document.getElementById('accHeadline').textContent = accuser + ' has lodged an accusation.';
+  document.getElementById('accVerdict').textContent  = '';
+  document.getElementById('accBody').textContent     = '';
+
+  document.getElementById('accCards').innerHTML = `
+    <div class="acc-declaration">
+      &ldquo;I solemnly declare that the crime was committed by
+      <em>${displayGuest(guest)}</em>, who stole
+      <em>${treasure}</em> and concealed it in the
+      <em>${room}</em>.&rdquo;
+    </div>`;
+
+  const btn = document.createElement('button');
+  btn.className = 'acc-btn acc-btn-primary';
+  btn.textContent = 'Reveal the Verdict';
+  btn.onclick = () => { btn.remove(); onReveal(); };
+  const actions = document.getElementById('accActions');
+  actions.innerHTML = '';
+  actions.appendChild(btn);
+
+  ov.classList.remove('hidden');
+}
+
+function transitionOverlayNotGuilty({ accuser, onDismiss }) {
+  const ov = accOverlay();
+  ov.className = 'acc-overlay state-notguilty';
+
+  document.getElementById('accEyebrow').textContent  = 'The Verdict Is In';
+  document.getElementById('accHeadline').textContent = 'Not Guilty';
+  document.getElementById('accVerdict').textContent  = '';
+  document.getElementById('accBody').textContent     =
+    accuser + ' has been eliminated from the investigation, but may still be called upon to refute a theory.';
+
+  const btn = document.createElement('button');
+  btn.className = 'acc-btn';
+  btn.textContent = 'Return to the Investigation';
+  btn.onclick = () => { hideAccusationOverlay(); onDismiss(); };
+  const actions = document.getElementById('accActions');
+  actions.innerHTML = '';
+  actions.appendChild(btn);
+}
+
+function transitionOverlayConvicted({ winner, guest, treasure, room, onRestart }) {
+  const ov = accOverlay();
+  ov.className = 'acc-overlay state-convicted';
+
+  document.getElementById('accEyebrow').textContent  = 'The Mystery Is Solved';
+  document.getElementById('accHeadline').textContent = winner + ' Wins';
+  document.getElementById('accVerdict').textContent  = 'Convicted';
+  document.getElementById('accBody').textContent     =
+    displayGuest(guest) + ' concealed ' + treasure + ' in the ' + room + '.';
+
+  document.getElementById('accCards').innerHTML = `
+    <div class="acc-declaration">
+      <em>${displayGuest(guest)}</em> stole
+      <em>${treasure}</em> and concealed it in the
+      <em>${room}</em>.
+    </div>`;
+
+  const btn = document.createElement('button');
+  btn.className = 'acc-btn acc-btn-primary';
+  btn.textContent = 'Return to Hapless Hall';
+  btn.onclick = onRestart;
+  const actions = document.getElementById('accActions');
+  actions.innerHTML = '';
+  actions.appendChild(btn);
+}
+
+function hideAccusationOverlay() {
+  accOverlay().classList.add('hidden');
+}
+
 /* Data */
 /* ================================================================================
  * [SECTION 2] GAME CONSTANTS
  * ================================================================================ */
 
-const SUSPECTS=["Green","Mustard","Peacock","Plum","Scarlet","White"];
-const SUSPECT_TITLES={Green:"Rev. Green",Mustard:"Col. Mustard",Peacock:"Mrs Peacock",Plum:"Prof. Plum",Scarlet:"Miss Scarlet",White:"Mrs White"};
-const WEAPONS=["Candlestick","Dagger","Lead Pipe","Revolver","Rope","Wrench"];
+const GUESTS=["Forest","Saffron","Sapphire","Lavender","Rouge","Weisse"];
+const GUEST_TITLES={Forest:"Mr. Forest",Saffron:"Maj. Saffron",Sapphire:"Lady Sapphire",Lavender:"Dr. Lavender",Rouge:"Madame Rouge",Weisse:"Mrs. Weisse"};
+const TREASURES=["Portrait","Ornaments","Documents","Coins","Necklace","Watch"];
 const ROOMS=["Study","Hall","Lounge","Library","Billiard Room","Dining Room","Conservatory","Ballroom","Kitchen"];
 const START_ROOMS=["Study","Lounge","Kitchen","Conservatory","Billiard Room","Hall"];
 
-const displaySuspect=id=>SUSPECT_TITLES[id]||id;
-const displayCardName=(type,name)=> type==='Suspect'?displaySuspect(name):name;
+const displayGuest=id=>GUEST_TITLES[id]||id;
+const displayCardName=(type,name)=> type==='Guest'?displayGuest(name):name;
 
 // Room icons for the board and casebook
 const ROOM_ICON = {
@@ -1126,8 +1658,8 @@ async function showChoicePrompt(title, promptHTML, choices, { allowCancel = true
 async function promptPlayAgain(){
   const r=await renderPrompt({
     title:'Play Again?',
-    bodyHTML:`<div>Would you like to play again?</div><div style="margin-top:8px;color:var(--muted);font-size:12px;">Start a new game with fresh cards.</div>`,
-    actions:[{label:'New Game',value:true,className:'danger'}]
+    bodyHTML:`<div>Would you like to return to Hapless Hall?</div><div style="margin-top:8px;color:var(--muted);font-size:12px;">You will be taken back to the beginning to choose your character and settings.</div>`,
+    actions:[{label:'Return to Hapless Hall',value:true,className:'danger'},{label:'Stay Here',value:false,className:'secondary'}]
   });
   clearGameplayPrompt();
   return !!r;
@@ -1145,67 +1677,83 @@ const normDiff = (d) => (d === 'deep' ? 'smart' : d); // map old "deep" to "smar
 const isAdvancedAI = (d) => (d === 'smart' || d === 'sherlock' || d === 'deep');
 const isSherlock   = (d) => (d === 'sherlock');
 
-/* Setup prompts */
-async function promptGameSetup(){
-  const body = `
-    <div style="margin-bottom:10px;">Choose game setup:</div>
-    <div class="row" style="margin-bottom:10px;">
-      <label><b>Difficulty:</b>
-        <select id="diffSel">
-          <option value="basic" selected>🌞 Basic</option>
-          <option value="smart">🧠 Smart</option>
-          <option value="sherlock">🔍 Sherlock</option>
-        </select>
-      </label>
-    </div>
-    <div class="row" style="margin-bottom:10px;">
-      <label><b>Opponents:</b>
-        <select id="oppCountSel">
-          <option value="2" selected>2 opponents (3 players)</option>
-          <option value="3">3 opponents (4 players)</option>
-          <option value="4">4 opponents (5 players)</option>
-          <option value="5">5 opponents (6 players)</option>
-        </select>
-      </label>
-    </div>
-    <div class="row">
-      <label><b>Mode:</b>
-        <select id="modeSel">
-          <option value="normal" selected>Normal Play</option>
-          <option value="coach">AI Coach</option>
-        </select>
-      </label>
-    </div>
-    <div style="margin-top:10px;color:var(--muted);font-size:12px;">
-      <b>Normal:</b> You play as Player 1, AI controls the rest.<br>
-      <b>AI Coach:</b> AI suggests moves for Player 1, you make the final choice.
-    </div>
-  `;
-  await renderPrompt({ title:'New Game Setup', bodyHTML: body, actions:[{label:'Continue', value:true}] });
-  const diffRaw = document.getElementById('diffSel')?.value || 'basic';
-  const diff = normDiff(diffRaw);
-  const oppRaw = document.getElementById('oppCountSel')?.value;
-  const modeRaw = document.getElementById('modeSel')?.value || 'normal';
-  const observer = (modeRaw === 'coach');
-  
-  // Use the selected number of opponents for both normal and coach mode
-  const opp = clampInt(oppRaw, 2, 5, 2);
-  
-  clearGameplayPrompt();
-  return { opp, diff, observer };
-  
-  clearGameplayPrompt();
-  return { opp, diff, observer };
+/* ============================================================
+   TITLE PAGE CONTROLLER
+   ============================================================ */
+
+// Holds selections made on the title pages
+const tpState = { guest: null, diff: 'basic', opp: 2, observer: false };
+
+// Resolve functions — set when game is waiting for title page input
+let tpResolveSetup = null;
+let tpResolveGuest = null;
+
+function tpSelectCharacter(guestKey, displayName, emoji) {
+  tpState.guest = guestKey;
+  document.getElementById('tpCharDisplay').textContent = emoji + '  ' + displayName;
+  // Transition to page 2
+  document.getElementById('tpPage1').classList.remove('active');
+  const p2 = document.getElementById('tpPage2');
+  p2.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
-async function promptHumanSuspect(available){
-  const opts=available.map(s=>`<option value="${s}">${displaySuspect(s)}</option>`).join("");
-  const body=`<div style="margin-bottom:10px;">Pick your character:</div>
-    <div class="row"><label><b>Suspect:</b> <select id="humanSusSel">${opts}</select></label></div>
-    <div style="margin-top:10px;color:var(--muted);font-size:12px;">The remaining suspects will be assigned to AIs.</div>`;
-  await renderPrompt({title:'Choose Your Character',bodyHTML:body,actions:[{label:'Start',value:true}]});
-  const pick=document.getElementById('humanSusSel')?.value||available[0];
-  clearGameplayPrompt();return pick;
+function tpBeginInvestigation() {
+  // Read options from Page 2
+  const diffRaw = document.querySelector('input[name="tpDiff"]:checked')?.value || 'basic';
+  const oppRaw  = document.querySelector('input[name="tpOpp"]:checked')?.value  || '2';
+  const modeRaw = document.querySelector('input[name="tpMode"]:checked')?.value || 'normal';
+  tpState.diff     = normDiff(diffRaw);
+  tpState.opp      = clampInt(oppRaw, 2, 5, 2);
+  tpState.observer = (modeRaw === 'coach');
+
+  // Hide title pages, show game UI
+  document.getElementById('titlePages').classList.add('hidden');
+  document.getElementById('gameUI').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'instant' });
+
+  // Resolve the setup promise — this unblocks the game startup sequence.
+  // Guest is already stored in tpState and will be returned by promptHumanGuest.
+  if (tpResolveSetup) {
+    const resolve = tpResolveSetup;
+    tpResolveSetup = null;
+    resolve({ diff: tpState.diff, opp: tpState.opp, observer: tpState.observer });
+  }
+}
+
+function tpShowTitlePages() {
+  // Reset title pages back to page 1
+  document.getElementById('tpPage1').classList.add('active');
+  document.getElementById('tpPage2').classList.remove('active');
+  // Reset radio buttons to defaults
+  const defDiff = document.querySelector('input[name="tpDiff"][value="basic"]');
+  const defOpp  = document.querySelector('input[name="tpOpp"][value="2"]');
+  const defMode = document.querySelector('input[name="tpMode"][value="normal"]');
+  if (defDiff) defDiff.checked = true;
+  if (defOpp)  defOpp.checked  = true;
+  if (defMode) defMode.checked = true;
+  document.getElementById('tpCharDisplay').textContent = '—';
+  // Show title pages, hide game
+  document.getElementById('titlePages').classList.remove('hidden');
+  document.getElementById('gameUI').classList.remove('active');
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+/* Setup prompts — now driven by title pages */
+async function promptGameSetup(){
+  const tp = document.getElementById('titlePages');
+  if (tp && !tp.classList.contains('hidden')) {
+    // Title pages are visible — wait for Begin the Investigation
+    return new Promise(resolve => { tpResolveSetup = resolve; });
+  }
+  // Title pages already dismissed — use stored state
+  return { diff: tpState.diff, opp: tpState.opp, observer: tpState.observer };
+}
+
+async function promptHumanGuest(available){
+  // By the time this is called, tpBeginInvestigation has already run
+  // and stored the guest in tpState. Just return it.
+  return tpState.guest || available[0];
 }
 
 /* Manual Checklist: ticks + per-item text notes */
@@ -1242,8 +1790,8 @@ const AI_CFG = {
 
 // Flattened list of all cards (for belief initialization)
 const ALL_CARDS = [
-  ...SUSPECTS.map(n => ({type:'Suspect', name:n})),
-  ...WEAPONS.map(n => ({type:'Weapon', name:n})),
+  ...GUESTS.map(n => ({type:'Guest', name:n})),
+  ...TREASURES.map(n => ({type:'Treasure', name:n})),
   ...ROOMS.map(n => ({type:'Room', name:n}))
 ];
 
@@ -1259,9 +1807,9 @@ const CASE_FILE_NAME = 'Case File';
  * ================================================================================ */
 
 class Player{
-  constructor(id,isHuman=false,suspect=null){
-    this.id=id;this.isHuman=isHuman;this.suspect=suspect;
-    this.name=suspect?displaySuspect(suspect):(isHuman?'You':`AI-${id}`);
+  constructor(id,isHuman=false,guest=null){
+    this.id=id;this.isHuman=isHuman;this.guest=guest;
+    this.name=guest?displayGuest(guest):(isHuman?'You':`AI-${id}`);
     this.hand=[];this.location='Hall';this.eliminated=false;
     this.seen=new Set();this.own=new Set();
     this.knownOwners=new Map(); // cardKey -> playerId
@@ -1302,8 +1850,8 @@ class Player{
     
     // AUTO-GUILTY: Check each category after marking own cards
     // If I own all but one card in a category, the last one must be GUILTY
-    this.checkAndMarkGuiltyIfLastRemaining('Suspect');
-    this.checkAndMarkGuiltyIfLastRemaining('Weapon');
+    this.checkAndMarkGuiltyIfLastRemaining('Guest');
+    this.checkAndMarkGuiltyIfLastRemaining('Treasure');
     this.checkAndMarkGuiltyIfLastRemaining('Room');
   }
 }
@@ -1420,7 +1968,7 @@ class Player{
 
     // 🔒 LOCK THE CATEGORY:
     // All other cards in this category are NOT in the case file (they're INNOCENT as solutions)
-    const list = (type === 'Suspect') ? SUSPECTS : (type === 'Weapon') ? WEAPONS : ROOMS;
+    const list = (type === 'Guest') ? GUESTS : (type === 'Treasure') ? TREASURES : ROOMS;
 
     for (const otherName of list) {
       if (otherName === name) continue;
@@ -1463,7 +2011,7 @@ class Player{
       
       // When a card is confirmed INNOCENT, mark ✗ (not owned) for CF
       if(this.gameRef && (this.gameRef.aiDifficulty === 'smart' || this.gameRef.aiDifficulty === 'sherlock')) {
-        const categoryList = type === 'Suspect' ? SUSPECTS : (type === 'Weapon' ? WEAPONS : ROOMS);
+        const categoryList = type === 'Guest' ? GUESTS : (type === 'Treasure' ? TREASURES : ROOMS);
         categoryList.forEach(otherName => {
           if(otherName !== name) {
             const otherKey = this.cardKey(type, otherName);
@@ -1494,7 +2042,7 @@ class Player{
 
   // Check if only one card remains unmarked in a category, and mark it GUILTY
   checkAndMarkGuiltyIfLastRemaining(type) {
-    const list = (type === 'Suspect') ? SUSPECTS : (type === 'Weapon') ? WEAPONS : ROOMS;
+    const list = (type === 'Guest') ? GUESTS : (type === 'Treasure') ? TREASURES : ROOMS;
     
     // Find cards that are not INNOCENT (not marked ✓ in any player column)
     const notInnocent = [];
@@ -1542,7 +2090,7 @@ class Player{
   
   // Get the GUILTY card for a category (if any)
   getGuiltyCard(type) {
-    const list = type === 'Suspect' ? SUSPECTS : (type === 'Weapon' ? WEAPONS : ROOMS);
+    const list = type === 'Guest' ? GUESTS : (type === 'Treasure' ? TREASURES : ROOMS);
     for (const name of list) {
       if (this.isCardGuilty(type, name)) return name;
     }
@@ -1550,7 +2098,7 @@ class Player{
   }
   
   possibleSet(type){
-    const list=type==='Suspect'?SUSPECTS:type==='Weapon'?WEAPONS:ROOMS;
+    const list=type==='Guest'?GUESTS:type==='Treasure'?TREASURES:ROOMS;
     
     // In Smart/Sherlock modes: if one card in category is GUILTY (🚩 in CF), 
     // return ONLY that card (it's the solution for this category)
@@ -1761,12 +2309,12 @@ class Player{
   // Force all probabilities in a category to focus on the guilty card
   forceGuiltyProbabilities(guiltyCard){
     const { type, name } = guiltyCard;
-    const list = (type==='Suspect'?SUSPECTS : type==='Weapon'?WEAPONS : ROOMS);
+    const list = (type==='Guest'?GUESTS : type==='Treasure'?TREASURES : ROOMS);
 
     console.log(`[DEBUG forceGuiltyProbabilities] Forcing ${type} probabilities, guilty card: ${name}`);
 
-    // For suspects and weapons: 100% guilty, 0% everything else
-    if(type === 'Suspect' || type === 'Weapon'){
+    // For guests and treasures: 100% guilty, 0% everything else
+    if(type === 'Guest' || type === 'Treasure'){
       for(const cardName of list){
         const key = this.cardKey(type, cardName);
         const w = this.ownerWeights.get(key);
@@ -1838,13 +2386,13 @@ class Player{
     }
   }
   // --- Sherlock: category-normalised probability that an item is in the case file ---
-  // Ensures probabilities within each category (Suspect/Weapon/Room) sum to 1
+  // Ensures probabilities within each category (Guest/Treasure/Room) sum to 1
   // across remaining (not cleared) candidates.
   caseFileProbNormalized(type, name){
     // If already cleared/marked innocent/owned/seen, it cannot be in the case file
     if(this.isCleared(type, name)) return 0;
 
-    const list = (type==='Suspect'?SUSPECTS : type==='Weapon'?WEAPONS : ROOMS);
+    const list = (type==='Guest'?GUESTS : type==='Treasure'?TREASURES : ROOMS);
 
     // Remaining candidates in this category (not cleared)
     const remaining = list.filter(n => !this.isCleared(type, n));
@@ -1897,7 +2445,7 @@ class Player{
     return -probs.reduce((acc,p)=>acc + (p>0 ? p*Math.log(p) : 0), 0);
   }
 
-  // Sherlock++: pick suspect & weapon that look most informative (entropy + tiny jitter)
+  // Sherlock++: pick guest & treasure that look most informative (entropy + tiny jitter)
   pickSmartSuggestionParts(){
     const pickFrom=(type)=>{
       const pool=this.possibleSet(type);
@@ -1909,7 +2457,7 @@ class Player{
       }
       
       // If pool is empty (shouldn't happen), fall back to full list
-      const candidates=pool.length ? pool : (type==='Suspect'?SUSPECTS : type==='Weapon'?WEAPONS : ROOMS);
+      const candidates=pool.length ? pool : (type==='Guest'?GUESTS : type==='Treasure'?TREASURES : ROOMS);
       console.log(`[DEBUG pickSmartSuggestionParts] ${type} candidates:`, candidates);
       
       let best=[],bestScore=-Infinity;
@@ -1930,14 +2478,14 @@ class Player{
       return pick;
     };
     return {
-      suspect: pickFrom('Suspect'),
-      weapon : pickFrom('Weapon')
+      guest: pickFrom('Guest'),
+      treasure : pickFrom('Treasure')
     };
   }
 
   // Sherlock: pick the most likely case-file item in a category using category-normalised probabilities
   beliefsTopFor(type){
-    const list = (type==='Suspect'?SUSPECTS : type==='Weapon'?WEAPONS : ROOMS);
+    const list = (type==='Guest'?GUESTS : type==='Treasure'?TREASURES : ROOMS);
 
     let bestName=null, bestVal=-1, second=-1;
 
@@ -1957,11 +2505,11 @@ class Player{
   }
 
   planAccusationWithBeliefs(){
-    const s=this.beliefsTopFor('Suspect');
-    const w=this.beliefsTopFor('Weapon');
+    const s=this.beliefsTopFor('Guest');
+    const w=this.beliefsTopFor('Treasure');
     const r=this.beliefsTopFor('Room');
     const combined = Math.pow(s.confidence * w.confidence * r.confidence, 1/3);
-    return { acc: { suspect:s.name, weapon:w.name, room:r.name }, confidence: combined };
+    return { acc: { guest:s.name, treasure:w.name, room:r.name }, confidence: combined };
   }
 }
 
@@ -1969,8 +2517,8 @@ class Player{
 // Returns true if there's exactly one card marked GUILTY (🚩 in CF) for each category
 // OR exactly one card remaining (not INNOCENT) for each category
 Player.prototype.isConfidentSolution = function(){
-  return this.possibleSet('Suspect').length === 1
-      && this.possibleSet('Weapon').length  === 1
+  return this.possibleSet('Guest').length === 1
+      && this.possibleSet('Treasure').length  === 1
       && this.possibleSet('Room').length    === 1;
 };
 
@@ -1978,8 +2526,8 @@ Player.prototype.isConfidentSolution = function(){
 // Returns the single remaining/GUILTY card for each category
 Player.prototype.inferredAccusation = function(){
   return {
-    suspect: this.possibleSet('Suspect')[0],
-    weapon : this.possibleSet('Weapon')[0],
+    guest: this.possibleSet('Guest')[0],
+    treasure : this.possibleSet('Treasure')[0],
     room   : this.possibleSet('Room')[0]
   };
 };
@@ -1993,7 +2541,7 @@ Player.prototype.inferredAccusation = function(){
 class Game{
   constructor(){
     this.players=[];this.turnIndex=0;this.solution=null;
-    this.suspectLoc=new Map();this.weaponLoc=new Map();
+    this.guestLoc=new Map();this.treasureLoc=new Map();
     this.dice=null;this.reachable=new Set();
     this.awaitingMove=false;this.awaitingDecision=false;this.stayedInsteadOfRoll=false;
     this.aiDifficulty='basic';this.humanTurnsStarted=0;this.gameOver=false;
@@ -2035,23 +2583,23 @@ class Game{
   newSession(){this.sessionId++;return this.sessionId;}
   isActiveSession(id){return id===this.sessionId;}
 
-  // ... keep the rest of your Game methods here (initAllSuspectPawns, setup, makeSuggestion, aiTurn, etc.)
+  // ... keep the rest of your Game methods here (initAllGuestPawns, setup, makeSuggestion, aiTurn, etc.)
   isActiveSession(id){return id===this.sessionId;}
 
-  initAllSuspectPawns(){
-    this.suspectLoc=new Map();
-    SUSPECTS.forEach((s,i)=>this.suspectLoc.set(s,START_ROOMS[i]||'Hall'));
+  initAllGuestPawns(){
+    this.guestLoc=new Map();
+    GUESTS.forEach((s,i)=>this.guestLoc.set(s,START_ROOMS[i]||'Hall'));
   }
-  initWeaponsOnBoard(){
-    this.weaponLoc=new Map();
+  initTreasuresOnBoard(){
+    this.treasureLoc=new Map();
     const rooms=shuffle(ROOMS.slice());
-    WEAPONS.forEach((w,i)=>this.weaponLoc.set(w,rooms[i%rooms.length]));
+    TREASURES.forEach((w,i)=>this.treasureLoc.set(w,rooms[i%rooms.length]));
   }
   resetPlayers(n){
     n=clampInt(n,2,5,2);
     this.newSession();
-    this.initAllSuspectPawns();
-    this.weaponLoc=new Map();
+    this.initAllGuestPawns();
+    this.treasureLoc=new Map();
     this.players=[new Player(0,true,null)];
     for(let i=1;i<=n;i++) this.players.push(new Player(i,false,null));
 
@@ -2062,7 +2610,7 @@ class Game{
       p.hand=[];p.eliminated=false;p.seen=new Set();p.own=new Set();
       p.knownOwners=new Map();p.knowledgeMeta = new Map();p.constraints=[];p.unrefuted=[];
       p.arrivedByOpponentSuggestion=false;
-      p.name=p.suspect?displaySuspect(p.suspect):(p.isHuman?'You':`AI-${p.id}`);
+      p.name=p.guest?displayGuest(p.guest):(p.isHuman?'You':`AI-${p.id}`);
       p.location='Hall';
     });
 
@@ -2071,27 +2619,27 @@ class Game{
     this.humanTurnsStarted=0;this.gameOver=false;
     this.trial=null;    
   }
-  assignSuspects(human){
-    const pool=SUSPECTS.slice();const i=pool.indexOf(human);if(i>=0) pool.splice(i,1);
+  assignGuests(human){
+    const pool=GUESTS.slice();const i=pool.indexOf(human);if(i>=0) pool.splice(i,1);
     shuffle(pool);
-    const me=this.players[0];me.suspect=human;me.name=displaySuspect(human);
-    for(let k=1;k<this.players.length;k++){const s=pool.shift();this.players[k].suspect=s;this.players[k].name=displaySuspect(s);}
-    this.players.forEach(p=>{if(p.suspect)p.location=this.suspectLoc.get(p.suspect)||'Hall';});
+    const me=this.players[0];me.guest=human;me.name=displayGuest(human);
+    for(let k=1;k<this.players.length;k++){const s=pool.shift();this.players[k].guest=s;this.players[k].name=displayGuest(s);}
+    this.players.forEach(p=>{if(p.guest)p.location=this.guestLoc.get(p.guest)||'Hall';});
   }
   buildDeck(){
     const cards=[];
-    for(const s of SUSPECTS) cards.push({type:'Suspect',name:s});
-    for(const w of WEAPONS) cards.push({type:'Weapon',name:w});
+    for(const s of GUESTS) cards.push({type:'Guest',name:s});
+    for(const w of TREASURES) cards.push({type:'Treasure',name:w});
     for(const r of ROOMS) cards.push({type:'Room',name:r});
     return cards;
   }
 
   setup(){
     log('Setting up game…');
-    this.solution={suspect:choice(SUSPECTS),weapon:choice(WEAPONS),room:choice(ROOMS)};
+    this.solution={guest:choice(GUESTS),treasure:choice(TREASURES),room:choice(ROOMS)};
     const deck=this.buildDeck().filter(c=>{
-      return !((c.type==='Suspect'&&c.name===this.solution.suspect)||
-               (c.type==='Weapon'&&c.name===this.solution.weapon)||
+      return !((c.type==='Guest'&&c.name===this.solution.guest)||
+               (c.type==='Treasure'&&c.name===this.solution.treasure)||
                (c.type==='Room'&&c.name===this.solution.room));
     });
     shuffle(deck);
@@ -2099,9 +2647,9 @@ class Game{
     let p=0; while(deck.length) this.players[p++%this.players.length].hand.push(deck.pop());
     this.players.forEach(pl=>pl.initKnowledge());
 
-    this.initAllSuspectPawns();
-    this.players.forEach(pl=>{ if(pl.suspect) pl.location=this.suspectLoc.get(pl.suspect)||'Hall'; });
-    this.initWeaponsOnBoard();
+    this.initAllGuestPawns();
+    this.players.forEach(pl=>{ if(pl.guest) pl.location=this.guestLoc.get(pl.guest)||'Hall'; });
+    this.initTreasuresOnBoard();
 
     // Sherlock++: initialize beliefs after hands are dealt
     this.players.forEach(pl=>pl.initBeliefs(this.players));
@@ -2134,7 +2682,7 @@ class Game{
   // For each suggested card NOT owned by suggester:
   //   - Mark that card GUILTY (🚩 in CF column)
   //   - Mark all other cards in that category INNOCENT (not in CF)
-  noRefuteDeduction(pl, { suspect, weapon, room }){
+  noRefuteDeduction(pl, { guest, treasure, room }){
     const owns = (type, name) => pl.hand.some(c => c.type === type && c.name === name);
   
     const innocentAllOthers = (type, keepName, list) => {
@@ -2144,16 +2692,16 @@ class Game{
     };
   
     // Only mark GUILTY if suggester does NOT own that suggested card
-    if (!owns('Suspect', suspect)) {
-      innocentAllOthers('Suspect', suspect, SUSPECTS);
-      if (pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Suspect', name:suspect});
-      if (pl.markGuilty) pl.markGuilty('Suspect', suspect); // Mark 🚩 (GUILTY) in CF column
+    if (!owns('Guest', guest)) {
+      innocentAllOthers('Guest', guest, GUESTS);
+      if (pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Guest', name:guest});
+      if (pl.markGuilty) pl.markGuilty('Guest', guest); // Mark 🚩 (GUILTY) in CF column
     }
 
-    if (!owns('Weapon', weapon)) {
-      innocentAllOthers('Weapon', weapon, WEAPONS);
-      if (pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Weapon', name:weapon});
-      if (pl.markGuilty) pl.markGuilty('Weapon', weapon); // Mark 🚩 (GUILTY) in CF column
+    if (!owns('Treasure', treasure)) {
+      innocentAllOthers('Treasure', treasure, TREASURES);
+      if (pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Treasure', name:treasure});
+      if (pl.markGuilty) pl.markGuilty('Treasure', treasure); // Mark 🚩 (GUILTY) in CF column
     }
 
     if (!owns('Room', room)) {
@@ -2171,19 +2719,19 @@ class Game{
   // the remaining card must be GUILTY (🚩 in CF)
   applyMildInference(pl){
     for(const t of pl.unrefuted){
-      const s=pl.isCardInnocent('Suspect',t.suspect),
-            w=pl.isCardInnocent('Weapon',t.weapon),
+      const s=pl.isCardInnocent('Guest',t.guest),
+            w=pl.isCardInnocent('Treasure',t.treasure),
             r=pl.isCardInnocent('Room',t.room);
       if((s?1:0)+(w?1:0)+(r?1:0)===2){
         if(!s){
-          SUSPECTS.forEach(x=>{ if(x!==t.suspect) pl.markInnocent('Suspect',x); });
-          if (pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Suspect', name:t.suspect});
-          if (pl.markGuilty) pl.markGuilty('Suspect', t.suspect); // Mark 🚩 (GUILTY) in CF
+          GUESTS.forEach(x=>{ if(x!==t.guest) pl.markInnocent('Guest',x); });
+          if (pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Guest', name:t.guest});
+          if (pl.markGuilty) pl.markGuilty('Guest', t.guest); // Mark 🚩 (GUILTY) in CF
         }
         if(!w){
-          WEAPONS.forEach(x=>{ if(x!==t.weapon) pl.markInnocent('Weapon',x); });
-          if (pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Weapon', name:t.weapon});
-          if (pl.markGuilty) pl.markGuilty('Weapon', t.weapon); // Mark 🚩 (GUILTY) in CF
+          TREASURES.forEach(x=>{ if(x!==t.treasure) pl.markInnocent('Treasure',x); });
+          if (pl.noteCaseFileCard) pl.noteCaseFileCard({type:'Treasure', name:t.treasure});
+          if (pl.markGuilty) pl.markGuilty('Treasure', t.treasure); // Mark 🚩 (GUILTY) in CF
         }
         if(!r){
           ROOMS.forEach(x=>{ if(x!==t.room) pl.markInnocent('Room',x); });
@@ -2325,20 +2873,20 @@ class Game{
     return dest || pl.location;
   }
 
-  async makeSuggestion(pl,suspect,weapon,room){
-    const triple=[{type:'Suspect',name:suspect},{type:'Weapon',name:weapon},{type:'Room',name:room}];
+  async makeSuggestion(pl,guest,treasure,room){
+    const triple=[{type:'Guest',name:guest},{type:'Treasure',name:treasure},{type:'Room',name:room}];
 
-    // Move suspect pawn and weapon into room as per suggestion
-    const wasSus=this.suspectLoc.get(suspect);
-    if(wasSus && wasSus!==room){
-      this.suspectLoc.set(suspect,room);
-      log(`${displaySuspect(suspect)} is moved from ${wasSus} to ${room} due to the suggestion.`);
-    }else if(!wasSus){
-      this.suspectLoc.set(suspect,room);
-      log(`${displaySuspect(suspect)} is moved into ${room} due to the suggestion.`);
+    // Move guest pawn and treasure into room as per suggestion
+    const wasGst=this.guestLoc.get(guest);
+    if(wasGst && wasGst!==room){
+      this.guestLoc.set(guest,room);
+      log(`${displayGuest(guest)} is moved from ${wasGst} to ${room} due to the suggestion.`);
+    }else if(!wasGst){
+      this.guestLoc.set(guest,room);
+      log(`${displayGuest(guest)} is moved into ${room} due to the suggestion.`);
     }
 
-    const ownerPlayer=this.players.find(p=>p.suspect===suspect);
+    const ownerPlayer=this.players.find(p=>p.guest===guest);
     if(ownerPlayer){
       if(ownerPlayer.location!==room){
         const prev=ownerPlayer.location;
@@ -2348,14 +2896,14 @@ class Game{
       }
     }
 
-    const wasWeap=this.weaponLoc.get(weapon);
+    const wasWeap=this.treasureLoc.get(treasure);
     if(wasWeap && wasWeap!==room){
-      this.weaponLoc.set(weapon,room);log(`${weapon} is moved from ${wasWeap} to ${room} due to the suggestion.`);
+      this.treasureLoc.set(treasure,room);log(`${treasure} is moved from ${wasWeap} to ${room} due to the suggestion.`);
     }else if(!wasWeap){
-      this.weaponLoc.set(weapon,room);log(`${weapon} is moved into ${room} due to the suggestion.`);
+      this.treasureLoc.set(treasure,room);log(`${treasure} is moved into ${room} due to the suggestion.`);
     }
     renderAll(this);
-    log(`${pl.name} suggests: ${displaySuspect(suspect)} in the ${room} with the ${weapon}.`);
+    log(`${pl.name} suggests: ${displayGuest(guest)} concealed the ${treasure} in the ${room}.`);
 
     // Resolve refutations in order
     const order=[];for(let i=1;i<this.players.length;i++) order.push(this.players[(this.turnIndex+i)%this.players.length]);
@@ -2522,13 +3070,13 @@ class Game{
 
     // Apply NO-REFUTE deduction for ALL difficulties (AI only).
     if(!pl.isHuman){
-      this.noRefuteDeduction(pl, { suspect, weapon, room });
+      this.noRefuteDeduction(pl, { guest, treasure, room });
     }
 
     // Smart/Sherlock can still keep unrefuted history for mild inference later.
     // (Basic won't use it, but keeping it doesn't hurt.)
     if(!pl.isHuman){
-      pl.unrefuted.push({suspect,weapon,room});
+      pl.unrefuted.push({guest,treasure,room});
     }
 
         this.applyInference(pl);
@@ -2538,19 +3086,19 @@ class Game{
   // === Centre-tile "trial" helpers (ACCUSED → NOT GUILTY → revert) ===
   beginTrial(pl, acc){
     // Save previous locations so we can revert after NOT GUILTY
-    const prevSus = this.suspectLoc.get(acc.suspect);
-    const prevWep = this.weaponLoc.get(acc.weapon);
+    const prevGst = this.guestLoc.get(acc.guest);
+    const prevTsr = this.treasureLoc.get(acc.treasure);
 
     this.trial = {
       stage: 'accused',
       by: pl.name,
       acc: { ...acc },
-      prev: { sus: prevSus, wep: prevWep }
+      prev: { gst: prevGst, tsr: prevTsr }
     };
 
-    // Move accused suspect + weapon to the centre (Case File tile)
-    this.suspectLoc.set(acc.suspect, HOLDING_CELL_ID);
-    this.weaponLoc.set(acc.weapon, HOLDING_CELL_ID);
+    // Move accused guest + treasure to the centre (Case File tile)
+    this.guestLoc.set(acc.guest, HOLDING_CELL_ID);
+    this.treasureLoc.set(acc.treasure, HOLDING_CELL_ID);
   }
 
   restoreTrial(){
@@ -2558,72 +3106,77 @@ class Game{
     const { acc, prev } = this.trial;
 
     // Always restore if we saved anything at all (use != null to allow empty strings, 0, false, etc.)
-    if(prev && prev.sus != null) this.suspectLoc.set(acc.suspect, prev.sus);
-    if(prev && prev.wep != null) this.weaponLoc.set(acc.weapon,  prev.wep);
+    if(prev && prev.gst != null) this.guestLoc.set(acc.guest, prev.gst);
+    if(prev && prev.tsr != null) this.treasureLoc.set(acc.treasure,  prev.tsr);
 
     // Clear centre trial state (this removes room token + restores CASE FILE)
     this.trial = null;
   }
 
   checkAccusation(a){
-    return a.suspect===this.solution.suspect &&
-           a.weapon===this.solution.weapon &&
+    return a.guest===this.solution.guest &&
+           a.treasure===this.solution.treasure &&
            a.room===this.solution.room;
   }
 
   async accuse(pl,acc){
-    // 1) Move pieces to centre + show "ACCUSED" prompt first (tension)
-    log(`${pl.name} ACCUSES: ${displaySuspect(acc.suspect)} in the ${acc.room} with the ${acc.weapon}!`);
+    log(`${pl.name} ACCUSES: ${displayGuest(acc.guest)} concealed the ${acc.treasure} in the ${acc.room}!`);
 
-    // Start the centre "trial" display (orange ACCUSED)
     this.beginTrial(pl, acc);
     renderAll(this);
 
-    // Prompt describing the accusation (AI: this appears before end-of-turn summary)
-    await showInfoPrompt('Accusation',
-      `<div><b>${pl.name}</b> makes an accusation:</div>
-       <div style="margin-top:10px;font-size:16px;">
-         <b>${displaySuspect(acc.suspect)}</b> in the <b>${acc.room}</b> with the <b>${acc.weapon}</b>
-       </div>
-       <div style="margin-top:10px;color:var(--muted);font-size:12px;">Click OK to reveal the verdict…</div>`
-    );
-
     if(this.observerMode){
-      this.obs(`⚖️ ${pl.name} ACCUSES: ${displaySuspect(acc.suspect)} / ${acc.weapon} / ${acc.room}`);
+      this.obs(`⚖️ ${pl.name} ACCUSES: ${displayGuest(acc.guest)} / ${acc.treasure} / ${acc.room}`);
     }
 
-    // 2) Determine verdict
+    // Show overlay — human must click to reveal verdict
+    await new Promise(resolve => {
+      showAccusationOverlay({
+        accuser: pl.name + ' makes an accusation',
+        guest:    acc.guest,
+        treasure: acc.treasure,
+        room:     acc.room,
+        onReveal: resolve
+      });
+    });
+
+    // Determine verdict
     const ok = this.checkAccusation(acc);
 
     if(ok){
-      // === CORRECT: CONVICTED (keep tokens in centre, including ROOM token) ===
-      this.gameOver=true;
-      this.convicted={suspect:acc.suspect,weapon:acc.weapon,room:acc.room,winner:pl.name};
-
-      // Keep suspect + weapon in centre (already there); clear trial state (we'll use convicted UI)
+      // === CORRECT: CONVICTED ===
+      this.gameOver = true;
+      this.convicted = { guest:acc.guest, treasure:acc.treasure, room:acc.room, winner:pl.name };
       this.trial = null;
-
       renderAll(this);
 
       if(this.observerMode){
         this.obs(`👮‍♂️ CONVICTED: ${pl.name} wins.`);
       }
 
-      await showInfoPrompt('Game Over',
-        `<div><b>${pl.name}</b> wins!</div>
-         <div style="margin-top:10px;">Solution was: <b>${displaySuspect(this.solution.suspect)}</b> in the <b>${this.solution.room}</b> with the <b>${this.solution.weapon}</b>.</div>`
-      );
+      await new Promise(resolve => {
+        transitionOverlayConvicted({
+          winner:   pl.name,
+          guest:    this.solution.guest,
+          treasure: this.solution.treasure,
+          room:     this.solution.room,
+          onRestart: async () => {
+            hideAccusationOverlay();
+            resetUIForSetup();
+            tpShowTitlePages();
+            await startNewGame(game, { skipConfirm:true, fromTitlePage:true });
+            resolve();
+          }
+        });
+      });
 
-      const again=await promptPlayAgain();
-      if(again){ await startNewGame(game,{skipConfirm:true}); }
       return { correct:true };
     }
 
-    // === WRONG: NOT GUILTY (keep tokens in centre temporarily, then revert) ===
+    // === WRONG: NOT GUILTY ===
     log(`❌ Wrong accusation. ${pl.name} is eliminated from taking turns (but can still refute).`);
-    pl.eliminated=true;
+    pl.eliminated = true;
 
-    // Switch centre tile to NOT GUILTY (pale yellow), keep tokens there for the prompt/summary
     if(this.trial) this.trial.stage = 'notguilty';
     renderAll(this);
 
@@ -2632,23 +3185,19 @@ class Game{
     }
 
     if(pl.isHuman || this.isCoachFocus(pl)){
-      // Human (or coach focus): use the existing Wrong Accusation prompt (plus the revert behaviour after OK)
-      await showInfoPrompt('Wrong Accusation',
-        `<div>That accusation was <b>incorrect</b>.</div>
-         <div style="margin-top:10px;">Verdict: <b>🕊 NOT GUILTY</b>.</div>
-         <div style="margin-top:10px;">You are eliminated from taking turns, but you will still be asked to refute suggestions.</div>
-         <div style="margin-top:10px;color:var(--muted);font-size:12px;">Click OK to continue. The pieces will return to their previous positions.</div>`
-      );
+      await new Promise(resolve => {
+        transitionOverlayNotGuilty({
+          accuser: pl.name,
+          onDismiss: resolve
+        });
+      });
 
-      // After dismissing the prompt: revert centre + pieces
       this.restoreTrial();
       renderAll(this);
       return { correct:false };
     }
 
-    // AI: do NOT show another prompt here.
-    // The NOT GUILTY display should remain visible during the end-of-turn summary,
-    // and we will restore after the summary is dismissed (handled in aiTurn()).
+    // AI wrong accusation — no further overlay needed
     return { correct:false, revertAfterSummary:true };
   }
 
@@ -2786,7 +3335,7 @@ class Game{
     const pl=this.currentPlayer();
     if(!(pl.isHuman || this.isCoachFocus(pl)) || !this.awaitingMove) return;
     if(!this.reachable.has(room)) return;
-    pl.location=room; if(pl.suspect) this.suspectLoc.set(pl.suspect,room);
+    pl.location=room; if(pl.guest) this.guestLoc.set(pl.guest,room);
     this.awaitingMove=false; pl.arrivedByOpponentSuggestion=false;
     log(`You moved to ${room}.`);
     this.updateTurnUI();
@@ -2808,67 +3357,67 @@ class Game{
           arr.sort((a,b)=>b.e-a.e);
           return arr.slice(0,3);
         };
-        const susPool = pl.possibleSet('Suspect');
-        const wepPool = pl.possibleSet('Weapon');
-        const susCands = susPool.length ? susPool : SUSPECTS;
-        const wepCands = wepPool.length ? wepPool : WEAPONS;
-        const topSus = rankEntropy('Suspect', susCands);
-        const topWep = rankEntropy('Weapon', wepCands);
+        const gstPool = pl.possibleSet('Guest');
+        const tsrPool = pl.possibleSet('Treasure');
+        const gstCands = gstPool.length ? gstPool : GUESTS;
+        const tsrCands = tsrPool.length ? tsrPool : TREASURES;
+        const topGst = rankEntropy('Guest', gstCands);
+        const topTsr = rankEntropy('Treasure', tsrCands);
 
         const pick = pl.pickSmartSuggestionParts();
-        coachPick = { suspect: pick.suspect, weapon: pick.weapon };
+        coachPick = { guest: pick.guest, treasure: pick.treasure };
 
         this.obs(
-          `🔎 Let's see... top suspects are ${topSus.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')} and top weapons are ${topWep.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')}. I'll check out ${coachPick.suspect} and ${coachPick.weapon} in the ${room}.`,
+          `🔎 Let's see... top guests are ${topGst.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')} and top treasures are ${topTsr.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')}. I'll check out ${coachPick.guest} and ${coachPick.treasure} in the ${room}.`,
           { byPlayerId: pl.id }
         );
       } else {
         // Smart/basic style recommendation (same message format as aiTurn uses for smart)
-        const sC = pl.possibleSet('Suspect');
-        const wC = pl.possibleSet('Weapon');
-        const susCands = sC.length ? sC : SUSPECTS;
-        const wepCands = wC.length ? wC : WEAPONS;
+        const sC = pl.possibleSet('Guest');
+        const wC = pl.possibleSet('Treasure');
+        const gstCands = sC.length ? sC : GUESTS;
+        const tsrCands = wC.length ? wC : TREASURES;
 
-        coachPick = { suspect: choice(susCands), weapon: choice(wepCands) };
+        coachPick = { guest: choice(gstCands), treasure: choice(tsrCands) };
 
         if(this.aiDifficulty==='smart'){
           this.obs(
-            `🔎 Let's see... suspects remaining are ${susCands.length} and weapons remaining are ${wepCands.length}. I'll check out ${coachPick.suspect} and ${coachPick.weapon} in the ${room}.`,
+            `🔎 Let's see... guests remaining are ${gstCands.length} and treasures remaining are ${tsrCands.length}. I'll check out ${coachPick.guest} and ${coachPick.treasure} in the ${room}.`,
             { byPlayerId: pl.id }
           );
         }
       }
     }
 
-    const sus = SUSPECTS.map(s =>
-      `<option value="${s}" ${(coachPick && coachPick.suspect===s) ? 'selected' : ''}>${displaySuspect(s)}</option>`
+    const gst = GUESTS.map(s =>
+      `<option value="${s}" ${(coachPick && coachPick.guest===s) ? 'selected' : ''}>${displayGuest(s)}</option>`
     ).join("");
 
-    const wep = WEAPONS.map(w =>
-      `<option value="${w}" ${(coachPick && coachPick.weapon===w) ? 'selected' : ''}>${w}</option>`
+    const tsr = TREASURES.map(w =>
+      `<option value="${w}" ${(coachPick && coachPick.treasure===w) ? 'selected' : ''}>${w}</option>`
     ).join("");
     const html=`<div><b>Room:</b> ${room}</div>
       <div style="margin-top:10px;" class="row">
-        <label>Suspect: <select id="selSuspect">${sus}</select></label>
-        <label>Weapon: <select id="selWeapon">${wep}</select></label>
+        <label>Guest: <select id="selGuest">${gst}</select></label>
+        <label>Treasure: <select id="selTreasure">${tsr}</select></label>
       </div>
-      <div style="margin-top:10px;color:var(--muted);font-size:12px;">Pick a suspect and weapon to make a suggestion.</div>`;
+      <div style="margin-top:10px;color:var(--muted);font-size:12px;">Pick a guest and treasure to make a suggestion.</div>`;
     const go=await renderPrompt({title:'Make a Suggestion',bodyHTML:html,actions:[{label:'Suggest',value:true}]});
-    const suspect=document.getElementById('selSuspect')?.value;
-    const weapon=document.getElementById('selWeapon')?.value;
+    const guest=document.getElementById('selGuest')?.value;
+    const treasure=document.getElementById('selTreasure')?.value;
     clearGameplayPrompt();
-    if(go&&suspect&&weapon){
-      const result = await this.makeSuggestion(pl,suspect,weapon,room);
+    if(go&&guest&&treasure){
+      const result = await this.makeSuggestion(pl,guest,treasure,room);
 
       // Coach mode: after suggestion resolves (refuted or not), if threshold met then auto-open accusation prompt
       if(this.isCoachFocus(pl)){
         const acc = this.coachAccusationPlan(pl);
         if(acc){
-          this.obs(`🛑 Coach's choice: ACCUSE ${acc.suspect} / ${acc.weapon} / ${acc.room}`, { byPlayerId: pl.id });
+          this.obs(`🛑 Coach's choice: ACCUSE ${acc.guest} / ${acc.treasure} / ${acc.room}`, { byPlayerId: pl.id });
 
           await this.humanAccuse({
             prefill: acc,
-            onCancel: () => this.showPostSuggestionPrompt(result,{suspect,weapon,room})
+            onCancel: () => this.showPostSuggestionPrompt(result,{guest,treasure,room})
           });
 
           // If the accusation ended the game, stop here
@@ -2876,7 +3425,7 @@ class Game{
         }
       }
 
-      await this.showPostSuggestionPrompt(result,{suspect,weapon,room});
+      await this.showPostSuggestionPrompt(result,{guest,treasure,room});
     }else{
       await this.endTurn();
     }
@@ -2888,7 +3437,7 @@ class Game{
     const body=result.refuted
       ?`<div>Your suggestion has been <b>refuted</b>.</div><div style="margin-top:8px;color:var(--muted);font-size:12px;">What would you like to do next?</div>`
       :`<div><b>No one</b> could refute your suggestion:</div>
-        <div style="margin-top:8px;"><b>${displaySuspect(triple.suspect)}</b> in the <b>${triple.room}</b> with the <b>${triple.weapon}</b>.</div>
+        <div style="margin-top:8px;"><b>${displayGuest(triple.guest)}</b> concealed the <b>${triple.treasure}</b> in the <b>${triple.room}</b>.</div>
         <div style="margin-top:8px;color:var(--muted);font-size:12px;">What would you like to do next?</div>`;
     const pick=await renderPrompt({title,bodyHTML:body,actions:[
       {label:'End Turn',value:'end',className:'secondary'},
@@ -2902,12 +3451,12 @@ class Game{
   async humanAccuse({onCancel, prefill=null}={}){
     const pl=this.currentPlayer(); if(!(pl.isHuman || this.isCoachFocus(pl)) || pl.eliminated || this.gameOver) return;
     if(this.awaitingMove) return;
-    const sus = SUSPECTS.map(s =>
-      `<option value="${s}" ${(prefill && prefill.suspect===s) ? 'selected' : ''}>${displaySuspect(s)}</option>`
+    const gst = GUESTS.map(s =>
+      `<option value="${s}" ${(prefill && prefill.guest===s) ? 'selected' : ''}>${displayGuest(s)}</option>`
     ).join("");
 
-    const wep = WEAPONS.map(w =>
-      `<option value="${w}" ${(prefill && prefill.weapon===w) ? 'selected' : ''}>${w}</option>`
+    const tsr = TREASURES.map(w =>
+      `<option value="${w}" ${(prefill && prefill.treasure===w) ? 'selected' : ''}>${w}</option>`
     ).join("");
 
     const rms = ROOMS.map(r =>
@@ -2915,17 +3464,17 @@ class Game{
     ).join("");
     const html=`<div style="color:var(--warn)"><b>Warning:</b> If you are wrong, you will be eliminated from taking turns.</div>
       <div style="margin-top:10px;" class="row">
-        <label>Suspect: <select id="accSus">${sus}</select></label>
-        <label>Weapon: <select id="accWeap">${wep}</select></label>
+        <label>Guest: <select id="accGst">${gst}</select></label>
+        <label>Treasure: <select id="accWeap">${tsr}</select></label>
         <label>Room: <select id="accRoom">${rms}</select></label>
       </div>`;
     const go=await renderPrompt({title:'Make an Accusation',bodyHTML:html,actions:[
       {label:'Cancel',value:false,className:'secondary'},
       {label:'Accuse',value:true,className:'danger'}
     ]});
-    const acc={suspect:document.getElementById('accSus')?.value,weapon:document.getElementById('accWeap')?.value,room:document.getElementById('accRoom')?.value};
+    const acc={guest:document.getElementById('accGst')?.value,treasure:document.getElementById('accWeap')?.value,room:document.getElementById('accRoom')?.value};
     clearGameplayPrompt();
-    if(go&&acc.suspect&&acc.weapon&&acc.room){
+    if(go&&acc.guest&&acc.treasure&&acc.room){
       await this.accuse(pl,acc);
       if(!this.gameOver) await this.endTurn();
     }else{
@@ -3023,7 +3572,7 @@ class Game{
 
       const from=pl.location;
       pl.location=dest;
-      if(pl.suspect) this.suspectLoc.set(pl.suspect, dest);
+      if(pl.guest) this.guestLoc.set(pl.guest, dest);
 
       log(`${pl.name} moved from ${from} to ${dest}.`);
       summary.push(`Moved from ${from} to ${dest}.`);
@@ -3037,7 +3586,7 @@ class Game{
     }
 
     // Sherlock++: suggestion target selection + thought process logging
-    let suspect, weapon;
+    let guest, treasure;
     const room = pl.location;
 
     if (isSherlock(this.aiDifficulty)) {
@@ -3051,41 +3600,41 @@ class Game{
         return arr.slice(0,3);
       };
 
-      const susPool = pl.possibleSet('Suspect');
-      const wepPool = pl.possibleSet('Weapon');
+      const gstPool = pl.possibleSet('Guest');
+      const tsrPool = pl.possibleSet('Treasure');
 
-      const susCands = susPool.length ? susPool : SUSPECTS;
-      const wepCands = wepPool.length ? wepPool : WEAPONS;
+      const gstCands = gstPool.length ? gstPool : GUESTS;
+      const tsrCands = tsrPool.length ? tsrPool : TREASURES;
 
-      const topSus = rankEntropy('Suspect', susCands);
-      const topWep = rankEntropy('Weapon',  wepCands);
+      const topGst = rankEntropy('Guest', gstCands);
+      const topTsr = rankEntropy('Treasure',  tsrCands);
 
       const pick = pl.pickSmartSuggestionParts();
-      suspect = pick.suspect;
-      weapon  = pick.weapon;
+      guest = pick.guest;
+      treasure  = pick.treasure;
 
       if(this.observerMode){
-        this.obs(`🔎 Let's see... top suspects are ${topSus.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')} and top weapons are ${topWep.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')}. I'll check out ${suspect} and ${weapon} in the ${room}.`, { byPlayerId: pl.id });
+        this.obs(`🔎 Let's see... top guests are ${topGst.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')} and top treasures are ${topTsr.map(x=>`${x.n}(${x.e.toFixed(2)})`).join(', ')}. I'll check out ${guest} and ${treasure} in the ${room}.`, { byPlayerId: pl.id });
       }
 
     } else {
       // Smart/basic: pick from remaining (uncleared) candidates
-      const sC = pl.possibleSet('Suspect');
-      const wC = pl.possibleSet('Weapon');
+      const sC = pl.possibleSet('Guest');
+      const wC = pl.possibleSet('Treasure');
 
-      const susCands = sC.length ? sC : SUSPECTS;
-      const wepCands = wC.length ? wC : WEAPONS;
+      const gstCands = sC.length ? sC : GUESTS;
+      const tsrCands = wC.length ? wC : TREASURES;
 
-      suspect = choice(susCands);
-      weapon  = choice(wepCands);
+      guest = choice(gstCands);
+      treasure  = choice(tsrCands);
 
       if(this.observerMode && this.aiDifficulty==='smart'){
-        this.obs(`🔎 Let's see... suspects remaining are ${susCands.length} and weapons remaining are ${wepCands.length}. I'll check out ${suspect} and ${weapon} in the ${room}.`, { byPlayerId: pl.id });
+        this.obs(`🔎 Let's see... guests remaining are ${gstCands.length} and treasures remaining are ${tsrCands.length}. I'll check out ${guest} and ${treasure} in the ${room}.`, { byPlayerId: pl.id });
       }
     }
 
-    summary.push(`Suggested: ${displaySuspect(suspect)} in the ${room} with the ${weapon}.`);
-    const result=await this.makeSuggestion(pl,suspect,weapon,room);
+    summary.push(`Suggested: ${displayGuest(guest)} concealed the ${treasure} in the ${room}.`);
+    const result=await this.makeSuggestion(pl,guest,treasure,room);
     if(!this.isActiveSession(sid)) return;
     summary.push(result.refuted?`Refuted by ${result.by?.isHuman ? 'You' : (result.by?.name ?? 'another player')}.`:'No one could refute the suggestion.');
 
@@ -3103,10 +3652,10 @@ class Game{
       const acc=pl.inferredAccusation();
 
       if(this.observerMode){
-        this.obs(`🛑 Time to act! Accusing ${acc.suspect} with the ${acc.weapon} in the ${acc.room}.`, { byPlayerId: pl.id });
+        this.obs(`🛑 Time to act! Accusing ${acc.guest} of concealing the ${acc.treasure} in the ${acc.room}.`, { byPlayerId: pl.id });
       }
 
-      summary.push(`Accused (certain): ${displaySuspect(acc.suspect)} in the ${acc.room} with the ${acc.weapon}.`);
+      summary.push(`Accused (certain): ${displayGuest(acc.guest)} concealed the ${acc.treasure} in the ${acc.room}.`);
       accOutcome = await this.accuse(pl,acc);
       accused=true;
       if(accOutcome && accOutcome.correct===false){
@@ -3117,7 +3666,7 @@ class Game{
     else if(!pl.eliminated && isSherlock(this.aiDifficulty)){
       const plan = pl.planAccusationWithBeliefs();
       if(this.observerMode && plan){
-        this.obs(`❓ Do I have enough evidence? Was it ${plan.acc.suspect} with the ${plan.acc.weapon} in the ${plan.acc.room}? I'll only accuse if the evidence holds.`, { byPlayerId: pl.id });
+        this.obs(`❓ Do I have enough evidence? Did ${plan.acc.guest} conceal the ${plan.acc.treasure} in the ${plan.acc.room}? I'll only accuse if the evidence holds.`, { byPlayerId: pl.id });
       }
 
       const hasEvidence = (pl.seen.size > pl.own.size) || pl.constraints.length > 0 || pl.unrefuted.length > 0;
@@ -3125,7 +3674,7 @@ class Game{
         if (Math.random() < AI_CFG.sherlock.earlyAccuseChance) {
           await sleep(650);
           if(!this.isActiveSession(sid)) return;
-          summary.push(`Accused (early, conf=${plan.confidence.toFixed(2)}): ${displaySuspect(plan.acc.suspect)} in the ${plan.acc.room} with the ${plan.acc.weapon}.`);
+          summary.push(`Accused (early, conf=${plan.confidence.toFixed(2)}): ${displayGuest(plan.acc.guest)} concealed the ${plan.acc.treasure} in the ${plan.acc.room}.`);
           accOutcome = await this.accuse(pl, plan.acc);
           accused = true;
           if(accOutcome && accOutcome.correct===false){
@@ -3137,7 +3686,7 @@ class Game{
         await sleep(650);
         if(!this.isActiveSession(sid)) return;
         const b = pl.planAccusationWithBeliefs();
-        summary.push(`Accused (mistake): ${displaySuspect(b.acc.suspect)} in the ${b.acc.room} with the ${b.acc.weapon}.`);
+        summary.push(`Accused (mistake): ${displayGuest(b.acc.guest)} concealed the ${b.acc.treasure} in the ${b.acc.room}.`);
         accOutcome = await this.accuse(pl, b.acc);
         accused = true;
         if(accOutcome && accOutcome.correct===false){
@@ -3167,7 +3716,7 @@ class Game{
     const pretty=lines.map(l=>`• ${l}`).join('\n');
     const html=`<div style="margin-bottom:8px;"><b>${player.name}</b> finished their turn.</div>
       <div style="color:var(--muted);font-size:12px;margin-bottom:10px;">Click OK to continue.</div>
-      <div style="background:rgba(0,0,0,0.18);border:1px solid var(--border);border-radius:12px;padding:10px;
+      <div style="background:rgba(0,0,0,0.18);border:1px solid rgba(201,151,58,0.3);border-radius:2px;padding:10px;
       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.35;white-space:pre-wrap;">${pretty}</div>`;
     await showInfoPrompt('Opponent Turn Summary',html);
   }
@@ -3242,19 +3791,19 @@ function renderNotebook(game){
   // Get player initials for column headers
   const playerInitials = game.players.map(p => {
     if(p.isHuman && !game.observerMode) return 'Own';
-    // Get initials from suspect name
-    const suspect = p.suspect || p.name;
-    const words = suspect.split(' ');
+    // Get initials from guest name
+    const guest = p.guest || p.name;
+    const words = guest.split(' ');
     if(words.length > 1) return words.map(w => w[0]).join('');
-    return suspect.substring(0, 2).toUpperCase();
+    return guest.substring(0, 2).toUpperCase();
   });
 
   // Icons
-  const SUS_ICON = {
-    "Green": "🎩","Mustard": "🎖️","Scarlet": "👒","Peacock": "💎","Plum": "💼","White": "👜"
+  const GST_ICON = {
+    "Forest": "🎩","Saffron": "🎖️","Rouge": "👒","Sapphire": "💎","Lavender": "💼","Weisse": "👜"
   };
-  const WEP_ICON = {
-    "Candlestick":"🕯️","Dagger":"🗡️","Lead Pipe":"🦯","Revolver":"🔫","Rope":"🪢","Wrench":"🔧"
+  const TSR_ICON = {
+    "Portrait":"🖼️","Ornaments":"⚔️","Documents":"📜","Coins":"🪙","Necklace":"📿","Watch":"⏱️"
   };
   const ROOM_ICON_LOCAL = {
     "Study": "📝","Hall":"🧥","Lounge":"🛋️","Library":"📖","Billiard Room":"🎱",
@@ -3273,8 +3822,8 @@ function renderNotebook(game){
   let html = `<table class="clueGrid"><tbody>`;
 
   const categories = [
-    { title: 'SUSPECTS', cards: SUSPECTS, type: 'Suspect', icons: SUS_ICON },
-    { title: 'WEAPONS',  cards: WEAPONS,  type: 'Weapon',  icons: WEP_ICON },
+    { title: 'GUESTS', cards: GUESTS, type: 'Guest', icons: GST_ICON },
+    { title: 'TREASURES',  cards: TREASURES,  type: 'Treasure',  icons: TSR_ICON },
     { title: 'ROOMS',    cards: ROOMS,    type: 'Room',    icons: ROOM_ICON_LOCAL }
   ];
 
@@ -3412,18 +3961,18 @@ function renderObserverCasebook(game){
   // Column headers: focus player shows as "Own"
   const playerInitials = game.players.map((p, idx) => {
     if(idx === game.observerFocusId) return 'Own';
-    const suspect = p.suspect || p.name;
-    const words = String(suspect).split(' ');
+    const guest = p.guest || p.name;
+    const words = String(guest).split(' ');
     if(words.length > 1) return words.map(w => w[0]).join('');
-    return String(suspect).substring(0, 2).toUpperCase();
+    return String(guest).substring(0, 2).toUpperCase();
   });
 
   // Icons
-  const SUS_ICON = {
-    "Green": "🎩","Mustard": "🎖️","Scarlet": "👒","Peacock": "💎","Plum": "💼","White": "👜"
+  const GST_ICON = {
+    "Forest": "🎩","Saffron": "🎖️","Rouge": "👒","Sapphire": "💎","Lavender": "💼","Weisse": "👜"
   };
-  const WEP_ICON = {
-    "Candlestick":"🕯️","Dagger":"🗡️","Lead Pipe":"🦯","Revolver":"🔫","Rope":"🪢","Wrench":"🔧"
+  const TSR_ICON = {
+    "Portrait":"🖼️","Ornaments":"⚔️","Documents":"📜","Coins":"🪙","Necklace":"📿","Watch":"⏱️"
   };
   const ROOM_ICON_LOCAL = {
     "Study": "📝","Hall":"🧥","Lounge":"🛋️","Library":"📖","Billiard Room":"🎱",
@@ -3459,8 +4008,8 @@ function renderObserverCasebook(game){
 
     // If another card in this category is already guilty, this one is automatically NOT CF
     const categoryList =
-      (type === 'Suspect') ? SUSPECTS :
-      (type === 'Weapon')  ? WEAPONS  :
+      (type === 'Guest') ? GUESTS :
+      (type === 'Treasure')  ? TREASURES  :
                              ROOMS;
 
     const anotherIsGuilty = categoryList.some(cardName => {
@@ -3566,8 +4115,8 @@ function renderObserverCasebook(game){
   let html = `<table class="clueGrid"><tbody>`;
 
   const categories = [
-    { title: 'SUSPECTS', cards: SUSPECTS, type: 'Suspect', icons: SUS_ICON },
-    { title: 'WEAPONS',  cards: WEAPONS,  type: 'Weapon',  icons: WEP_ICON },
+    { title: 'GUESTS', cards: GUESTS, type: 'Guest', icons: GST_ICON },
+    { title: 'TREASURES',  cards: TREASURES,  type: 'Treasure',  icons: TSR_ICON },
     { title: 'ROOMS',    cards: ROOMS,    type: 'Room',    icons: ROOM_ICON_LOCAL }
   ];
 
@@ -3651,7 +4200,7 @@ function renderObserverCasebook(game){
 function renderBoard(game){
   const board=el('board');board.innerHTML='';
   const placeBox=(div,pos)=>{div.style.gridColumn=`${pos.col[0]} / ${pos.col[1]}`;div.style.gridRow=`${pos.row[0]} / ${pos.row[1]}`;};
-  const activeSuspects=new Set(game.players.map(p=>p.suspect).filter(Boolean));
+  const activeGuests=new Set(game.players.map(p=>p.guest).filter(Boolean));
   const current=game.currentPlayer();
   const uiControlled = current.isHuman || game.isCoachFocus(current); // ✅ allow human UI in Coach Mode
   const roomNames=['Study','Library','Billiard Room','Conservatory','Hall','Ballroom','Lounge','Dining Room','Kitchen'];
@@ -3666,31 +4215,31 @@ function renderBoard(game){
     if(here) div.classList.add('here');
     if(reachable) div.classList.add('reachable');
 
-    const SUSPECT_ICON = {"Green":"🎩","Mustard":"🎖️","Scarlet":"👒","Peacock":"💎","Plum":"💼","White":"👜"};
-    const suspectTokens = SUSPECTS
-      .filter(s => (game.suspectLoc.get(s) || 'Hall') === roomName)
+    const GUEST_ICON = {"Forest":"🎩","Saffron":"🎖️","Rouge":"👒","Sapphire":"💎","Lavender":"💼","Weisse":"👜"};
+    const guestTokens = GUESTS
+      .filter(s => (game.guestLoc.get(s) || 'Hall') === roomName)
       .map(s => {
-        const inactive = !activeSuspects.has(s);
-        const cls = `token suspect ${slug(s)}${inactive ? ' inactive' : ''}`;
-        const icon = SUSPECT_ICON[s] || "";
-        const label = displaySuspect(s);
+        const inactive = !activeGuests.has(s);
+        const cls = `token guest ${slug(s)}${inactive ? ' inactive' : ''}`;
+        const icon = GUEST_ICON[s] || "";
+        const label = displayGuest(s);
         return `<span class="${cls}" data-color="1" title="${label}">
                   <span class="ico" aria-hidden="true">${icon}</span>${label}
                 </span>`;
       });
 
-    const WEAPON_ICON = {"Candlestick":"🕯️","Dagger":"🗡️","Lead Pipe":"🦯","Revolver":"🔫","Rope":"🪢","Wrench":"🔧"};
-    const weaponTokens = WEAPONS
-      .filter(w => (game.weaponLoc.get(w) || '') === roomName)
+    const TREASURE_ICON = {"Portrait":"🖼️","Ornaments":"⚔️","Documents":"📜","Coins":"🪙","Necklace":"📿","Watch":"⏱️"};
+    const treasureTokens = TREASURES
+      .filter(w => (game.treasureLoc.get(w) || '') === roomName)
       .map(w => {
-        const cls = `token weapon ${slug(w)}`;
-        const icon = WEAPON_ICON[w] || "";
+        const cls = `token treasure ${slug(w)}`;
+        const icon = TREASURE_ICON[w] || "";
         return `<span class="${cls}" data-color="1" title="${w}">
                   <span class="ico" aria-hidden="true">${icon}</span>${w}
                 </span>`;
       });
 
-    const tokensHTML=[...suspectTokens,...weaponTokens].join('')||`<span class="token" style="opacity:.6;">(empty)</span>`;
+    const tokensHTML=[...guestTokens,...treasureTokens].join('')||`<span class="token" style="opacity:.6;">(empty)</span>`;
     const roomIcon = ROOM_ICON[roomName] || "";
     div.innerHTML = `<div class="title"><span class="ico" aria-hidden="true">${roomIcon}</span>${roomName}</div>
                      <div class="tokens">${tokensHTML}</div>`;
@@ -3734,8 +4283,8 @@ function renderBoard(game){
       centerTitle = `<span class="ico" aria-hidden="true">👨‍⚖️</span>ACCUSED`;
       centerBody = `<div style="margin-top:6px;font-size:12px;color:var(--muted)">
         ${by ? `<div><b>By:</b> ${by}</div>` : ''}
-        <div><b>Suspect:</b> ${displaySuspect(acc.suspect)}</div>
-        <div><b>Weapon:</b> ${acc.weapon}</div>
+        <div><b>Guest:</b> ${displayGuest(acc.guest)}</div>
+        <div><b>Treasure:</b> ${acc.treasure}</div>
         <div><b>Room:</b> ${acc.room}</div>
       </div>`;
     } else {
@@ -3743,50 +4292,50 @@ function renderBoard(game){
       centerTitle = `<span class="ico" aria-hidden="true">🕊</span>NOT GUILTY`;
       centerBody = `<div style="margin-top:6px;font-size:12px;color:var(--muted)">
         ${by ? `<div><b>By:</b> ${by}</div>` : ''}
-        <div><b>Suspect:</b> ${displaySuspect(acc.suspect)}</div>
-        <div><b>Weapon:</b> ${acc.weapon}</div>
+        <div><b>Guest:</b> ${displayGuest(acc.guest)}</div>
+        <div><b>Treasure:</b> ${acc.treasure}</div>
         <div><b>Room:</b> ${acc.room}</div>
       </div>`;
     }
   }
   else if (game.gameOver && game.convicted) {
-    const { suspect, weapon, room, winner } = game.convicted;
+    const { guest, treasure, room, winner } = game.convicted;
     center.classList.add('convicted');
     centerTitle = `<span class="ico" aria-hidden="true">👮‍♂️</span>CONVICTED`;
     centerBody = `<div style="margin-top:6px;font-size:12px;color:var(--muted)">
       ${winner ? `<div><b>By:</b> ${winner}</div>` : ''}
-      <div><b>Suspect:</b> ${displaySuspect(suspect)}</div>
-      <div><b>Weapon:</b> ${weapon}</div>
+      <div><b>Guest:</b> ${displayGuest(guest)}</div>
+      <div><b>Treasure:</b> ${treasure}</div>
       <div><b>Room:</b> ${room}</div>
     </div>`;
   }
 
-  // Tokens currently held in centre (suspect + weapon moved via HOLDING_CELL_ID)
+  // Tokens currently held in centre (guest + treasure moved via HOLDING_CELL_ID)
   // Render using the SAME icon style as room tiles (no dots)
 
-  const SUSPECT_ICON = {
-    "Green":"🎩","Mustard":"🎖️","Scarlet":"👒",
-    "Peacock":"💎","Plum":"💼","White":"👜"
+  const GUEST_ICON = {
+    "Forest":"🎩","Saffron":"🎖️","Rouge":"👒",
+    "Sapphire":"💎","Lavender":"💼","Weisse":"👜"
   };
 
-  const WEAPON_ICON = {
-    "Candlestick":"🕯️","Dagger":"🗡️","Lead Pipe":"🦯",
-    "Revolver":"🔫","Rope":"🪢","Wrench":"🔧"
+  const TREASURE_ICON = {
+    "Portrait":"🖼️","Ornaments":"⚔️","Documents":"📜",
+    "Coins":"🪙","Necklace":"📿","Watch":"⏱️"
   };
 
-  const holdingSus = SUSPECTS
-    .filter(s => game.suspectLoc.get(s) === HOLDING_CELL_ID)
+  const holdingGst = GUESTS
+    .filter(s => game.guestLoc.get(s) === HOLDING_CELL_ID)
     .map(s => `
-      <span class="token suspect ${slug(s)}" data-color="1" title="${displaySuspect(s)}">
-        <span class="ico" aria-hidden="true">${SUSPECT_ICON[s] || ""}</span>${displaySuspect(s)}
+      <span class="token guest ${slug(s)}" data-color="1" title="${displayGuest(s)}">
+        <span class="ico" aria-hidden="true">${GUEST_ICON[s] || ""}</span>${displayGuest(s)}
       </span>
     `);
 
-  const holdingWep = WEAPONS
-    .filter(w => game.weaponLoc.get(w) === HOLDING_CELL_ID)
+  const holdingTsr = TREASURES
+    .filter(w => game.treasureLoc.get(w) === HOLDING_CELL_ID)
     .map(w => `
-      <span class="token weapon ${slug(w)}" data-color="1" title="${w}">
-        <span class="ico" aria-hidden="true">${WEAPON_ICON[w] || ""}</span>${w}
+      <span class="token treasure ${slug(w)}" data-color="1" title="${w}">
+        <span class="ico" aria-hidden="true">${TREASURE_ICON[w] || ""}</span>${w}
       </span>
     `);
 
@@ -3795,7 +4344,7 @@ function renderBoard(game){
   if(game.trial && game.trial.acc) roomToken = makeRoomToken(game.trial.acc.room);
   else if(game.gameOver && game.convicted) roomToken = makeRoomToken(game.convicted.room);
 
-  const centerTokens=[...holdingSus,...holdingWep, roomToken].filter(Boolean).join('');
+  const centerTokens=[...holdingGst,...holdingTsr, roomToken].filter(Boolean).join('');
 
   center.innerHTML=`<div class="title">${centerTitle}</div><div class="tokens">${centerTokens||centerBody}</div>`;
   board.appendChild(center);
@@ -3831,17 +4380,17 @@ const game=new Game();
     // In observer mode, Player 1 is AI (no human prompts during play)
     if(game.observerMode){
       game.players[0].isHuman = false; // critical: prevents "human" refute prompts
-      game.players[0].name = `Player 1`; // temporary until suspect assigned
+      game.players[0].name = `Player 1`; // temporary until guest assigned
     }
 
-    // Choose focus suspect (optional but recommended)
-    const pick = await promptHumanSuspect(SUSPECTS);
+    // Choose focus guest (optional but recommended)
+    const pick = await promptHumanGuest(GUESTS);
     // You can rename the prompt title/body if observer mode (see below)
-    game.assignSuspects(pick);
+    game.assignGuests(pick);
 
-    // After assignSuspects, set a nicer label for Player 1 in observer mode
+    // After assignGuests, set a nicer label for Player 1 in observer mode
     if(game.observerMode){
-      game.players[0].name = displaySuspect(game.players[0].suspect); // keep consistent
+      game.players[0].name = displayGuest(game.players[0].guest); // keep consistent
     }
 
     game.setup();
@@ -3925,24 +4474,22 @@ function resetUIForSetup() {
   const locPill  = el('locPill');  if (locPill)  locPill.textContent  = 'Location: —';
 }
 
-async function startNewGame(game,{skipConfirm=false}={}){
-  let ok=true;
-  if(!skipConfirm){
-    ok = await showModalConfirm({
+async function startNewGame(game,{skipConfirm=false,fromTitlePage=false}={}){
+  if(!skipConfirm && !fromTitlePage){
+    const ok = await showModalConfirm({
       title: 'Start a New Game?',
-      bodyHTML: `<div style="font-size:16px;margin-bottom:12px;">This will restart the game and redeal all cards.</div>
+      bodyHTML: `<div style="font-size:16px;margin-bottom:12px;">Return to Hapless Hall to choose your character and settings?</div>
       <div style="color:var(--muted);font-size:13px;">
-      Any current turn progress will be lost, but your casebook notes will be preserved.
+      All current progress and casebook notes will be cleared.
       </div>`,
-      confirmLabel: 'New Game',
+      confirmLabel: 'Return to Hapless Hall',
       cancelLabel: 'Cancel'
     });
-    // CRITICAL: Only clear gameplay prompt if user confirmed
-    if(ok) clearGameplayPrompt();
+    if(!ok) return;
+    clearGameplayPrompt();
   }
-  if(!ok) return; // User cancelled - previous state remains intact!
-
   resetUIForSetup();
+  if(!fromTitlePage){ tpShowTitlePages(); }
   const setup = await promptGameSetup();
   game.aiDifficulty = normDiff(setup.diff);
   game.observerMode = !!setup.observer;
@@ -3954,17 +4501,17 @@ async function startNewGame(game,{skipConfirm=false}={}){
   // In observer mode, Player 1 is AI (no human prompts during play)
   if(game.observerMode){
     game.players[0].isHuman = false; // critical: prevents "human" refute prompts
-    game.players[0].name = `Player 1`; // temporary until suspect assigned
+    game.players[0].name = `Player 1`; // temporary until guest assigned
   }
 
-  // Choose focus suspect (optional but recommended)
-  const pick = await promptHumanSuspect(SUSPECTS);
+  // Choose focus guest (optional but recommended)
+  const pick = await promptHumanGuest(GUESTS);
   // You can rename the prompt title/body if observer mode (see below)
-  game.assignSuspects(pick);
+  game.assignGuests(pick);
 
-  // After assignSuspects, set a nicer label for Player 1 in observer mode
+  // After assignGuests, set a nicer label for Player 1 in observer mode
   if(game.observerMode){
-    game.players[0].name = displaySuspect(game.players[0].suspect); // keep consistent
+    game.players[0].name = displayGuest(game.players[0].guest); // keep consistent
   }
 
   game.setup();
@@ -3990,8 +4537,8 @@ async function startNewGame(game,{skipConfirm=false}={}){
  * │ Number of AI opponents      │ Search: "promptGameSetup"                 │
  * │ AI difficulty               │ Search: "[SECTION 5]"                     │
  * │ Room names                  │ Search: "const ROOMS"                     │
- * │ Suspect names               │ Search: "const SUSPECTS"                  │
- * │ Weapon names                │ Search: "const WEAPONS"                   │
+ * │ Guest names                 │ Search: "const GUESTS"                    │
+ * │ Treasure names              │ Search: "const TREASURES"                 │
  * │ Board layout                │ Search: "ROOM_LAYOUT"                     │
  * │ Dice roll range             │ Search: "randInt(2, 12)"                  │
  * │ Button labels               │ Search for the exact button text          │
