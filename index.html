@@ -1028,12 +1028,12 @@ function tpBeginInvestigation() {
       <h2>The Guests of Hapless Hall</h2>
       <p>Six guests sat at Sir Henry's table that evening. Each arrived with impeccable manners and, it would seem, rather more impeccable motives.</p>
       <div class="tp-guests-grid">
-        <div class="tp-guest-card"><span class="tp-guest-icon">🎩</span><div class="tp-guest-name">Mr Forest</div><div class="tp-guest-desc">A gentleman of the old school. His finances are considerably less well maintained than his charm.</div></div>
-        <div class="tp-guest-card"><span class="tp-guest-icon">🎖️</span><div class="tp-guest-name">Maj. Brimstone</div><div class="tp-guest-desc">Retired military, distinction largely self-assessed. He has always admired Sir Henry's collection rather too openly.</div></div>
-        <div class="tp-guest-card"><span class="tp-guest-icon">💼</span><div class="tp-guest-name">Dr Lavender</div><div class="tp-guest-desc">A scholar of antiquities, quiet and precise. His gaze catalogues everything in a room before he has even removed his coat.</div></div>
-        <div class="tp-guest-card"><span class="tp-guest-icon">💎</span><div class="tp-guest-name">Lady Sapphire</div><div class="tp-guest-desc">Aristocratic, immaculate, possessed of a smile that has never once reached her eyes.</div></div>
-        <div class="tp-guest-card"><span class="tp-guest-icon">👒</span><div class="tp-guest-name">Madame Rouge</div><div class="tp-guest-desc">Continental, dramatic, entirely impossible to read. Charming in four languages and evasive in all of them.</div></div>
-        <div class="tp-guest-card"><span class="tp-guest-icon">👜</span><div class="tp-guest-name">Mrs Weisse</div><div class="tp-guest-desc">The very picture of respectable widowhood. She sees considerably more than she lets on.</div></div>
+        <div class="tp-guest-card" onclick="tpSelectCharacter('Forest','Mr Forest','🎩')" style="cursor:pointer"><span class="tp-guest-icon">🎩</span><div class="tp-guest-name">Mr Forest</div><div class="tp-guest-desc">A gentleman of the old school. His finances are considerably less well maintained than his charm.</div></div>
+        <div class="tp-guest-card" onclick="tpSelectCharacter('Brimstone','Maj. Brimstone','🎖️')" style="cursor:pointer"><span class="tp-guest-icon">🎖️</span><div class="tp-guest-name">Maj. Brimstone</div><div class="tp-guest-desc">Retired military, distinction largely self-assessed. He has always admired Sir Henry's collection rather too openly.</div></div>
+        <div class="tp-guest-card" onclick="tpSelectCharacter('Lavender','Dr Lavender','🎓')" style="cursor:pointer"><span class="tp-guest-icon">🎓</span><div class="tp-guest-name">Dr Lavender</div><div class="tp-guest-desc">A scholar of antiquities, quiet and precise. His gaze catalogues everything in a room before he has even removed his coat.</div></div>
+        <div class="tp-guest-card" onclick="tpSelectCharacter('Sapphire','Lady Sapphire','💎')" style="cursor:pointer"><span class="tp-guest-icon">💎</span><div class="tp-guest-name">Lady Sapphire</div><div class="tp-guest-desc">Aristocratic, immaculate, possessed of a smile that has never once reached her eyes.</div></div>
+        <div class="tp-guest-card" onclick="tpSelectCharacter('Rouge','Madame Rouge','💋')" style="cursor:pointer"><span class="tp-guest-icon">💋</span><div class="tp-guest-name">Madame Rouge</div><div class="tp-guest-desc">Continental, dramatic, entirely impossible to read. Charming in four languages and evasive in all of them.</div></div>
+        <div class="tp-guest-card" onclick="tpSelectCharacter('Weisse','Mrs Weisse','👒')" style="cursor:pointer"><span class="tp-guest-icon">👒</span><div class="tp-guest-name">Mrs Weisse</div><div class="tp-guest-desc">The very picture of respectable widowhood. She sees considerably more than she lets on.</div></div>
       </div>
     </div>
 
@@ -1086,10 +1086,10 @@ function tpBeginInvestigation() {
       <div class="tp-char-buttons">
         <button class="tp-char-btn" onclick="tpSelectCharacter('Forest','Mr Forest','🎩')">🎩 Mr Forest</button>
         <button class="tp-char-btn" onclick="tpSelectCharacter('Brimstone','Maj. Brimstone','🎖️')">🎖️ Maj. Brimstone</button>
-        <button class="tp-char-btn" onclick="tpSelectCharacter('Lavender','Dr Lavender','💼')">💼 Dr Lavender</button>
+        <button class="tp-char-btn" onclick="tpSelectCharacter('Lavender','Dr Lavender','🎓')">🎓 Dr Lavender</button>
         <button class="tp-char-btn" onclick="tpSelectCharacter('Sapphire','Lady Sapphire','💎')">💎 Lady Sapphire</button>
-        <button class="tp-char-btn" onclick="tpSelectCharacter('Rouge','Madame Rouge','👒')">👒 Madame Rouge</button>
-        <button class="tp-char-btn" onclick="tpSelectCharacter('Weisse','Mrs Weisse','👜')">👜 Mrs Weisse</button>
+        <button class="tp-char-btn" onclick="tpSelectCharacter('Rouge','Madame Rouge','💋')">💋 Madame Rouge</button>
+        <button class="tp-char-btn" onclick="tpSelectCharacter('Weisse','Mrs Weisse','👒')">👒 Mrs Weisse</button>
       </div>
     </div>
 
@@ -1528,7 +1528,7 @@ function transitionOverlayNotGuilty({ accuser, onDismiss }) {
   actions.appendChild(btn);
 }
 
-function transitionOverlayConvicted({ winner, guest, treasure, room, onRestart }) {
+function transitionOverlayConvicted({ winner, guest, treasure, room, onRestart, onRestartSame }) {
   const ov = accOverlay();
   ov.className = 'acc-overlay state-convicted';
 
@@ -1545,13 +1545,21 @@ function transitionOverlayConvicted({ winner, guest, treasure, room, onRestart }
       <em>${room}</em>.
     </div>`;
 
-  const btn = document.createElement('button');
-  btn.className = 'acc-btn acc-btn-primary';
-  btn.textContent = 'Return to Hapless Hall';
-  btn.onclick = onRestart;
   const actions = document.getElementById('accActions');
   actions.innerHTML = '';
-  actions.appendChild(btn);
+
+  const restartBtn = document.createElement('button');
+  restartBtn.className = 'acc-btn';
+  restartBtn.textContent = 'Restart';
+  restartBtn.title = 'Play again with the same character and settings';
+  restartBtn.onclick = onRestartSame;
+  actions.appendChild(restartBtn);
+
+  const hallBtn = document.createElement('button');
+  hallBtn.className = 'acc-btn acc-btn-primary';
+  hallBtn.textContent = 'Return to Hapless Hall';
+  hallBtn.onclick = onRestart;
+  actions.appendChild(hallBtn);
 }
 
 function hideAccusationOverlay() {
@@ -3053,9 +3061,12 @@ class Game{
 
         // Coach mode: show the same prompt even though the focus player is not "human"
         if (pl.isHuman || this.isCoachFocus(pl)) {
-          // Show in prompt box without requiring OK
-          setPromptMessage('Card Shown',
-            `<div><b>${other.name}</b> shows you: <b>${displayCardName(shown.type, shown.name)}</b></div>`
+          await showInfoPrompt(
+            'Card Shown',
+            `<div><b>${other.name}</b> shows <b>you</b>:</div>
+             <div style="margin-top:10px;font-size:18px;">
+               <b>${shown.type}: ${displayCardName(shown.type, shown.name)}</b>
+             </div>`
           );
 
           // In Coach mode the focus player is still an AI, so we MUST record the knowledge
@@ -3201,6 +3212,11 @@ class Game{
             tpShowTitlePages();
             await startNewGame(game, { skipConfirm:true, fromTitlePage:true });
             resolve();
+          },
+          onRestartSame: async () => {
+            hideAccusationOverlay();
+            await restartSameSettings(game);
+            resolve();
           }
         });
       });
@@ -3330,7 +3346,7 @@ class Game{
     this.awaitingMove=true;
     log(`You rolled a ${this.dice}. Choose a reachable room to move.`);
     this.updateTurnUI();
-    setPromptMessage('Dice Result',`<div>You rolled a <b>${this.dice}</b>.</div><div style="margin-top:8px;">Now select a highlighted room to move into.</div>`);
+    setPromptMessage('Dice Result',`<div>You rolled a <b>${this.dice}</b>.</div><div style="margin-top:8px;color:var(--muted);">Select a highlighted room to move into.</div>`);
     // Coach mode: recommend a room and provide a Coach's choice button to auto-move
     if(this.isCoachFocus(pl)){
       const dest = this.coachRecommendMove(pl);
@@ -3517,7 +3533,7 @@ class Game{
       if(this.gameOver) return;
       if(typeof onCancel==='function'){ await onCancel(); return; }
       if(this.awaitingMove){
-        setPromptMessage('Choose a Room',`<div>Select a highlighted room to move into.</div>`);
+        setPromptMessage('Choose a Room',`<div style="color:var(--muted);">Select a highlighted room to move into.</div>`);
       }else{
         await this.showRollPromptForHuman();
       }
@@ -3743,11 +3759,17 @@ class Game{
     await this.endTurn();
   }
 
-  async showOpponentTurnSummary(player,lines){
-    // No forced pause — just log the summary lines
+  async showOpponentTurnSummary(player, lines){
     lines.forEach(l => log(`[${player.name}] ${l}`));
-    // Brief pause so the board updates are visible
-    await new Promise(r => setTimeout(r, 300));
+    const body = lines
+      .filter(l => l !== 'Turn started.' && l !== 'Turn ended.')
+      .map(l => `<div style="margin-bottom:5px;">&#x2014; ${l}</div>`)
+      .join('');
+    await showInfoPrompt(
+      player.name + '\u2019s turn',
+      `<div style="font-family:'EB Garamond',Georgia,serif;font-size:14px;line-height:1.7;">${body || '<em>Nothing of note.</em>'}</div>`
+    );
+    clearGameplayPrompt();
   }
 }
 
@@ -3829,7 +3851,7 @@ function renderNotebook(game){
 
   // Icons
   const GST_ICON = {
-    "Forest": "🎩","Brimstone": "🎖️","Rouge": "👒","Sapphire": "💎","Lavender": "💼","Weisse": "👜"
+    "Forest": "🎩","Brimstone": "🎖️","Rouge": "💋","Sapphire": "💎","Lavender": "🎓","Weisse": "👒"
   };
   const TSR_ICON = {
     "Portrait":"🖼️","Ornaments":"⚔️","Documents":"📜","Coins":"🪙","Necklace":"📿","Watch":"⏱️"
@@ -3998,7 +4020,7 @@ function renderObserverCasebook(game){
 
   // Icons
   const GST_ICON = {
-    "Forest": "🎩","Brimstone": "🎖️","Rouge": "👒","Sapphire": "💎","Lavender": "💼","Weisse": "👜"
+    "Forest": "🎩","Brimstone": "🎖️","Rouge": "💋","Sapphire": "💎","Lavender": "🎓","Weisse": "👒"
   };
   const TSR_ICON = {
     "Portrait":"🖼️","Ornaments":"⚔️","Documents":"📜","Coins":"🪙","Necklace":"📿","Watch":"⏱️"
@@ -4231,96 +4253,74 @@ function renderObserverCasebook(game){
    TOKEN MOVEMENT ANIMATION
    ============================================================ */
 
-// Track last known position of each guest token (for animation)
-const tokenPositions = new Map(); // guestKey -> { x, y, w, h }
+// ── Token movement animation ──────────────────────────────────────────────────
+// Strategy:
+//   1. Before renderAll(), call queueTokenMove() to snapshot the source position.
+//   2. renderBoard() runs normally — token appears at destination.
+//   3. At the END of renderBoard(), flushTokenMove() hides the dest token and
+//      launches a fixed clone flying from source → dest.
+//   4. On arrival, clone is removed and dest token is revealed.
 
-async function animateGuestMove(guestKey, fromEl, toContainerEl) {
-  if (!fromEl || !toContainerEl) return;
-  const fromRect = fromEl.getBoundingClientRect();
-  if (fromRect.width === 0) return; // not visible
-
-  // Clone the token for the flying element
-  const clone = fromEl.cloneNode(true);
-  clone.style.left   = fromRect.left + 'px';
-  clone.style.top    = fromRect.top  + 'px';
-  clone.style.width  = fromRect.width  + 'px';
-  clone.style.height = fromRect.height + 'px';
-  clone.classList.add('token-moving');
-  document.body.appendChild(clone);
-
-  // Hide original during flight
-  fromEl.style.opacity = '0';
-
-  // Re-render so destination room now has the token (but invisible)
-  // We need the destination rect — find it after a micro-tick
-  await new Promise(r => requestAnimationFrame(r));
-
-  // Find destination token element (now rendered at zero opacity by renderBoard)
-  const destEl = toContainerEl.querySelector(`.token.guest.${guestKey}`);
-  if (!destEl) { clone.remove(); fromEl.style.opacity = ''; return; }
-  const toRect = destEl.getBoundingClientRect();
-  destEl.style.opacity = '0';
-
-  // Animate clone to destination
-  clone.style.left = toRect.left + 'px';
-  clone.style.top  = toRect.top  + 'px';
-
-  await new Promise(r => setTimeout(r, 460));
-  clone.remove();
-  destEl.style.opacity = '';
-  destEl.classList.add('token-arrived');
-  setTimeout(() => destEl.classList.remove('token-arrived'), 400);
-}
-
-// Called by game logic when a player moves; queues animation before next renderAll
-let pendingMoveAnimation = null;
+let pendingMoveAnimation = null; // { guestKey, rect }
 
 function queueTokenMove(guestKey) {
-  // Capture current token element position before renderAll wipes the board
   const board = document.getElementById('board');
   if (!board) return;
-  const el = board.querySelector(`.token.guest.${guestKey}`);
-  if (el) {
-    pendingMoveAnimation = { guestKey, el: el.cloneNode(true), rect: el.getBoundingClientRect() };
+  const src = board.querySelector('.token.guest.' + guestKey);
+  if (src) {
+    pendingMoveAnimation = { guestKey, rect: src.getBoundingClientRect() };
   }
 }
 
-async function flushTokenMove(guestKey) {
-  if (!pendingMoveAnimation || pendingMoveAnimation.guestKey !== guestKey) return;
-  const { el: cloneEl, rect } = pendingMoveAnimation;
+async function flushTokenMove() {
+  if (!pendingMoveAnimation) return;
+  const { guestKey, rect } = pendingMoveAnimation;
   pendingMoveAnimation = null;
-
   if (rect.width === 0) return;
 
-  // Place flying clone
-  const clone = cloneEl;
-  clone.style.position = 'fixed';
-  clone.style.left   = rect.left + 'px';
-  clone.style.top    = rect.top  + 'px';
-  clone.style.width  = rect.width  + 'px';
-  clone.style.height = rect.height + 'px';
-  clone.style.margin = '0';
-  clone.style.zIndex = '1500';
-  clone.style.pointerEvents = 'none';
-  clone.style.transition = 'left 0.42s cubic-bezier(0.4,0,0.2,1), top 0.42s cubic-bezier(0.4,0,0.2,1)';
+  // Find the dest token (just rendered by renderBoard)
+  const board = document.getElementById('board');
+  const destEl = board && board.querySelector('.token.guest.' + guestKey);
+  if (!destEl) return;
+
+  // Hide dest token immediately — suppress its entrance animation too
+  destEl.style.opacity = '0';
+  destEl.style.animation = 'none';
+
+  const destRect = destEl.getBoundingClientRect();
+
+  // Build flying clone from source position
+  const clone = destEl.cloneNode(true);
+  clone.style.cssText = [
+    'position:fixed',
+    'left:' + rect.left + 'px',
+    'top:'  + rect.top  + 'px',
+    'width:'  + rect.width  + 'px',
+    'height:' + rect.height + 'px',
+    'margin:0',
+    'z-index:1500',
+    'pointer-events:none',
+    'opacity:1',
+    'animation:none',
+    'transition:left 0.38s cubic-bezier(0.4,0,0.2,1), top 0.38s cubic-bezier(0.4,0,0.2,1)',
+  ].join(';');
   document.body.appendChild(clone);
 
-  // Wait one frame then move to new position
+  // Two rAF frames so the transition picks up the initial position before moving
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-  const board = document.getElementById('board');
-  const destEl = board && board.querySelector(`.token.guest.${guestKey}`);
-  if (destEl) {
-    const destRect = destEl.getBoundingClientRect();
-    destEl.style.opacity = '0';
-    clone.style.left = destRect.left + 'px';
-    clone.style.top  = destRect.top  + 'px';
-    await new Promise(r => setTimeout(r, 450));
-    destEl.style.opacity = '';
-    destEl.classList.add('token-arrived');
-    setTimeout(() => destEl.classList.remove('token-arrived'), 350);
-  }
+  clone.style.left = destRect.left + 'px';
+  clone.style.top  = destRect.top  + 'px';
+
+  await new Promise(r => setTimeout(r, 740));
   clone.remove();
+
+  // Reveal dest token with a small pop
+  destEl.style.opacity = '';
+  destEl.style.animation = '';
+  destEl.style.transform = 'scale(1.25)';
+  destEl.style.transition = 'transform 0.18s ease';
+  setTimeout(() => { destEl.style.transform = ''; destEl.style.transition = ''; }, 180);
 }
 function renderBoard(game){
   const board=el('board'); if(!board) return;
@@ -4331,7 +4331,7 @@ function renderBoard(game){
   const uiControlled = current.isHuman || game.isCoachFocus(current);
   const roomNames=['Study','Library','Billiard Room','Conservatory','Hall','Ballroom','Lounge','Dining Room','Kitchen'];
 
-  const GUEST_ICON = {"Forest":"🎩","Brimstone":"🎖️","Rouge":"👒","Sapphire":"💎","Lavender":"💼","Weisse":"👜"};
+  const GUEST_ICON = {"Forest":"🎩","Brimstone":"🎖️","Rouge":"💋","Sapphire":"💎","Lavender":"🎓","Weisse":"👒"};
   const TREASURE_ICON = {"Portrait":"🖼️","Ornaments":"⚔️","Documents":"📜","Coins":"🪙","Necklace":"📿","Watch":"⏱️"};
 
   const makeToken = (cls, icon, title, colorVar) =>
@@ -4411,8 +4411,8 @@ function renderBoard(game){
   center.innerHTML=`<div class="title">${centerTitle}</div><div class="tokens">${centerTokens}</div>${centerDefault}`;
   board.appendChild(center);
 
-  // Flush pending movement animation
-  if(pendingMoveAnimation){ const {guestKey}=pendingMoveAnimation; flushTokenMove(guestKey); }
+  // Flush pending movement animation (async — fires after board is painted)
+  if(pendingMoveAnimation) setTimeout(flushTokenMove, 0);
 }
 
 function renderAll(game){
@@ -4539,19 +4539,95 @@ function resetUIForSetup() {
   const locPill  = el('locPill');  if (locPill)  locPill.textContent  = 'Location: —';
 }
 
+
+function showNewGameModal() {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modalOverlay';
+    const dialog = document.createElement('div');
+    dialog.className = 'modalDialog';
+
+    const header = document.createElement('div');
+    header.className = 'modalHeader';
+    header.textContent = 'Start a New Game?';
+
+    const body = document.createElement('div');
+    body.className = 'modalBody';
+    body.innerHTML = `<div style="font-size:16px;margin-bottom:12px;">What would you like to do?</div>
+      <div style="color:var(--muted);font-size:13px;">All current progress and casebook notes will be cleared.</div>`;
+
+    const actions = document.createElement('div');
+    actions.className = 'modalActions';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'secondary';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.onclick = () => { document.body.removeChild(overlay); resolve(false); };
+
+    const restartBtn = document.createElement('button');
+    restartBtn.className = 'secondary';
+    restartBtn.textContent = 'Restart';
+    restartBtn.title = 'Start fresh with the same character and settings';
+    restartBtn.onclick = () => { document.body.removeChild(overlay); resolve('restart'); };
+
+    const hallBtn = document.createElement('button');
+    hallBtn.className = 'danger';
+    hallBtn.textContent = 'Return to Hapless Hall';
+    hallBtn.title = 'Choose a new character and settings';
+    hallBtn.onclick = () => { document.body.removeChild(overlay); resolve('hall'); };
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(restartBtn);
+    actions.appendChild(hallBtn);
+
+    dialog.appendChild(header);
+    dialog.appendChild(body);
+    dialog.appendChild(actions);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+  });
+}
+
+async function restartSameSettings(game) {
+  // Replay with the exact same guest, difficulty, opponents and mode stored in tpState
+  resetUIForSetup();
+  document.getElementById('titlePages').classList.add('hidden');
+  document.getElementById('gameUI').classList.add('active');
+  clearGameplayPrompt();
+
+  game.aiDifficulty = normDiff(tpState.diff);
+  game.observerMode = !!tpState.observer;
+  game.coachMode    = !!tpState.observer;
+  game.observerFocusId = 0;
+  game.resetPlayers(tpState.opp);
+
+  if(game.observerMode){
+    game.players[0].isHuman = false;
+    game.players[0].name = 'Player 1';
+  }
+
+  game.assignGuests(tpState.guest);
+
+  if(game.observerMode){
+    game.players[0].name = displayGuest(game.players[0].guest);
+  }
+
+  game.setup();
+  const ng = el('btnNewGame');  if(ng)  ng.onclick  = () => startNewGame(game);
+  const ngm = el('btnNewGameMobile'); if(ngm) ngm.onclick = () => startNewGame(game);
+  await game.beginTurn();
+}
+
 async function startNewGame(game,{skipConfirm=false,fromTitlePage=false}={}){
   if(!skipConfirm && !fromTitlePage){
-    const ok = await showModalConfirm({
-      title: 'Start a New Game?',
-      bodyHTML: `<div style="font-size:16px;margin-bottom:12px;">Return to Hapless Hall to choose your character and settings?</div>
-      <div style="color:var(--muted);font-size:13px;">
-      All current progress and casebook notes will be cleared.
-      </div>`,
-      confirmLabel: 'Return to Hapless Hall',
-      cancelLabel: 'Cancel'
-    });
-    if(!ok) return;
+    const choice = await showNewGameModal();
+    if(!choice) return;
     clearGameplayPrompt();
+    if(choice === 'restart'){
+      // Use tpState exactly as-is — no title pages, no prompts
+      await restartSameSettings(game);
+      return;
+    }
   }
   resetUIForSetup();
   if(!fromTitlePage){ tpShowTitlePages(); }
