@@ -1412,7 +1412,7 @@ function showAccusationOverlay({ accuser, guest, treasure, room, onReveal }) {
   document.getElementById('accCards').innerHTML = `
     <div class="acc-declaration">
       &ldquo;I solemnly declare that the crime was committed by
-      <em>${displayGuest(guest)}</em>, who stole
+      <em>${displayGuest(guest)}</em>, who stole the
       <em>${treasure}</em> and concealed it in the
       <em>${room}</em>.&rdquo;
     </div>`;
@@ -1459,7 +1459,7 @@ function transitionOverlayConvicted({ winner, guest, treasure, room, onRestart }
 
   document.getElementById('accCards').innerHTML = `
     <div class="acc-declaration">
-      <em>${displayGuest(guest)}</em> stole
+      <em>${displayGuest(guest)}</em> stole the
       <em>${treasure}</em> and concealed it in the
       <em>${room}</em>.
     </div>`;
