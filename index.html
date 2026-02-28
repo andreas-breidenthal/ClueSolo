@@ -1455,7 +1455,7 @@ function transitionOverlayConvicted({ winner, guest, treasure, room, onRestart }
   document.getElementById('accHeadline').textContent = winner + ' Wins';
   document.getElementById('accVerdict').textContent  = 'Convicted';
   document.getElementById('accBody').textContent     =
-    displayGuest(guest) + ' concealed ' + treasure + ' in the ' + room + '.';
+    displayGuest(guest) + ' concealed the ' + treasure + ' in the ' + room + '.';
 
   document.getElementById('accCards').innerHTML = `
     <div class="acc-declaration">
