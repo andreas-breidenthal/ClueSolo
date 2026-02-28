@@ -3012,15 +3012,10 @@ class Game{
         if (pl.isHuman || this.isCoachFocus(pl)) {
           await showInfoPrompt(
             'Card Shown',
-            this.isCoachFocus(pl)
-              ? `<div><b>${other.name}</b> shows <b>you</b>:</div>
-                <div style="margin-top:10px;font-size:18px;">
-                  <b>${shown.type}: ${displayCardName(shown.type, shown.name)}</b>
-                </div>`
-              : `<div><b>${other.name}</b> shows <b>${pl.name}</b>:</div>
-                <div style="margin-top:10px;font-size:18px;">
-                  <b>${shown.type}: ${displayCardName(shown.type, shown.name)}</b>
-                </div>`
+            `<div><b>${other.name}</b> shows <b>you</b>:</div>
+             <div style="margin-top:10px;font-size:18px;">
+               <b>${shown.type}: ${displayCardName(shown.type, shown.name)}</b>
+             </div>`
           );
 
           // In Coach mode the focus player is still an AI, so we MUST record the knowledge
