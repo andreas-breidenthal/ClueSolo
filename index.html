@@ -3330,7 +3330,7 @@ class Game{
     this.awaitingMove=true;
     log(`You rolled a ${this.dice}. Choose a reachable room to move.`);
     this.updateTurnUI();
-    setPromptMessage('Dice Result',`<div>You rolled a <b>${this.dice}</b>.</div><div style="margin-top:8px;">Now click <b>Move</b> on a highlighted room.</div>`);
+    setPromptMessage('Dice Result',`<div>You rolled a <b>${this.dice}</b>.</div><div style="margin-top:8px;">Now select a highlighted room to move into.</div>`);
     // Coach mode: recommend a room and provide a Coach's choice button to auto-move
     if(this.isCoachFocus(pl)){
       const dest = this.coachRecommendMove(pl);
@@ -3517,7 +3517,7 @@ class Game{
       if(this.gameOver) return;
       if(typeof onCancel==='function'){ await onCancel(); return; }
       if(this.awaitingMove){
-        setPromptMessage('Choose a Room',`<div>Click <b>Move</b> on a highlighted room.</div>`);
+        setPromptMessage('Choose a Room',`<div>Select a highlighted room to move into.</div>`);
       }else{
         await this.showRollPromptForHuman();
       }
