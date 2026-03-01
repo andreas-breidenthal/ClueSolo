@@ -2745,14 +2745,14 @@ class Game{
     let x=i;for(let s=0;s<100;s++){x=(x+1)%this.players.length;if(!this.players[x].eliminated) return x;}return i;
   }
   computeReachable(start,steps){return diceReachable(start,steps);}
-  updateTurnUI(){
+  updateTurnUI(fullRedraw=true){
     const pl=this.currentPlayer();
     const who = (this.observerMode && pl.id===this.observerFocusId)
       ? `Coach Focus (${pl.name})`
       : (pl.isHuman ? `You (${pl.name})` : pl.name);
     el('turnPill').textContent=`Turn: ${who}${pl.eliminated?' (eliminated)':''}`;
     el('locPill').textContent=`Location: ${pl.location}`;
-    renderAll(this);
+    if(fullRedraw) renderAll(this);
   }
 
   // NO-REFUTE DEDUCTION (all opponents cannot refute):
@@ -3424,7 +3424,7 @@ class Game{
     log(`You moved to ${room}.`);
     renderBoard(this);
     await animatePendingMoves();
-    this.updateTurnUI();
+    this.updateTurnUI(false);  // pills only — board already painted by animation
     await this.openSuggestionPromptAuto();
   }
 
@@ -3482,15 +3482,22 @@ class Game{
     const tsr = TREASURES.map(w =>
       `<option value="${w}" ${(coachPick && coachPick.treasure===w) ? 'selected' : ''}>${w}</option>`
     ).join("");
+    const coachNote = coachPick
+      ? `<div style="margin-top:10px;color:var(--accent);font-size:12px;"><b>Coach recommends:</b> ${displayGuest(coachPick.guest)} / ${coachPick.treasure}</div>`
+      : '';
     const html=`<div><b>Room:</b> ${room}</div>
       <div style="margin-top:10px;" class="row">
         <label>Guest: <select id="selGuest">${gst}</select></label>
         <label>Treasure: <select id="selTreasure">${tsr}</select></label>
       </div>
-      <div style="margin-top:10px;color:var(--muted);font-size:12px;">Pick a guest and treasure to make a suggestion.</div>`;
-    const go=await renderPrompt({title:'Make a Suggestion',bodyHTML:html,actions:[{label:'Suggest',value:true}]});
-    const guest=document.getElementById('selGuest')?.value;
-    const treasure=document.getElementById('selTreasure')?.value;
+      <div style="margin-top:10px;color:var(--muted);font-size:12px;">Pick a guest and treasure to make a suggestion.</div>
+      ${coachNote}`;
+    const suggActions = coachPick
+      ? [{label:"Coach's choice", value:'coach'}, {label:'Suggest', value:true}]
+      : [{label:'Suggest', value:true}];
+    const go=await renderPrompt({title:'Make a Suggestion',bodyHTML:html,actions:suggActions});
+    const guest = go==='coach' ? coachPick.guest : document.getElementById('selGuest')?.value;
+    const treasure = go==='coach' ? coachPick.treasure : document.getElementById('selTreasure')?.value;
     clearGameplayPrompt();
     if(go&&guest&&treasure){
       const result = await this.makeSuggestion(pl,guest,treasure,room);
@@ -3662,6 +3669,7 @@ class Game{
       summary.push(`Moved from ${from} to ${dest}.`);
       renderBoard(this);
       await animatePendingMoves();
+      this.updateTurnUI(false);  // pills only — board already painted
       if(!this.isActiveSession(sid)) return;
     } else {
       // Chose to stay
