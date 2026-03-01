@@ -2959,6 +2959,7 @@ class Game{
     const ownerPlayer=this.players.find(p=>p.guest===guest);
     if(ownerPlayer && ownerPlayer.location!==room){
       const prev=ownerPlayer.location;
+      // Guest token already animated above; just sync the player location quietly
       ownerPlayer.location=room;
       ownerPlayer.arrivedByOpponentSuggestion=true;
       log(`${ownerPlayer.name} is moved from ${prev} to ${room} due to the suggestion.`);
@@ -2975,7 +2976,6 @@ class Game{
     }else if(!wasWeap){
       this.treasureLoc.set(treasure,room);
     }
-    renderBoard(this);
     log(`${pl.name} suggests: ${displayGuest(guest)} concealed the ${treasure} in the ${room}.`);
 
     // Resolve refutations in order
@@ -3109,7 +3109,7 @@ class Game{
         }
 
         this.applyInference(pl);
-        renderAll(this);
+        renderWithoutBoard(this);  // board unchanged — only notebook/casebook needs update
         return {refuted:true,by:other,card:shown};
       } else {
         // Negative refutation: other could not refute => they do NOT own any of the triple
@@ -4476,6 +4476,13 @@ function renderAll(game){
   if(game.observerMode) renderObserverCasebook(game);
   else renderNotebook(game);
   renderBoard(game);
+}
+
+function renderWithoutBoard(game){
+  renderPlayers(game);
+  renderHand(game);
+  if(game.observerMode) renderObserverCasebook(game);
+  else renderNotebook(game);
 }
 
 /* ================================================================================
