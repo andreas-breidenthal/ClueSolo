@@ -2954,35 +2954,38 @@ class Game{
   async makeSuggestion(pl,guest,treasure,room){
     const triple=[{type:'Guest',name:guest},{type:'Treasure',name:treasure},{type:'Room',name:room}];
 
-    // Move guest pawn and treasure into room as per suggestion
+    // Step d: Move guest into suggested room and animate
     const wasGst=this.guestLoc.get(guest);
     if(wasGst && wasGst!==room){
       queueTokenMove('.token.guest.' + slug(guest));
       this.guestLoc.set(guest,room);
       log(`${displayGuest(guest)} is moved from ${wasGst} to ${room} due to the suggestion.`);
+      renderBoard(this);
+      await animatePendingMoves();
     }else if(!wasGst){
       this.guestLoc.set(guest,room);
-      log(`${displayGuest(guest)} is moved into ${room} due to the suggestion.`);
     }
 
     const ownerPlayer=this.players.find(p=>p.guest===guest);
-    if(ownerPlayer){
-      if(ownerPlayer.location!==room){
-        const prev=ownerPlayer.location;
-        ownerPlayer.location=room;
-        ownerPlayer.arrivedByOpponentSuggestion=true;
-        log(`${ownerPlayer.name} is moved from ${prev} to ${room} due to the suggestion.`);
-      }
+    if(ownerPlayer && ownerPlayer.location!==room){
+      const prev=ownerPlayer.location;
+      ownerPlayer.location=room;
+      ownerPlayer.arrivedByOpponentSuggestion=true;
+      log(`${ownerPlayer.name} is moved from ${prev} to ${room} due to the suggestion.`);
     }
 
+    // Step e: Move treasure into suggested room and animate
     const wasWeap=this.treasureLoc.get(treasure);
     if(wasWeap && wasWeap!==room){
       queueTokenMove('.token.treasure.' + slug(treasure));
-      this.treasureLoc.set(treasure,room);log(`${treasure} is moved from ${wasWeap} to ${room} due to the suggestion.`);
+      this.treasureLoc.set(treasure,room);
+      log(`${treasure} is moved from ${wasWeap} to ${room} due to the suggestion.`);
+      renderBoard(this);
+      await animatePendingMoves();
     }else if(!wasWeap){
-      this.treasureLoc.set(treasure,room);log(`${treasure} is moved into ${room} due to the suggestion.`);
+      this.treasureLoc.set(treasure,room);
     }
-    renderBoard(this);  // board only — avoids casebook flicker during animation
+    renderBoard(this);
     log(`${pl.name} suggests: ${displayGuest(guest)} concealed the ${treasure} in the ${room}.`);
 
     // Resolve refutations in order
@@ -3419,6 +3422,8 @@ class Game{
     pl.location=room; if(pl.guest) this.guestLoc.set(pl.guest,room);
     this.awaitingMove=false; pl.arrivedByOpponentSuggestion=false;
     log(`You moved to ${room}.`);
+    renderBoard(this);
+    await animatePendingMoves();
     this.updateTurnUI();
     await this.openSuggestionPromptAuto();
   }
@@ -3649,14 +3654,14 @@ class Game{
       if(!dest) dest=pl.location;
 
       const from=pl.location;
-      if(pl.guest) queueTokenMove(slug(pl.guest));
+      if(pl.guest) queueTokenMove('.token.guest.' + slug(pl.guest));
       pl.location=dest;
       if(pl.guest) this.guestLoc.set(pl.guest, dest);
 
       log(`${pl.name} moved from ${from} to ${dest}.`);
       summary.push(`Moved from ${from} to ${dest}.`);
-      renderAll(this);
-      await new Promise(r => setTimeout(r, 500)); // wait for animation
+      renderBoard(this);
+      await animatePendingMoves();
       if(!this.isActiveSession(sid)) return;
     } else {
       // Chose to stay
@@ -4283,6 +4288,15 @@ function renderObserverCasebook(game){
    ============================================================ */
 
 // ── Token movement animation ──────────────────────────────────────────────────
+// Call queueTokenMove() BEFORE changing location data.
+// Call renderBoard(game) to paint new positions.
+// Call await animatePendingMoves() to play the animation and wait for it to finish.
+
+async function animatePendingMoves() {
+  await flushTokenMoves();
+}
+
+
 // Supports multiple simultaneous tokens (e.g. guest + treasure in a suggestion).
 // Queue snapshots BEFORE location changes; flush AFTER renderBoard paints new positions.
 
@@ -4458,8 +4472,7 @@ function renderBoard(game){
   center.innerHTML=`<div class="title">${centerTitle}</div><div class="tokens">${centerTokens}</div>${centerDefault}`;
   board.appendChild(center);
 
-  // Flush pending movement animation (async — fires after board is painted)
-  if(pendingMoves.length) setTimeout(flushTokenMoves, 0);
+  // pendingMoves are flushed by the caller via: await animatePendingMoves()
 }
 
 function renderAll(game){
