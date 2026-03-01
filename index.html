@@ -4219,9 +4219,18 @@ function renderObserverCasebook(game){
       const displayName = displayCardName(category.type, cardName);
       const cardInfo = getCardInfo(category.type, cardName);
 
-      // Main row (read-only)
+      // Single combined row — note/prob inline with card name
+      const noteColors = {own:'var(--accent)',seen:'var(--accent)',deduced:'var(--gold)',guilty:'var(--warn)',innocent:'var(--muted)'};
+      const noteSpan = cardInfo.noteText
+        ? `<span style="font-size:9px;color:${noteColors[cardInfo.noteText]||'var(--muted)'};margin-left:4px;opacity:0.85;">${cardInfo.noteText}</span>`
+        : '';
+      const probBg = (cardInfo.hasProb && cardInfo.prob !== undefined)
+        ? `<span style="position:absolute;left:0;top:0;bottom:0;width:${Math.round(cardInfo.prob*100)}%;background:linear-gradient(90deg,rgba(201,151,58,0.18),rgba(201,151,58,0.08));border-radius:2px;pointer-events:none;z-index:0;"></span>`
+        : '';
+      const tdStyle = probBg ? ' style="position:relative;overflow:hidden;"' : '';
+
       html += `<tr>`;
-      html += `<td class="cardName"><span class="ico">${icon}</span>${displayName}</td>`;
+      html += `<td class="cardName"${tdStyle}>${probBg}<span style="position:relative;z-index:1;"><span class="ico">${icon}</span>${displayName}${noteSpan}</span></td>`;
 
       cardInfo.playerMarks.forEach(mark => {
         html += `<td style="font-size:11px;">${mark || '　'}</td>`;
@@ -4229,19 +4238,6 @@ function renderObserverCasebook(game){
 
       html += `<td style="font-size:11px;">${cardInfo.cfMark || '　'}</td>`;
       html += `</tr>`;
-
-      // Notes / probability row
-      html += `<tr><td colspan="${colCount}" class="notesRow">`;
-      if(cardInfo.hasProb && cardInfo.prob !== undefined){
-        const pct = Math.round(cardInfo.prob * 100);
-        html += `<div class="probWrap" style="position:relative; margin:2px 0;">
-          <div class="probBar" style="width:${pct}%;"></div>
-          <span class="probPct" style="position:absolute; right:4px; top:-18px;">${pct}%</span>
-        </div>`;
-      } else {
-        html += `<div class="noteDisplay">${cardInfo.noteText || '　'}</div>`;
-      }
-      html += `</td></tr>`;
     });
   });
 
