@@ -958,8 +958,31 @@
 .room .tokens .token {
   animation: token-appear 0.25s ease both;
 }
+#board.no-token-anim .room .tokens .token {
+  animation: none;
+}
 /* Room title icon hidden — text only, keep clean */
 .room .title .ico { display:none; }
+
+/* Room watermark icons */
+.room[data-watermark] { overflow: hidden; }
+.room[data-watermark]::before {
+  content: attr(data-watermark);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 4.5rem;
+  line-height: 1;
+  opacity: 0.1;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+.room.reachable[data-watermark]::before,
+.room.here[data-watermark]::before { opacity: 0.16; }
+.room.center[data-watermark]::before { font-size: 5.5rem; opacity: 0.07; }
+.room .title, .room .tokens { position: relative; z-index: 1; }
 </style>
 <script>
 /* Title page functions — must be defined before the HTML buttons that call them */
@@ -1479,6 +1502,10 @@ const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^
    ACCUSATION OVERLAY CONTROLLER
    ============================================================ */
 
+
+const PLURAL_TREASURES = new Set(['Ornaments', 'Documents', 'Coins']);
+function treasurePronoun(t) { return PLURAL_TREASURES.has(t) ? 'them' : 'it'; }
+
 function accOverlay() { return document.getElementById('accusationOverlay'); }
 
 function showAccusationOverlay({ accuser, guest, treasure, room, onReveal }) {
@@ -1494,7 +1521,7 @@ function showAccusationOverlay({ accuser, guest, treasure, room, onReveal }) {
     <div class="acc-declaration">
       &ldquo;I solemnly declare that the crime was committed by
       <em>${displayGuest(guest)}</em>, who stole the
-      <em>${treasure}</em> and concealed it in the
+      <em>${treasure}</em> and concealed ${treasurePronoun(treasure)} in the
       <em>${room}</em>.&rdquo;
     </div>`;
 
@@ -1541,7 +1568,7 @@ function transitionOverlayConvicted({ winner, guest, treasure, room, onRestart, 
   document.getElementById('accCards').innerHTML = `
     <div class="acc-declaration">
       <em>${displayGuest(guest)}</em> stole the
-      <em>${treasure}</em> and concealed it in the
+      <em>${treasure}</em> and concealed ${treasurePronoun(treasure)} in the
       <em>${room}</em>.
     </div>`;
 
@@ -2930,6 +2957,7 @@ class Game{
     // Move guest pawn and treasure into room as per suggestion
     const wasGst=this.guestLoc.get(guest);
     if(wasGst && wasGst!==room){
+      queueTokenMove('.token.guest.' + slug(guest));
       this.guestLoc.set(guest,room);
       log(`${displayGuest(guest)} is moved from ${wasGst} to ${room} due to the suggestion.`);
     }else if(!wasGst){
@@ -2949,11 +2977,12 @@ class Game{
 
     const wasWeap=this.treasureLoc.get(treasure);
     if(wasWeap && wasWeap!==room){
+      queueTokenMove('.token.treasure.' + slug(treasure));
       this.treasureLoc.set(treasure,room);log(`${treasure} is moved from ${wasWeap} to ${room} due to the suggestion.`);
     }else if(!wasWeap){
       this.treasureLoc.set(treasure,room);log(`${treasure} is moved into ${room} due to the suggestion.`);
     }
-    renderAll(this);
+    renderBoard(this);  // board only — avoids casebook flicker during animation
     log(`${pl.name} suggests: ${displayGuest(guest)} concealed the ${treasure} in the ${room}.`);
 
     // Resolve refutations in order
@@ -3386,7 +3415,7 @@ class Game{
     const pl=this.currentPlayer();
     if(!(pl.isHuman || this.isCoachFocus(pl)) || !this.awaitingMove) return;
     if(!this.reachable.has(room)) return;
-    if(pl.guest) queueTokenMove(slug(pl.guest));
+    if(pl.guest) queueTokenMove('.token.guest.' + slug(pl.guest));
     pl.location=room; if(pl.guest) this.guestLoc.set(pl.guest,room);
     this.awaitingMove=false; pl.arrivedByOpponentSuggestion=false;
     log(`You moved to ${room}.`);
@@ -4254,76 +4283,91 @@ function renderObserverCasebook(game){
    ============================================================ */
 
 // ── Token movement animation ──────────────────────────────────────────────────
-// Strategy:
-//   1. Before renderAll(), call queueTokenMove() to snapshot the source position.
-//   2. renderBoard() runs normally — token appears at destination.
-//   3. At the END of renderBoard(), flushTokenMove() hides the dest token and
-//      launches a fixed clone flying from source → dest.
-//   4. On arrival, clone is removed and dest token is revealed.
+// Supports multiple simultaneous tokens (e.g. guest + treasure in a suggestion).
+// Queue snapshots BEFORE location changes; flush AFTER renderBoard paints new positions.
 
-let pendingMoveAnimation = null; // { guestKey, rect }
+const pendingMoves = []; // [{ selector, rect }]
 
-function queueTokenMove(guestKey) {
+function queueTokenMove(selector) {
   const board = document.getElementById('board');
   if (!board) return;
-  const src = board.querySelector('.token.guest.' + guestKey);
+  const src = board.querySelector(selector);
   if (src) {
-    pendingMoveAnimation = { guestKey, rect: src.getBoundingClientRect() };
+    const rect = src.getBoundingClientRect();
+    if (rect.width > 0) pendingMoves.push({ selector, rect });
   }
 }
 
-async function flushTokenMove() {
-  if (!pendingMoveAnimation) return;
-  const { guestKey, rect } = pendingMoveAnimation;
-  pendingMoveAnimation = null;
-  if (rect.width === 0) return;
-
-  // Find the dest token (just rendered by renderBoard)
+async function flushTokenMoves() {
+  if (!pendingMoves.length) return;
+  const moves = pendingMoves.splice(0);
   const board = document.getElementById('board');
-  const destEl = board && board.querySelector('.token.guest.' + guestKey);
-  if (!destEl) return;
+  if (!board) return;
 
-  // Hide dest token immediately — suppress its entrance animation too
-  destEl.style.opacity = '0';
-  destEl.style.animation = 'none';
+  const DURATION = 680;
+  const clones = [];
 
-  const destRect = destEl.getBoundingClientRect();
+  for (const { selector, rect } of moves) {
+    const destEl = board.querySelector(selector);
+    if (!destEl) continue;
 
-  // Build flying clone from source position
-  const clone = destEl.cloneNode(true);
-  clone.style.cssText = [
-    'position:fixed',
-    'left:' + rect.left + 'px',
-    'top:'  + rect.top  + 'px',
-    'width:'  + rect.width  + 'px',
-    'height:' + rect.height + 'px',
-    'margin:0',
-    'z-index:1500',
-    'pointer-events:none',
-    'opacity:1',
-    'animation:none',
-    'transition:left 0.38s cubic-bezier(0.4,0,0.2,1), top 0.38s cubic-bezier(0.4,0,0.2,1)',
-  ].join(';');
-  document.body.appendChild(clone);
+    // Suppress dest token during flight
+    destEl.style.opacity = '0';
+    destEl.style.animation = 'none';
+    const destRect = destEl.getBoundingClientRect();
+    if (destRect.left === rect.left && destRect.top === rect.top) {
+      // No movement — token already there, just reveal it
+      destEl.style.opacity = '';
+      destEl.style.animation = '';
+      continue;
+    }
 
-  // Two rAF frames so the transition picks up the initial position before moving
+    // Build fixed clone at source
+    const clone = destEl.cloneNode(true);
+    clone.style.cssText = [
+      'position:fixed',
+      'left:' + rect.left + 'px',
+      'top:'  + rect.top  + 'px',
+      'width:'  + rect.width  + 'px',
+      'height:' + rect.height + 'px',
+      'margin:0',
+      'z-index:1500',
+      'pointer-events:none',
+      'opacity:1',
+      'animation:none',
+      'will-change:left,top',
+      'transition:left ' + DURATION + 'ms cubic-bezier(0.4,0,0.2,1), top ' + DURATION + 'ms cubic-bezier(0.4,0,0.2,1)',
+    ].join(';');
+    document.body.appendChild(clone);
+    clones.push({ clone, destEl, destRect });
+  }
+
+  if (!clones.length) return;
+
+  // Two rAF to commit starting positions before transition fires
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-  clone.style.left = destRect.left + 'px';
-  clone.style.top  = destRect.top  + 'px';
+  for (const { clone, destRect } of clones) {
+    clone.style.left = destRect.left + 'px';
+    clone.style.top  = destRect.top  + 'px';
+  }
 
-  await new Promise(r => setTimeout(r, 740));
-  clone.remove();
+  await new Promise(r => setTimeout(r, DURATION + 40));
 
-  // Reveal dest token with a small pop
-  destEl.style.opacity = '';
-  destEl.style.animation = '';
-  destEl.style.transform = 'scale(1.25)';
-  destEl.style.transition = 'transform 0.18s ease';
-  setTimeout(() => { destEl.style.transform = ''; destEl.style.transition = ''; }, 180);
+  for (const { clone, destEl } of clones) {
+    clone.remove();
+    destEl.style.opacity = '';
+    destEl.style.animation = '';
+    destEl.style.transform = 'scale(1.18)';
+    destEl.style.transition = 'transform 0.15s ease';
+    setTimeout(() => { destEl.style.transform = ''; destEl.style.transition = ''; }, 150);
+  }
 }
 function renderBoard(game){
   const board=el('board'); if(!board) return;
+  // Suppress entrance animation when tokens are about to be animated externally
+  if(pendingMoves.length) board.classList.add('no-token-anim');
+  else board.classList.remove('no-token-anim');
   board.innerHTML='';
   const placeBox=(div,pos)=>{div.style.gridColumn=`${pos.col[0]} / ${pos.col[1]}`;div.style.gridRow=`${pos.row[0]} / ${pos.row[1]}`;};
   const activeGuests=new Set(game.players.map(p=>p.guest).filter(Boolean));
@@ -4367,6 +4411,8 @@ function renderBoard(game){
         TREASURE_ICON[w]||'📦', w, `var(--tsr-${slug(w)})`
       ));
 
+    const wm = ROOM_ICON[roomName] || '';
+    if(wm) div.setAttribute('data-watermark', wm);
     div.innerHTML = `<div class="title">${roomName}</div>
                      <div class="tokens">${[...guestTokens,...treasureTokens].join('')}</div>`;
     board.appendChild(div);
@@ -4408,11 +4454,12 @@ function renderBoard(game){
   const centerTokens=[...holdingGst,...holdingTsr,roomToken].filter(Boolean).join('');
   const centerDefault = centerTokens ? '' : `<div style="font-size:9px;letter-spacing:0.2em;color:rgba(201,151,58,0.35);margin-top:4px;font-family:'Cinzel',serif;">CONFIDENTIAL</div>`;
 
+  center.setAttribute('data-watermark', ROOM_ICON['Case File'] || '🕵️');
   center.innerHTML=`<div class="title">${centerTitle}</div><div class="tokens">${centerTokens}</div>${centerDefault}`;
   board.appendChild(center);
 
   // Flush pending movement animation (async — fires after board is painted)
-  if(pendingMoveAnimation) setTimeout(flushTokenMove, 0);
+  if(pendingMoves.length) setTimeout(flushTokenMoves, 0);
 }
 
 function renderAll(game){
