@@ -83,6 +83,15 @@
     --gold:#d4a127;        /* Gold highlight */
     --cream:var(--cluedo-cream);    /* Cluedo cream */
 
+    /* ── Universal script token mappings ── */
+    --ink:    #0d0a07;
+    --paper:  #1a1510;
+    --aged:   #2a1f10;
+    --rust:   var(--cluedo-red);
+    --gold:   var(--tp-gold);
+    --faded:  #9a8a6a;
+    --rule:   rgba(201,151,58,0.3);
+
     /* Guest colors - each guest has their own color */
     --gst-forest:#2D6A2D;--gst-brimstone:#C8A000;--gst-sapphire:#1A7FD4;--gst-lavender:#9966CC;--gst-rouge:#EE0000;--gst-weisse:#f0f0f0;
     /* Treasure colors - each treasure has its own color */
@@ -1015,8 +1024,9 @@ function tpBeginInvestigation() {
 <body>
 <div id="titlePages">
 
-  <div style="position:fixed;top:0;left:0;right:0;z-index:1001;padding:0.8rem 2rem;border-bottom:1px solid rgba(201,151,58,0.2);background:rgba(13,10,7,0.92);backdrop-filter:blur(4px);">
+  <div style="position:fixed;top:0;left:0;right:0;z-index:1001;padding:0.5rem 2.5rem;border-bottom:1px solid rgba(201,151,58,0.2);background:rgba(13,10,7,0.92);backdrop-filter:blur(4px);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;">
     <a href="https://andreas-breidenthal.github.io/andreas-breidenthal/" style="font-family:'Inconsolata',monospace;font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:#9a8a6a;text-decoration:none;opacity:0.85;transition:opacity 0.2s;">Andreas Breidenthal</a>
+    <button id="opinions-trigger" style="grid-column:3;justify-self:end;font-family:'Inconsolata',monospace;font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:#9a8a6a;background:none;border:none;padding:0;cursor:pointer;opacity:0.85;transition:opacity 0.2s;">Opinions?</button>
   </div>
   <div style="height:2.8rem;"></div>
 
@@ -4771,5 +4781,6 @@ async function startNewGame(game,{skipConfirm=false,fromTitlePage=false}={}){
  * 
  * ================================================================================ */
 </script>
+  <script src="https://andreas-breidenthal.github.io/andreas-breidenthal/opinions-modal.js"></script>
 </body>
 </html>
